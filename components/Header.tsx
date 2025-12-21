@@ -1,10 +1,14 @@
 'use client'
 
 import React, { useState } from 'react'
-import Link from 'next/link'
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from 'next-intl'
+import LanguageSwitcher from './LanguageSwitcher'
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const t = useTranslations('header')
+ 
 
     return (
         <header className="bg-white shadow-md sticky top-0 z-50">
@@ -26,31 +30,33 @@ const Header = () => {
                             href="/" 
                             className="text-black md:text-[20px] text-[16px] hover:text-orange-500 transition-colors font-medium"
                         >
-                            მთავარი
+                            {t('home')}
                         </Link>
                         <Link 
                             href="/inventory" 
                             className="text-black md:text-[20px] text-[16px] hover:text-orange-500 transition-colors font-medium"
                         >
-                          აღჭურვილობა
+                          {t('equipment')}
                         </Link>
                         <Link 
                             href="/about" 
                             className="text-black md:text-[20px] text-[16px] hover:text-orange-500 transition-colors font-medium"
                         >
-                         ჩვენს შესახებ
+                         {t('about')}
                         </Link>
                         <Link 
                             href="/contact" 
                             className="text-black md:text-[20px] text-[16px] hover:text-orange-500 transition-colors font-medium"
                         >
-                            კონტაქტი
+                            {t('contact')}
                         </Link>
                        
                     </nav>
 
-                    {/* CTA Button */}
-                    
+                    {/* Language Switcher */}
+                    <div className="hidden md:flex items-center">
+                        <LanguageSwitcher />
+                    </div>
 
                     {/* Mobile menu button */}
                     <div className="md:hidden">
@@ -87,36 +93,39 @@ const Header = () => {
                                 className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                მთავარი
+                                {t('home')}
                             </Link>
                             <Link
-                                href="/rentals"
+                                href="/inventory"
                                 className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                გაქირავება
+                                {t('equipment')}
                             </Link>
                             <Link
                                 href="/about"
                                 className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                ჩვენ შესახებ
+                                {t('about')}
                             </Link>
                             <Link
                                 href="/contact"
                                 className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                კონტაქტი
+                                {t('contact')}
                             </Link>
                             <Link
                                 href="/book"
                                 className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors font-medium text-center"
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                Book Now
+                                {t('bookNow')}
                             </Link>
+                            <div className="pt-2">
+                                <LanguageSwitcher />
+                            </div>
                         </nav>
                     </div>
                 )}

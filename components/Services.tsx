@@ -5,51 +5,53 @@ import Image from 'next/image'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay, EffectCards, Navigation } from 'swiper/modules'
 import { motion } from 'framer-motion'
+import { useTranslations } from 'next-intl'
 
 import 'swiper/css'
 import 'swiper/css/effect-cards'
 import 'swiper/css/navigation'
 
-const services = [
-  {
-    id: 1,
-    titleGeo: 'თხილამურებისა და სნოუბორდების გაქირავება',
-    descriptionGeo: 'პრემიუმ ხარისხის თხილამურები და სნოუბორდები ყველა დონისთვის',
-    image: '/images/serv1.png',
-  },
-  {
-    id: 3,
-    titleGeo: 'თხილამურის ტანსაცმელი',
-    descriptionGeo: 'პროფესიონალური ქურთუკები, შარვლები და თერმული ტანსაცმელი',
-    image: '/images/serv3.png',
-  },
-  {
-    id: 4,
-    titleGeo: 'პროფესიონალური გაკვეთილები',
-    descriptionGeo: 'გამოცდილი ინსტრუქტორები დამწყებთათვის და პროფესიონალებისთვის',
-    image: '/images/serv4.png',
-  },
-  {
-    id: 2,
-    titleGeo: 'აქსესუარები',
-    descriptionGeo: 'წნელები, ჩაფხუტები, სათვალეები და ყველა საჭირო აღჭურვილობა',
-    image: '/images/serv2.png',
-  },
-  {
-    id: 5,
-    titleGeo: 'სრული სერვისი',
-    descriptionGeo: 'აღჭურვილობის მორგება და სრული გაქირავების გამოცდილება',
-    image: '/images/serv5.png',
-  },
-  {
-    id: 6,
-    titleGeo: 'მოვლა და შეკეთება',
-    descriptionGeo: 'თხილამურებისა და სნოუბორდების პროფესიონალური სერვისი',
-    image: '/images/serv6.png',
-  },
-]
-
 const Services = () => {
+  const t = useTranslations('services')
+  
+  const services = [
+    {
+      id: 1,
+      titleKey: 'service1.title',
+      descriptionKey: 'service1.description',
+      image: '/images/serv1.png',
+    },
+    {
+      id: 3,
+      titleKey: 'service3.title',
+      descriptionKey: 'service3.description',
+      image: '/images/serv3.png',
+    },
+    {
+      id: 4,
+      titleKey: 'service4.title',
+      descriptionKey: 'service4.description',
+      image: '/images/serv4.png',
+    },
+    {
+      id: 2,
+      titleKey: 'service2.title',
+      descriptionKey: 'service2.description',
+      image: '/images/serv2.png',
+    },
+    {
+      id: 5,
+      titleKey: 'service5.title',
+      descriptionKey: 'service5.description',
+      image: '/images/serv5.png',
+    },
+    {
+      id: 6,
+      titleKey: 'service6.title',
+      descriptionKey: 'service6.description',
+      image: '/images/serv6.png',
+    },
+  ]
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -106,7 +108,7 @@ const Services = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg sm:text-xl md:text-2xl font-bold text-black mb-2 sm:mb-3 md:mb-4 px-2"
           >
-            ჩვენი სერვისები
+            {t('title')}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: -10 }}
@@ -115,7 +117,7 @@ const Services = () => {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base px-2"
           >
-            ყველაფერი რაც გჭირდება სრულყოფილი სათხილამურო გამოცდილებისთვის გუდაურში
+            {t('subtitle')}
           </motion.p>
         </motion.div>
 
@@ -149,7 +151,7 @@ const Services = () => {
                 <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl">
                   <Image
                     src={service.image}
-                    alt={service.titleGeo}
+                    alt={t(service.titleKey)}
                     fill
                     className="object-cover"
                     priority={service.id === 1}
@@ -161,10 +163,10 @@ const Services = () => {
                   {/* Text */}
                   <div className="absolute inset-0 flex flex-col justify-end items-center text-center p-3 xs:p-4 sm:p-6 md:p-8">
                     <h3 className="text-base xs:text-lg sm:text-xl md:text-2xl font-bold text-white mb-1.5 xs:mb-2 sm:mb-3 drop-shadow-lg px-2">
-                      {service.titleGeo}
+                      {t(service.titleKey)}
                     </h3>
                     <p className="text-white/90 text-xs xs:text-sm sm:text-base leading-relaxed drop-shadow-md px-3">
-                      {service.descriptionGeo}
+                      {t(service.descriptionKey)}
                     </p>
                   </div>
                 </div>
@@ -219,7 +221,7 @@ const Services = () => {
                 >
                   <Image
                     src={service.image}
-                    alt={service.titleGeo}
+                    alt={t(service.titleKey)}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-110"
                   />
@@ -241,10 +243,10 @@ const Services = () => {
                     className="absolute inset-0 flex flex-col justify-end items-center text-center p-6"
                   >
                     <h3 className="text-xl font-bold text-white mb-2 drop-shadow-lg">
-                      {service.titleGeo}
+                      {t(service.titleKey)}
                     </h3>
                     <p className="text-sm text-white/90 leading-relaxed drop-shadow-md">
-                      {service.descriptionGeo}
+                      {t(service.descriptionKey)}
                     </p>
                   </motion.div>
                 </motion.div>

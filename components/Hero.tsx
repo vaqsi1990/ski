@@ -2,16 +2,20 @@
 
 import React from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { motion } from 'framer-motion'
+
 const Hero = () => {
+    const t = useTranslations('hero')
+    
     return (
         <section className="relative h-[70vh] min-h-[500px] flex items-center justify-center overflow-hidden">
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
                 <Image
                     src="/images/hero.jpg"
-                    alt="თხილამურების გაქირავება გუდაურში"
+                    alt={t('alt')}
                     fill
                     priority
                     className="object-cover"
@@ -34,7 +38,7 @@ const Hero = () => {
                         }}
                     >
                         <h1 className=" md:text-[30px] text-[20px] font-bold text-white uppercase tracking-tight">
-                            SKI RENTAL IN GUDAURI
+                            {t('title')}
                         </h1>
 
 
@@ -50,7 +54,7 @@ const Hero = () => {
                         }}
                     >
                           <p className="text-xl md:text-2xl text-white font-light">
-                            საუკეთესო აღჭურვილობა • საუკეთესო ფასები
+                            {t('subtitle')}
                         </p>
 
 
@@ -64,7 +68,7 @@ const Hero = () => {
                             href="/book"
                             className="inline-block bg-orange-500 md:text-[20px] text-[16px] font-bold hover:bg-orange-600 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors duration-200 shadow-lg"
                         >
-                            დაჯავშნა
+                            {t('cta')}
                         </Link>
                     </div>
                 </div>

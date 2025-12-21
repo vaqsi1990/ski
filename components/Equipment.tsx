@@ -2,10 +2,13 @@
 
 import React from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { motion } from 'framer-motion'
 
 const Equipment = () => {
+    const t = useTranslations('equipment')
+    
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -50,28 +53,19 @@ const Equipment = () => {
     const equipment = [
         {
             id: 1,
-            name: 'Skis',
-            nameGeo: 'თხილამურები',
-            price: 'From £25/Day',
-            priceGeo: '25£ დღეში',
+            key: 'skis',
             image: '/images/1.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
         },
         {
             id: 2,
-            name: 'Snowboards',
-            nameGeo: 'სნოუბორდები',
-            price: 'From £50/Day',
-            priceGeo: '50£ დღეში',
+            key: 'snowboards',
             image: '/images/2.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
         },
         {
             id: 3,
-            name: 'აღჭურვილობა',
-            nameGeo: 'აღჭურვილობა',
-            price: 'From £50/Day',
-            priceGeo: '50£ დღეში',
+            key: 'accessories',
             image: '/images/3.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
         },
@@ -91,7 +85,7 @@ const Equipment = () => {
                     variants={titleVariants}
                     className="text-xl md:text-2xl text-black text-bold text-center mb-12"
                 >
-                    აღჭურვილობა
+                    {t('title')}
                 </motion.h2>
 
                 {/* Equipment Cards with Text Overlay */}
@@ -118,7 +112,7 @@ const Equipment = () => {
                                     >
                                         <Image
                                             src={item.image}
-                                            alt={item.nameGeo}
+                                            alt={t(`items.${item.key}.name`)}
                                             fill
                                             className="object-cover transition-transform duration-300"
                                         />
@@ -145,7 +139,7 @@ const Equipment = () => {
                                         transition={{ duration: 0.2 }}
                                         className="md:text-[24px] text-[16px] font-bold text-white mb-3"
                                     >
-                                        {item.nameGeo}
+                                        {t(`items.${item.key}.name`)}
                                     </motion.h3>
                                    
                                     <motion.div
@@ -157,7 +151,7 @@ const Equipment = () => {
                                         transition={{ duration: 0.2 }}
                                         className={`${item.buttonColor} text-white md:text-[20px] text-[16px] font-bold px-8 py-4 rounded-lg font-semibold inline-block w-fit transition-all duration-200 cursor-pointer`}
                                     >
-                                       დაათვალიერეთ
+                                       {t('viewMore')}
                                     </motion.div>
                                 </motion.div>
                             </Link>

@@ -1,0 +1,77 @@
+{
+  "header": {
+    "home": "Home",
+    "equipment": "Equipment",
+    "about": "About Us",
+    "contact": "Contact",
+    "bookNow": "Book Now"
+  },
+  "hero": {
+    "title": "SKI RENTAL IN GUDAURI",
+    "subtitle": "Best Equipment • Best Prices",
+    "cta": "Book Now",
+    "alt": "Ski rental in Gudauri"
+  },
+  "equipment": {
+    "title": "Equipment",
+    "viewMore": "View More",
+    "items": {
+      "skis": {
+        "name": "Skis",
+        "price": "From £25/Day"
+      },
+      "snowboards": {
+        "name": "Snowboards",
+        "price": "From £50/Day"
+      },
+      "accessories": {
+        "name": "Accessories",
+        "price": "From £50/Day"
+      }
+    }
+  },
+  "bookingSteps": {
+    "title": "Simple Booking Process",
+    "step1": "1. Select Dates",
+    "step2": "2. Choose Gear",
+    "step3": "3. Confirm Reservation"
+  },
+  "services": {
+    "title": "Our Services",
+    "subtitle": "Everything you need for the perfect skiing experience in Gudauri",
+    "service1": {
+      "title": "Ski & Snowboard Rental",
+      "description": "Premium quality skis and snowboards for all levels"
+    },
+    "service2": {
+      "title": "Accessories",
+      "description": "Poles, helmets, goggles and all necessary equipment"
+    },
+    "service3": {
+      "title": "Ski Clothing",
+      "description": "Professional jackets, pants and thermal wear"
+    },
+    "service4": {
+      "title": "Professional Lessons",
+      "description": "Experienced instructors for beginners and professionals"
+    },
+    "service5": {
+      "title": "Full Service",
+      "description": "Equipment fitting and complete rental experience"
+    },
+    "service6": {
+      "title": "Maintenance & Repair",
+      "description": "Professional service for skis and snowboards"
+    }
+  },
+  "footer": {
+    "description": "Premium quality ski and snowboard rental in Gudauri. Everything you need for the perfect skiing experience.",
+    "quickLinks": "Quick Links",
+    "services": "Services",
+    "contact": "Contact",
+    "location": "Gudauri, Georgia",
+    "phone": "+995 XXX XXX XXX",
+    "email": "info@skirental.ge",
+    "copyright": "All rights reserved."
+  }
+}

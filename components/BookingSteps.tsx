@@ -2,9 +2,11 @@
 
 import React from 'react'
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
 
 const BookingSteps = () => {
+    const t = useTranslations('bookingSteps')
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -80,27 +82,18 @@ const BookingSteps = () => {
     const steps = [
         {
             id: 1,
-            icon: (
-              "/images/cal.png"
-            ),
-            title: '1. Select Dates',
-            titleGeo: '1. აირჩიეთ თარიღები',
+            icon: "/images/cal.png",
+            translationKey: 'step1',
         },
         {
             id: 2,
-            icon: (
-             "/images/ski.png"
-            ),
-            title: '2. Choose Gear',
-            titleGeo: '2. აირჩიეთ აღჭურვილობა',
+            icon: "/images/ski.png",
+            translationKey: 'step2',
         },
         {
             id: 3,
-            icon: (
-             "/images/return.png"
-            ),
-            title: '3. Confirm Reservation',
-            titleGeo: '3. დაადასტურეთ დაჯავშნა',
+            icon: "/images/return.png",
+            translationKey: 'step3',
         },
     ]
 
@@ -118,7 +111,7 @@ const BookingSteps = () => {
                     variants={titleVariants}
                     className="text-xl md:text-2xl text-black text-bold text-center mb-10"
                 >
-                    მარტივი დაჯავშნის პროცესი
+                    {t('title')}
                 </motion.h2>
 
                 {/* Steps */}
@@ -146,7 +139,7 @@ const BookingSteps = () => {
                                 >
                                     <Image 
                                         src={step.icon} 
-                                        alt={step.titleGeo} 
+                                        alt={t(step.translationKey)} 
                                         width={70} 
                                         height={70} 
                                     />
@@ -158,7 +151,7 @@ const BookingSteps = () => {
                                     transition={{ delay: 0.4 + index * 0.2, duration: 0.5 }}
                                     className="md:text-[20px] text-[16px] font-bold"
                                 >
-                                    {step.titleGeo}
+                                    {t(step.translationKey)}
                                 </motion.p>
                             </motion.div>
 
