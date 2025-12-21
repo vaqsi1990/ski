@@ -3,7 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-
+import { motion } from 'framer-motion'
 const Hero = () => {
     return (
         <section className="relative h-[70vh] min-h-[500px] flex items-center justify-center overflow-hidden">
@@ -25,15 +25,39 @@ const Hero = () => {
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <div className="space-y-6">
                     {/* Main Title */}
-                    <h1 className=" md:text-[30px] text-[20px] font-bold text-white uppercase tracking-tight">
-                        SKI RENTAL IN GUDAURI
-                    </h1>
-                    
+                    <motion.div
+                        initial={{ opacity: 0, y: -40, x: -20 }}
+                        animate={{ opacity: 1, y: 0, x: 0 }}
+                        transition={{
+                            duration: 0.8,
+                            ease: 'easeOut',
+                        }}
+                    >
+                        <h1 className=" md:text-[30px] text-[20px] font-bold text-white uppercase tracking-tight">
+                            SKI RENTAL IN GUDAURI
+                        </h1>
+
+
+                    </motion.div>
+
                     {/* Subtitle */}
-                    <p className="text-xl md:text-2xl text-white font-light">
-                       საუკეთესო აღჭურვილობა • საუკეთესო ფასები
-                    </p>
-                    
+                    <motion.div
+                        initial={{ opacity: 0, y: -20, x: -20 }}
+                        animate={{ opacity: 1, y: 0, x: 0 }}
+                        transition={{
+                            duration: 0.8,
+                            ease: 'easeOut',
+                        }}
+                    >
+                          <p className="text-xl md:text-2xl text-white font-light">
+                            საუკეთესო აღჭურვილობა • საუკეთესო ფასები
+                        </p>
+
+
+                    </motion.div>
+                      
+                      
+
                     {/* CTA Button */}
                     <div className="pt-4">
                         <Link
