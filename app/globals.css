@@ -24,3 +24,167 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 1s ease-out;
+}
+
+.animate-fade-in-delay {
+  animation: fade-in 1s ease-out 0.2s both;
+}
+
+.animate-fade-in-delay-2 {
+  animation: fade-in 1s ease-out 0.4s both;
+}
+
+.animate-fade-in-delay-3 {
+  animation: fade-in 1s ease-out 0.6s both;
+}
+
+.animate-fade-in-delay-4 {
+  animation: fade-in 1s ease-out 0.8s both;
+}
+
+.delay-1000 {
+  animation-delay: 1s;
+}
+
+/* Swiper Custom Styles */
+.swiper-pagination-bullet {
+  background: rgba(255, 255, 255, 0.5) !important;
+  width: 12px !important;
+  height: 12px !important;
+  transition: all 0.3s ease !important;
+}
+
+.swiper-pagination-bullet-active {
+  background: #ea580c !important; /* orange-600 */
+  width: 40px !important;
+  height: 12px !important;
+  border-radius: 6px !important;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: #1f2937 !important; /* gray-800 */
+  background: rgba(255, 255, 255, 0.8) !important;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  transition: all 0.3s ease !important;
+}
+
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  background: white !important;
+  transform: scale(1.1) !important;
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 20px !important;
+  font-weight: bold !important;
+}
+
+/* Responsive navigation buttons for small screens */
+@media (max-width: 640px) {
+  .swiper-button-next,
+  .swiper-button-prev {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  .swiper-button-next::after,
+  .swiper-button-prev::after {
+    font-size: 12px !important;
+  }
+  
+  .swiper-button-next {
+    right: 4px !important;
+  }
+  
+  .swiper-button-prev {
+    left: 4px !important;
+  }
+}
+
+/* 3D Flip Card Slider Styles */
+.flip-card-swiper {
+  perspective: 1200px;
+  padding: 40px 0;
+}
+
+.flip-card-swiper .swiper-wrapper {
+  perspective: 1200px;
+}
+
+.flip-card-swiper .swiper-slide {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:is(.swiper-button-prev, .swiper-button-next) svg {
+  object-fit: contain;
+  transform-origin: center;
+ 
+  pointer-events: none;
+  width: 20% !important;
+  height: 100%;
+}
+
+.flip-card-swiper .swiper-slide-active {
+  z-index: 2;
+}
+
+.flip-card-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  height: 100%;
+}
+
+.flip-card-front {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* Enhanced 3D effect for cards */
+.flip-card-swiper .swiper-slide-shadow {
+  background: transparent !important;
+}
+
+.flip-card-swiper .swiper-slide-shadow-left,
+.flip-card-swiper .swiper-slide-shadow-right {
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.1),
+    transparent
+  ) !important;
+}
+
+/* Custom 3D rotation on hover */
+.flip-card-swiper .swiper-slide-active .flip-card-inner {
+  transform: rotateY(0deg) scale(1);
+}
+
+.flip-card-swiper .swiper-slide-prev .flip-card-inner {
+  transform: rotateY(25deg) scale(0.9);
+  opacity: 0.7;
+}
+
+.flip-card-swiper .swiper-slide-next .flip-card-inner {
+  transform: rotateY(-25deg) scale(0.9);
+  opacity: 0.7;
+}
