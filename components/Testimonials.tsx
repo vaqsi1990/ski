@@ -161,9 +161,7 @@ const Testimonials = () => {
                   <p className="font-bold text-black text-base sm:text-lg">
                     {t(testimonial.nameKey)}
                   </p>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Verified Customer
-                  </p>
+                 
                 </div>
               </motion.div>
 

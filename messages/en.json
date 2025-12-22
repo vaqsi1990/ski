@@ -12,6 +12,15 @@
     "cta": "Book Now",
     "alt": "Ski rental in Gudauri"
   },
+  "weather": {
+    "title": "Current Weather in Gudauri",
+    "loading": "Loading weather...",
+    "celsius": "C",
+    "feelsLike": "Feels Like",
+    "wind": "Wind Speed",
+    "windUnit": "km/h",
+    "humidity": "Humidity"
+  },
   "equipment": {
     "title": "Equipment",
     "viewMore": "View More",
