@@ -92,7 +92,7 @@ const Services = () => {
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
       variants={containerVariants}
-      className="relative py-12 sm:py-16 lg:py-20 overflow-hidden"
+      className="relative py-12 sm:py-16 lg:py-20 overflow-hidden bg-[#FFFAFA]"
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
 

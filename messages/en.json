@@ -64,6 +64,26 @@
       "description": "Professional service for skis and snowboards"
     }
   },
+  "testimonials": {
+    "title": "What Our Customers Say",
+    "subtitle": "Read reviews from our satisfied customers",
+    "testimonial1": {
+      "name": "valerian margalitadze",
+      "text": "Amazing service! The equipment was top quality and the staff was very helpful. Will definitely rent again on my next trip to Gudauri."
+    },
+    "testimonial2": {
+      "name": "nikoloz lomadze",
+      "text": "Best ski rental experience I've had. The skis were perfectly maintained and the prices were very reasonable. Highly recommend!"
+    },
+    "testimonial3": {
+      "name": "saba giorgadze",
+      "text": "Professional service from start to finish. They helped me find the perfect equipment for my skill level. Great value for money!"
+    },
+    "testimonial4": {
+      "name": "nika gogitidze",
+      "text": "Excellent quality equipment and friendly staff. Made our skiing trip to Gudauri unforgettable. Thank you!"
+    }
+  },
   "footer": {
     "description": "Premium quality ski and snowboard rental in Gudauri. Everything you need for the perfect skiing experience.",
     "quickLinks": "Quick Links",
