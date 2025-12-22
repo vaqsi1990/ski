@@ -102,5 +102,56 @@
     "phone": "+995 XXX XXX XXX",
     "email": "info@skirental.ge",
     "copyright": "Все права защищены."
+  },
+  "admin": {
+    "adminLabel": "Админ",
+    "backToSite": "Вернуться на сайт",
+    "dashboard": {
+      "title": "Админ-панель",
+      "subtitle": "Добро пожаловать! Вот что происходит сегодня."
+    },
+    "stats": {
+      "totalBookings": "Всего бронирований",
+      "activeRentals": "Активные аренды",
+      "revenue": "Доход",
+      "equipment": "Оборудование"
+    },
+    "menu": {
+      "dashboard": "Панель",
+      "bookings": "Бронирования",
+      "equipment": "Оборудование",
+      "customers": "Клиенты",
+      "reports": "Отчеты",
+      "settings": "Настройки"
+    },
+    "bookings": {
+      "recent": "Последние бронирования",
+      "viewAll": "Посмотреть все",
+      "table": {
+        "customer": "Клиент",
+        "equipment": "Оборудование",
+        "date": "Дата",
+        "status": "Статус"
+      },
+      "status": {
+        "active": "Активно",
+        "completed": "Завершено"
+      }
+    },
+    "quickActions": {
+      "title": "Быстрые действия",
+      "addBooking": "Добавить бронирование",
+      "manageEquipment": "Управление оборудованием",
+      "addCustomer": "Добавить клиента",
+      "generateReport": "Создать отчет"
+    },
+    "activity": {
+      "title": "Последняя активность",
+      "bookingCreated": "Создано новое бронирование",
+      "equipmentReturned": "Оборудование возвращено",
+      "paymentReceived": "Получен платеж",
+      "minutesAgo": "{count} минут назад",
+      "hourAgo": "{count} час назад"
+    }
   }
 }

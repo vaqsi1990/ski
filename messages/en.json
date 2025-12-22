@@ -102,5 +102,56 @@
     "phone": "+995 XXX XXX XXX",
     "email": "info@skirental.ge",
     "copyright": "All rights reserved."
+  },
+  "admin": {
+    "adminLabel": "Admin",
+    "backToSite": "Back to Site",
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "subtitle": "Welcome back! Here's what's happening today."
+    },
+    "stats": {
+      "totalBookings": "Total Bookings",
+      "activeRentals": "Active Rentals",
+      "revenue": "Revenue",
+      "equipment": "Equipment"
+    },
+    "menu": {
+      "dashboard": "Dashboard",
+      "bookings": "Bookings",
+      "equipment": "Equipment",
+      "customers": "Customers",
+      "reports": "Reports",
+      "settings": "Settings"
+    },
+    "bookings": {
+      "recent": "Recent Bookings",
+      "viewAll": "View All",
+      "table": {
+        "customer": "Customer",
+        "equipment": "Equipment",
+        "date": "Date",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "completed": "Completed"
+      }
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "addBooking": "Add New Booking",
+      "manageEquipment": "Manage Equipment",
+      "addCustomer": "Add Customer",
+      "generateReport": "Generate Report"
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "bookingCreated": "New booking created",
+      "equipmentReturned": "Equipment returned",
+      "paymentReceived": "Payment received",
+      "minutesAgo": "{count} minutes ago",
+      "hourAgo": "{count} hour ago"
+    }
   }
 }

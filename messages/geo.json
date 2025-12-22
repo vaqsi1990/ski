@@ -102,5 +102,56 @@
     "phone": "+995 XXX XXX XXX",
     "email": "info@skirental.ge",
     "copyright": "ყველა უფლება დაცულია."
+  },
+  "admin": {
+    "adminLabel": "ადმინისტრატორი",
+    "backToSite": "საიტზე დაბრუნება",
+    "dashboard": {
+      "title": "ადმინისტრატორის პანელი",
+      "subtitle": "კეთილი იყოს თქვენი დაბრუნება! აი რა ხდება დღეს."
+    },
+    "stats": {
+      "totalBookings": "სულ დაჯავშნები",
+      "activeRentals": "აქტიური გაქირავებები",
+      "revenue": "შემოსავალი",
+      "equipment": "აღჭურვილობა"
+    },
+    "menu": {
+      "dashboard": "პანელი",
+      "bookings": "დაჯავშნები",
+      "equipment": "აღჭურვილობა",
+      "customers": "მომხმარებლები",
+      "reports": "ანგარიშები",
+      "settings": "პარამეტრები"
+    },
+    "bookings": {
+      "recent": "ბოლო დაჯავშნები",
+      "viewAll": "ყველას ნახვა",
+      "table": {
+        "customer": "მომხმარებელი",
+        "equipment": "აღჭურვილობა",
+        "date": "თარიღი",
+        "status": "სტატუსი"
+      },
+      "status": {
+        "active": "აქტიური",
+        "completed": "დასრულებული"
+      }
+    },
+    "quickActions": {
+      "title": "სწრაფი მოქმედებები",
+      "addBooking": "ახალი დაჯავშნის დამატება",
+      "manageEquipment": "აღჭურვილობის მართვა",
+      "addCustomer": "მომხმარებლის დამატება",
+      "generateReport": "ანგარიშის გენერირება"
+    },
+    "activity": {
+      "title": "ბოლო აქტივობა",
+      "bookingCreated": "ახალი დაჯავშნა შექმნილია",
+      "equipmentReturned": "აღჭურვილობა დაბრუნებულია",
+      "paymentReceived": "გადახდა მიღებულია",
+      "minutesAgo": "{count} წუთის წინ",
+      "hourAgo": "{count} საათის წინ"
+    }
   }
 }
