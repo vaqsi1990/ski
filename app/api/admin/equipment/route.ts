@@ -39,6 +39,7 @@ export async function GET(request: Request) {
       images: product.images,
       title: product.title,
       price: product.price,
+      size: product.size,
       bookingsCount: product._count.bookings,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
@@ -62,7 +63,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { type, images, title, price } = body
+    const { type, images, title, price, size } = body
 
     if (!type || !title || price === undefined) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
         images: Array.isArray(images) ? images : images ? [images] : [],
         title,
         price: parseFloat(price),
+        size: type === ProductType.OTHER && size ? size : null,
       },
       include: {
         _count: {
@@ -92,6 +94,7 @@ export async function POST(request: Request) {
       images: product.images,
       title: product.title,
       price: product.price,
+      size: product.size,
       bookingsCount: product._count.bookings,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,

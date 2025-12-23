@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { ProductType } from '@/app/generated/prisma/enums'
+import { ProductType, ProductSize } from '@/app/generated/prisma/enums'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +26,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       images: product.images,
       title: product.title,
       price: product.price,
+      size: product.size,
       bookingsCount: product._count.bookings,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
@@ -46,6 +47,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       images?: string[]
       title?: string
       price?: number
+      size?: ProductSize | null
     } = {}
 
     if (body.type && Object.values(ProductType).includes(body.type)) {
@@ -56,6 +58,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
     if (body.title) updateData.title = body.title
     if (body.price !== undefined) updateData.price = parseFloat(body.price)
+    if (body.size !== undefined) {
+      if (body.type === ProductType.OTHER && body.size && Object.values(ProductSize).includes(body.size)) {
+        updateData.size = body.size as ProductSize
+      } else {
+        updateData.size = null
+      }
+    }
 
     const product = await prisma.product.update({
       where: { id },
@@ -73,6 +82,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       images: product.images,
       title: product.title,
       price: product.price,
+      size: product.size,
       bookingsCount: product._count.bookings,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,

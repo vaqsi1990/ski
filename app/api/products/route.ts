@@ -34,6 +34,7 @@ export async function GET(request: Request) {
       images: product.images,
       title: product.title,
       price: product.price,
+      size: product.size,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     }))

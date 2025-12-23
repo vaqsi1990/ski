@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
+import { Link } from '@/i18n/navigation'
 import { ProductType } from '@/app/generated/prisma/enums'
 
 type Product = {
@@ -13,6 +14,7 @@ type Product = {
   images: string[]
   title: string
   price: number
+  size?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -147,15 +149,24 @@ const ItemsPage = () => {
                     whileHover={{ scale: 1.03, y: -5 }}
                     className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
                   >
-                    {/* Product Image */}
-                    <div className="relative h-64 w-full bg-gray-100">
+                    {/* Product Image with Overlay */}
+                    <div className="relative h-80 md:h-96 w-full bg-gray-100 group">
                       {product.images && product.images.length > 0 ? (
-                        <Image
-                          src={product.images[0]}
-                          alt={product.title}
-                          fill
-                          className="object-cover"
-                        />
+                        <>
+                          <Image
+                            src={product.images[0]}
+                            alt={product.title}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                          {/* Dark Overlay for better text readability */}
+                          <motion.div
+                            initial={{ opacity: 0.7 }}
+                            whileHover={{ opacity: 0.85 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30"
+                          />
+                        </>
                       ) : (
                         <div className="flex items-center justify-center h-full">
                           <svg
@@ -173,17 +184,45 @@ const ItemsPage = () => {
                           </svg>
                         </div>
                       )}
-                    </div>
 
-                    {/* Product Info */}
-                    <div className="p-6">
-                      <div className="mb-2">
-                        <span className="inline-block px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-semibold">
-                          {getTypeLabel(product.type)}
-                        </span>
-                      </div>
-                      <h3 className="text-xl font-bold text-black mb-2 line-clamp-2">{product.title}</h3>
-                      <p className="text-2xl font-bold text-orange-600">{formatCurrency(product.price)}</p>
+                      {/* Text Content Overlay */}
+                      <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        whileInView={{ y: 0, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: index * 0.1 }}
+                        className="absolute inset-0 flex flex-col justify-end items-start text-left p-6"
+                      >
+                        {/* Type Badge */}
+                        <div className="mb-3">
+                          <span className="inline-block px-3 py-1 bg-orange-500/90 text-white rounded-full text-xs font-semibold backdrop-blur-sm">
+                            {getTypeLabel(product.type)}
+                          </span>
+                        </div>
+                        {/* Size Badge for OTHER products */}
+                        {/* Product Title */}
+                        <h3 className="text-xl font-bold text-white mb-2 line-clamp-2 drop-shadow-lg">
+                          {product.title}
+                        </h3>
+                        {product.type === ProductType.OTHER && product.size && (
+                          <div className="mb-3">
+                            <span className="inline-block px-3 py-1 bg-white/20 text-white rounded-full text-[14px] font-semibold backdrop-blur-sm border border-white/30">
+                              {t('size')}: {product.size}
+                            </span>
+                          </div>
+                        )}
+                        {/* Price */}
+                        <p className="text-2xl font-bold text-orange-400 drop-shadow-md mb-4">
+                          {formatCurrency(product.price)}
+                        </p>
+                        {/* Booking Button */}
+                        <Link
+                          href={`/?productId=${product.id}`}
+                          className="inline-block px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                        >
+                          დაჯავშნა
+                        </Link>
+                      </motion.div>
                     </div>
                   </motion.div>
                 ))}

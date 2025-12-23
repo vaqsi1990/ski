@@ -26,6 +26,7 @@
     "viewMore": "View More",
     "loading": "Loading equipment...",
     "empty": "No equipment found",
+    "size": "Size",
     "items": {
       "skis": {
         "name": "Skis",
@@ -192,6 +193,8 @@
       "form": {
         "title": "Title",
         "type": "Type",
+        "size": "Size",
+        "selectSize": "Select Size",
         "price": "Price",
         "images": "Images",
         "save": "Save",

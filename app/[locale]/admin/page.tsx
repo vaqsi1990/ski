@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import { Link } from '@/i18n/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { BookingStatus } from '@/app/generated/prisma/enums'
+import { BookingStatus, ProductSize } from '@/app/generated/prisma/enums'
 import { ProductType } from '@/app/generated/prisma/enums'
 import { z } from 'zod'
 import ImageUpload from '@/components/CloudinaryUploader'
@@ -54,6 +54,7 @@ type Product = {
   images: string[]
   title: string
   price: number
+  size?: string | null
   bookingsCount: number
   createdAt: string
   updatedAt: string
@@ -104,6 +105,7 @@ type EquipmentFormData = {
   type: ProductType
   price: string
   images: string[]
+  size?: ProductSize | null
 }
 
 // Constants
@@ -125,6 +127,7 @@ const INITIAL_EQUIPMENT_FORM: EquipmentFormData = {
   type: ProductType.SKI,
   price: '',
   images: [],
+  size: null,
 }
 
 // Zod schemas
@@ -146,6 +149,15 @@ const equipmentSchema = z.object({
   type: z.nativeEnum(ProductType),
   price: z.string().min(1, 'Price is required').refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Price must be a positive number'),
   images: z.array(z.string()).optional(),
+  size: z.nativeEnum(ProductSize).nullable().optional(),
+}).refine((data) => {
+  if (data.type === ProductType.OTHER && !data.size) {
+    return false
+  }
+  return true
+}, {
+  message: 'Size is required for OTHER products',
+  path: ['size'],
 })
 
 const AdminPage = () => {
@@ -497,6 +509,7 @@ const AdminPage = () => {
         type: ProductType.SKI,
         price: '',
         images: [],
+        size: null,
       })
       fetchEquipment()
     } catch (err) {
@@ -521,6 +534,7 @@ const AdminPage = () => {
       type: item.type as ProductType,
       price: item.price.toString(),
       images: item.images,
+      size: item.size ? (item.size as ProductSize) : null,
     })
     setShowEquipmentForm(true)
   }
@@ -1061,6 +1075,7 @@ const AdminPage = () => {
                         type: ProductType.SKI,
                         price: '',
                         images: [],
+                        size: null,
                       })
                     }}
                     className="text-gray-500 hover:text-black"
@@ -1095,9 +1110,14 @@ const AdminPage = () => {
                     </label>
                     <select
                       value={equipmentFormData.type}
-                      onChange={(e) =>
-                        setEquipmentFormData({ ...equipmentFormData, type: e.target.value as ProductType })
-                      }
+                      onChange={(e) => {
+                        const newType = e.target.value as ProductType
+                        setEquipmentFormData({ 
+                          ...equipmentFormData, 
+                          type: newType,
+                          size: newType === ProductType.OTHER ? equipmentFormData.size : null
+                        })
+                      }}
                       className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black"
                     >
                       <option value="SKI">{t('equipment.types.SKI')}</option>
@@ -1105,6 +1125,34 @@ const AdminPage = () => {
                       <option value="OTHER">{t('equipment.types.OTHER')}</option>
                     </select>
                   </div>
+
+                  {equipmentFormData.type === ProductType.OTHER && (
+                    <div>
+                      <label className="block text-[16px] font-medium text-black mb-1">
+                        {t('equipment.form.size')} *
+                      </label>
+                      <select
+                        value={equipmentFormData.size || ''}
+                        onChange={(e) =>
+                          setEquipmentFormData({ 
+                            ...equipmentFormData, 
+                            size: e.target.value ? (e.target.value as ProductSize) : null 
+                          })
+                        }
+                        className={`w-full border rounded-lg px-4 py-2 text-black ${
+                          equipmentFormErrors.size ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      >
+                        <option value="">{t('equipment.form.selectSize')}</option>
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                      </select>
+                      {equipmentFormErrors.size && (
+                        <p className="text-red-500 text-xs mt-1">{equipmentFormErrors.size}</p>
+                      )}
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-[16px] font-medium text-black mb-1">
@@ -1152,6 +1200,7 @@ const AdminPage = () => {
                           type: ProductType.SKI,
                           price: '',
                           images: [],
+                          size: null,
                         })
                       }}
                       className="w-full sm:w-auto bg-gray-200 text-black px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm md:text-base"
@@ -1240,10 +1289,18 @@ const AdminPage = () => {
                     <tr key={item.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
                       <td className="px-3 py-3 text-xs md:text-sm text-black">
                         <div className="font-medium">{item.title}</div>
+                        {item.type === ProductType.OTHER && item.size && (
+                          <div className="text-gray-500 mt-1 text-xs">Size: {item.size}</div>
+                        )}
                         <div className="text-gray-500 md:hidden mt-1 text-xs">{t(`equipment.types.${item.type}`)}</div>
                         <div className="text-gray-500 lg:hidden mt-1 text-xs">{t('equipment.table.bookings')}: {item.bookingsCount}</div>
                       </td>
-                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell">{t(`equipment.types.${item.type}`)}</td>
+                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell">
+                        {t(`equipment.types.${item.type}`)}
+                        {item.type === ProductType.OTHER && item.size && (
+                          <span className="ml-2 text-gray-500">({item.size})</span>
+                        )}
+                      </td>
                       <td className="px-3 py-3 text-xs md:text-sm text-black whitespace-nowrap">{formatCurrency(item.price)}</td>
                       <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">{item.bookingsCount}</td>
                       <td className="px-3 py-3">
