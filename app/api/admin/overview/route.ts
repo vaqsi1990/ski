@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { BookingStatus } from '@/app/generated/prisma/enums'
-import type { Prisma } from '@/app/generated/prisma/client'
+import { BookingStatus } from '../../../generated/prisma/enums'
+import type { Prisma } from '../../../generated/prisma/client'
 
 export const dynamic = 'force-dynamic'
 
