@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const {
-      productId,
+      productIds, // Changed from productId to productIds (array)
       firstName,
       lastName,
       phoneNumber,
@@ -20,7 +20,10 @@ export async function POST(request: Request) {
       totalPrice,
     } = body
 
-    if (!productId || !firstName || !lastName || !phoneNumber || !email || !startDate || !endDate || !totalPrice || !numberOfPeople) {
+    // Support both old format (single productId) and new format (productIds array)
+    const productIdArray = productIds || (body.productId ? [body.productId] : [])
+
+    if (!productIdArray || productIdArray.length === 0 || !firstName || !lastName || !phoneNumber || !email || !startDate || !endDate || !totalPrice || !numberOfPeople) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
     }
 
@@ -38,18 +41,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Booking period cannot exceed 2 weeks (14 days)' }, { status: 400 })
     }
 
-    // Check if product exists
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
+    // Check if all products exist
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIdArray } },
     })
 
-    if (!product) {
-      return NextResponse.json({ message: 'Product not found' }, { status: 404 })
+    if (products.length !== productIdArray.length) {
+      return NextResponse.json({ message: 'One or more products not found' }, { status: 404 })
     }
 
+    // Create booking with multiple products
     const booking = await prisma.booking.create({
       data: {
-        productId,
         firstName,
         lastName,
         phoneNumber,
@@ -60,9 +63,24 @@ export async function POST(request: Request) {
         endDate: end,
         totalPrice: parseFloat(totalPrice),
         status: BookingStatus.PENDING,
+        products: {
+          create: productIdArray.map((productId: string) => ({
+            productId,
+          })),
+        },
       },
-      include: { product: true },
+      include: {
+        products: {
+          include: {
+            product: true,
+          },
+        },
+      },
     })
+
+    const equipmentList = booking.products
+      .map((bp) => `${bp.product.type}${bp.product.size ? ` (${bp.product.size})` : ''}`)
+      .join(', ')
 
     return NextResponse.json({
       id: booking.id,
@@ -70,7 +88,7 @@ export async function POST(request: Request) {
       booking: {
         id: booking.id,
         customer: `${booking.firstName} ${booking.lastName}`,
-        equipment: booking.product ? `${booking.product.type}${booking.product.size ? ` (${booking.product.size})` : ''}` : '—',
+        equipment: equipmentList || '—',
         startDate: booking.startDate,
         endDate: booking.endDate,
         totalPrice: booking.totalPrice,

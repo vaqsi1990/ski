@@ -61,15 +61,13 @@ model Product {
   professional Boolean    @default(false)
   description String?     // Description for sets - what items are included
  
-  bookings    Booking[]
+  bookingProducts BookingProduct[]
   createdAt   DateTime     @default(now()) @db.Timestamp(6)
   updatedAt   DateTime     @updatedAt
 }
 
 model Booking {
   id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  productId     String        @db.Uuid
-  product       Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   firstName     String
   lastName      String
   phoneNumber   String
@@ -80,8 +78,20 @@ model Booking {
   endDate       DateTime
   status        BookingStatus @default(PENDING)
   totalPrice    Float
+  products      BookingProduct[]
   createdAt     DateTime      @default(now()) @db.Timestamp(6)
   updatedAt     DateTime      @updatedAt
+}
+
+model BookingProduct {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId String   @db.Uuid
+  productId String   @db.Uuid
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+
+  @@unique([bookingId, productId])
 }
 
 model Lesson {

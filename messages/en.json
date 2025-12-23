@@ -105,6 +105,7 @@
     "location": "Gudauri, Georgia",
     "phone": "+995 XXX XXX XXX",
     "email": "info@skirental.ge",
+    "followUs": "Follow us:",
     "copyright": "All rights reserved."
   },
   "admin": {
@@ -167,7 +168,18 @@
         "totalPrice": "Total Price:",
         "status": "Status",
         "save": "Save",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "title": "Booking",
+        "success": "Booking created successfully! Redirecting...",
+        "selectProduct": "Select product",
+        "selectProductOptional": "Select product (optional)",
+        "addProduct": "Add product",
+        "delete": "Delete",
+        "numberOfPeople": "Number of people",
+        "numberOfPeoplePlaceholder": "e.g. 2",
+        "submitting": "Submitting...",
+        "selectStartDate": "Select start date",
+        "selectEndDate": "Select end date"
       }
     },
     "equipment": {

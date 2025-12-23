@@ -6,6 +6,8 @@ import { useTranslations, useLocale } from 'next-intl'
 import { z } from 'zod'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
+import PhoneInput from 'react-phone-input-2'
+import 'react-phone-input-2/lib/style.css'
 
 type LessonFormData = {
   numberOfPeople: string
@@ -365,13 +367,25 @@ const LessonsPage = () => {
               <label className="block text-[18px] font-medium text-black mb-2">
                 {t('phoneNumber')} *
               </label>
-              <input
-                type="tel"
+              <PhoneInput
+                country="ge"
                 value={formData.phoneNumber}
-                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                onChange={(value) => setFormData({ ...formData, phoneNumber: value })}
+                inputClass={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
                   errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
                 }`}
+                buttonClass={`${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'}`}
+                containerClass=""
+                inputStyle={{
+                  width: '100%',
+                  height: '48px',
+                  fontSize: '18px',
+                }}
+                buttonStyle={{
+                  borderTopLeftRadius: '8px',
+                  borderBottomLeftRadius: '8px',
+                  borderRight: 'none',
+                }}
               />
               {errors.phoneNumber && (
                 <p className="text-red-500 text-[18px] mt-1">{errors.phoneNumber}</p>

@@ -105,6 +105,7 @@
     "location": "გუდაური, საქართველო",
     "phone": "+995 XXX XXX XXX",
     "email": "info@skirental.ge",
+    "followUs": "გამოგვყევით:",
     "copyright": "ყველა უფლება დაცულია."
   },
   "admin": {
@@ -167,7 +168,18 @@
         "totalPrice": "საერთო ფასი:",
         "status": "სტატუსი",
         "save": "შენახვა",
-        "cancel": "გაუქმება"
+        "cancel": "გაუქმება",
+        "title": "დაჯავშნა",
+        "success": "დაჯავშნა წარმატებით შექმნილია! გადამისამართება...",
+        "selectProduct": "აირჩიეთ პროდუქტი",
+        "selectProductOptional": "აირჩიეთ პროდუქტი (არასავალდებულო)",
+        "addProduct": "დაამატე პროდუქტი",
+        "delete": "წაშლა",
+        "numberOfPeople": "ადამიანების რაოდენობა",
+        "numberOfPeoplePlaceholder": "მაგ: 2",
+        "submitting": "იგზავნება...",
+        "selectStartDate": "აირჩიეთ დაწყების თარიღი",
+        "selectEndDate": "აირჩიეთ დასრულების თარიღი"
       }
     },
     "equipment": {

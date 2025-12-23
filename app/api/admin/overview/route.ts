@@ -28,18 +28,29 @@ export async function GET() {
       prisma.booking.findMany({
         orderBy: { createdAt: 'desc' },
         take: 8,
-        include: { product: true },
+        include: {
+          products: {
+            include: {
+              product: true,
+            },
+          },
+        },
       }),
     ])
 
-    const bookings = recentBookings.map((booking: Prisma.BookingGetPayload<{ include: { product: true } }>) => ({
-      id: booking.id,
-      customer: `${booking.firstName} ${booking.lastName}`,
-      equipment: booking.product ? `${booking.product.type}${booking.product.size ? ` (${booking.product.size})` : ''}` : '—',
-      startDate: booking.startDate,
-      endDate: booking.endDate,
-      status: booking.status,
-    }))
+    const bookings = recentBookings.map((booking) => {
+      const equipmentList = booking.products
+        .map((bp) => `${bp.product.type}${bp.product.size ? ` (${bp.product.size})` : ''}`)
+        .join(', ')
+      return {
+        id: booking.id,
+        customer: `${booking.firstName} ${booking.lastName}`,
+        equipment: equipmentList || '—',
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+        status: booking.status,
+      }
+    })
 
     return NextResponse.json({
       stats: {

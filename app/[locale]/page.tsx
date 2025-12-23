@@ -3,8 +3,9 @@ import Weather from "@/components/Weather";
 import Equipment from "@/components/Equipment";
 
 import Services from "@/components/Services";
-import Testimonials from "@/components/Testimonials";
+
 import Footer from "@/components/Footer";
+import Map from "@/components/Map";
 
 export default function Home() {
   return (
@@ -14,7 +15,7 @@ export default function Home() {
       <Equipment />
 
       <Services />
-      <Testimonials />
+    <Map />
       <Footer />
     </>
   );

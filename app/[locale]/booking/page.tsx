@@ -6,6 +6,8 @@ import { useTranslations, useLocale } from 'next-intl'
 import { z } from 'zod'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
+import PhoneInput from 'react-phone-input-2'
+import 'react-phone-input-2/lib/style.css'
 
 type Product = {
   id: string
@@ -22,7 +24,7 @@ type BookingFormData = {
   email: string
   phoneNumber: string
   personalId: string
-  productId: string
+  selectedProductIds: string[] // Changed from productId to selectedProductIds array
   numberOfPeople: string
   startDate: Date | null
   endDate: Date | null
@@ -35,7 +37,12 @@ const bookingSchema = z.object({
   email: z.string().email('Invalid email address'),
   phoneNumber: z.string().min(1, 'Phone number is required'),
   personalId: z.string().optional(),
-  productId: z.string().min(1, 'Equipment is required'),
+  selectedProductIds: z.array(z.string()).refine((ids) => {
+    const validIds = ids.filter(id => id && id !== '')
+    return validIds.length > 0
+  }, {
+    message: 'At least one equipment item is required',
+  }),
   numberOfPeople: z.string().min(1, 'Number of people is required'),
   startDate: z.date({ message: 'Start date is required' }).nullable().refine((val) => val !== null, {
     message: 'Start date is required',
@@ -83,7 +90,7 @@ const BookingPage = () => {
     email: '',
     phoneNumber: '',
     personalId: '',
-    productId: productIdFromUrl || '',
+    selectedProductIds: productIdFromUrl ? [productIdFromUrl] : [''],
     numberOfPeople: '',
     startDate: null,
     endDate: null,
@@ -107,11 +114,12 @@ const BookingPage = () => {
     fetchProducts()
   }, [])
 
-  // Auto-calculate price when product, dates, and number of people change
+  // Auto-calculate price when products, dates, and number of people change
   useEffect(() => {
-    if (formData.productId && formData.startDate && formData.endDate && formData.numberOfPeople) {
-      const product = products.find((p) => p.id === formData.productId)
-      if (product) {
+    const validProductIds = formData.selectedProductIds.filter(id => id && id !== '')
+    if (validProductIds.length > 0 && formData.startDate && formData.endDate && formData.numberOfPeople) {
+      const selectedProducts = products.filter((p) => validProductIds.includes(p.id))
+      if (selectedProducts.length > 0) {
         const start = new Date(formData.startDate)
         const end = new Date(formData.endDate)
         
@@ -124,7 +132,10 @@ const BookingPage = () => {
           const timeDiff = end.getTime() - start.getTime()
           const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1 // +1 to include both start and end day
           const numberOfPeople = parseInt(formData.numberOfPeople) || 1
-          const calculatedPrice = (product.price * days * numberOfPeople).toFixed(2)
+          
+          // Calculate total price for all selected products
+          const totalProductPrice = selectedProducts.reduce((sum, product) => sum + product.price, 0)
+          const calculatedPrice = (totalProductPrice * days * numberOfPeople).toFixed(2)
           setFormData((prev) => ({ ...prev, totalPrice: calculatedPrice }))
         } else {
           setFormData((prev) => ({ ...prev, totalPrice: '' }))
@@ -133,7 +144,7 @@ const BookingPage = () => {
     } else {
       setFormData((prev) => ({ ...prev, totalPrice: '' }))
     }
-  }, [formData.productId, formData.startDate, formData.endDate, formData.numberOfPeople, products])
+  }, [formData.selectedProductIds, formData.startDate, formData.endDate, formData.numberOfPeople, products])
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat(locale || 'ka-GE', { style: 'currency', currency: 'GEL' }).format(amount)
@@ -161,6 +172,9 @@ const BookingPage = () => {
         throw new Error('Start date and end date are required')
       }
       
+      // Filter out empty strings from product IDs
+      const validProductIds = validated.selectedProductIds.filter(id => id && id !== '')
+      
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -170,7 +184,7 @@ const BookingPage = () => {
           email: validated.email,
           phoneNumber: validated.phoneNumber,
           personalId: validated.personalId,
-          productId: validated.productId,
+          productIds: validProductIds,
           numberOfPeople: validated.numberOfPeople,
           startDate: validated.startDate.toISOString(),
           endDate: validated.endDate.toISOString(),
@@ -206,18 +220,19 @@ const BookingPage = () => {
     <div className="min-h-screen bg-[#FFFAFA] py-16">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl md:text-4xl font-bold text-black text-center mb-8">
-          Booking
+          {t('title')}
         </h1>
 
         {success && (
           <div className="mb-6 p-4 bg-green-100 border border-green-400 rounded-lg text-[18px] text-black">
-            Booking created successfully! Redirecting...
+            {t('success')}
           </div>
         )}
 
         <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
+            {/* Dynamic Product Dropdowns */}
+            <div className="space-y-4">
               <label className="block text-[18px] font-medium text-black mb-2">
                 {t('product')} *
               </label>
@@ -226,36 +241,94 @@ const BookingPage = () => {
               ) : products.length === 0 ? (
                 <div className="text-[18px] text-gray-500">No products available</div>
               ) : (
-                <select
-                  value={formData.productId}
-                  onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
-                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                    errors.productId ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">აირჩიეთ აღჭურვილობა</option>
-                  {products.map((product) => {
-                    let label = product.type.replace(/_/g, ' ')
-                    if (product.type === 'ADULT_CLOTH' && product.size) {
-                      label += ` (${product.size})`
-                    }
-                    const badges = []
-                    if (product.standard) badges.push('Standard')
-                    if (product.professional) badges.push('Professional')
-                    if (badges.length > 0) {
-                      label += ` [${badges.join(', ')}]`
-                    }
-                    label += ` - ${formatCurrency(product.price)}`
+                <>
+                  {formData.selectedProductIds.map((productId, index) => {
+                    // Get all selected product IDs except the current one
+                    const otherSelectedIds = formData.selectedProductIds.filter((id, i) => i !== index)
+                    
                     return (
-                      <option key={product.id} value={product.id}>
-                        {label}
-                      </option>
+                      <div key={index} className="flex gap-2 items-end">
+                        <div className="flex-1">
+                          <label className="block text-[16px] font-medium text-black mb-2">
+                            {t('product')} {index + 1} {index === 0 && '*'}
+                          </label>
+                          <select
+                            value={productId || ''}
+                            onChange={(e) => {
+                              const newIds = [...formData.selectedProductIds]
+                              newIds[index] = e.target.value
+                              // Keep at least one empty string for the first dropdown if it's empty
+                              const filtered = newIds.filter(Boolean)
+                              setFormData({ 
+                                ...formData, 
+                                selectedProductIds: filtered.length > 0 ? filtered : [''] 
+                              })
+                            }}
+                            className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                              errors.selectedProductIds && index === 0 ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                          >
+                            <option value="">
+                              {index === 0 ? t('selectProduct') : t('selectProductOptional')}
+                            </option>
+                            {products
+                              .filter((product) => !otherSelectedIds.includes(product.id))
+                              .map((product) => {
+                                let label = product.type.replace(/_/g, ' ')
+                                if (product.type === 'ADULT_CLOTH' && product.size) {
+                                  label += ` (${product.size})`
+                                }
+                                const badges = []
+                                if (product.standard) badges.push('Standard')
+                                if (product.professional) badges.push('Professional')
+                                if (badges.length > 0) {
+                                  label += ` [${badges.join(', ')}]`
+                                }
+                                label += ` - ${formatCurrency(product.price)}`
+                                return (
+                                  <option key={product.id} value={product.id}>
+                                    {label}
+                                  </option>
+                                )
+                              })}
+                          </select>
+                        </div>
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newIds = formData.selectedProductIds.filter((_, i) => i !== index)
+                              setFormData({ ...formData, selectedProductIds: newIds })
+                            }}
+                            className="px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg text-[18px] font-bold transition-colors mb-0"
+                            title={t('delete')}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
                     )
                   })}
-                </select>
-              )}
-              {errors.productId && (
-                <p className="text-red-500 text-[18px] mt-1">{errors.productId}</p>
+                  
+                  {/* Add Product Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        selectedProductIds: [...formData.selectedProductIds, ''],
+                      })
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-[16px] font-bold transition-colors"
+                  >
+                    <span className="text-xl">+</span>
+                    <span>{t('addProduct')}</span>
+                  </button>
+                  
+                  {errors.selectedProductIds && (
+                    <p className="text-red-500 text-[18px] mt-1">{errors.selectedProductIds}</p>
+                  )}
+                </>
               )}
             </div>
 
@@ -275,7 +348,7 @@ const BookingPage = () => {
                   className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
                     errors.startDate ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholderText="Select start date"
+                  placeholderText={t('selectStartDate')}
                 />
                 {errors.startDate && (
                   <p className="text-red-500 text-[18px] mt-1">{errors.startDate}</p>
@@ -302,7 +375,7 @@ const BookingPage = () => {
                   className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
                     errors.endDate ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholderText="Select end date"
+                  placeholderText={t('selectEndDate')}
                 />
                 {errors.endDate && (
                   <p className="text-red-500 text-[18px] mt-1">{errors.endDate}</p>
@@ -312,7 +385,7 @@ const BookingPage = () => {
 
             <div>
               <label className="block text-[18px] font-medium text-black mb-2">
-                ადამიანების რაოდენობა *
+                {t('numberOfPeople')} *
               </label>
               <input
                 type="number"
@@ -322,7 +395,7 @@ const BookingPage = () => {
                 className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
                   errors.numberOfPeople ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="მაგ: 2"
+                placeholder={t('numberOfPeoplePlaceholder')}
               />
               {errors.numberOfPeople && (
                 <p className="text-red-500 text-[18px] mt-1">{errors.numberOfPeople}</p>
@@ -386,13 +459,25 @@ const BookingPage = () => {
               <label className="block text-[18px] font-medium text-black mb-2">
                 {t('phone')} *
               </label>
-              <input
-                type="tel"
+              <PhoneInput
+                country="ge"
                 value={formData.phoneNumber}
-                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                onChange={(value) => setFormData({ ...formData, phoneNumber: value })}
+                inputClass={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
                   errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
                 }`}
+                buttonClass={`${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'}`}
+                containerClass=""
+                inputStyle={{
+                  width: '100%',
+                  height: '48px',
+                  fontSize: '18px',
+                }}
+                buttonStyle={{
+                  borderTopLeftRadius: '8px',
+                  borderBottomLeftRadius: '8px',
+                  borderRight: 'none',
+                }}
               />
               {errors.phoneNumber && (
                 <p className="text-red-500 text-[18px] mt-1">{errors.phoneNumber}</p>
@@ -417,18 +502,19 @@ const BookingPage = () => {
                 <div className="text-[18px] text-black">
                   <span className="font-semibold">{t('totalPrice')} </span>
                   <span className="text-orange-600 font-bold">{formatCurrency(parseFloat(formData.totalPrice))}</span>
-                  {formData.productId && formData.startDate && formData.endDate && formData.numberOfPeople && (
+                  {formData.selectedProductIds.length > 0 && formData.startDate && formData.endDate && formData.numberOfPeople && (
                     <span className="text-gray-600 text-[16px] block mt-1">
                       {(() => {
-                        const product = products.find((p) => p.id === formData.productId)
-                        if (product && formData.startDate && formData.endDate && formData.numberOfPeople) {
+                        const selectedProducts = products.filter((p) => formData.selectedProductIds.includes(p.id))
+                        if (selectedProducts.length > 0 && formData.startDate && formData.endDate && formData.numberOfPeople) {
                           const start = new Date(formData.startDate)
                           const end = new Date(formData.endDate)
                           start.setHours(0, 0, 0, 0)
                           end.setHours(0, 0, 0, 0)
                           const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
                           const numberOfPeople = parseInt(formData.numberOfPeople) || 1
-                          return `${formatCurrency(product.price)} × ${days} ${days === 1 ? 'day' : 'days'} × ${numberOfPeople} ${numberOfPeople === 1 ? 'person' : 'people'} = ${formatCurrency(parseFloat(formData.totalPrice))}`
+                          const totalProductPrice = selectedProducts.reduce((sum, p) => sum + p.price, 0)
+                          return `(${selectedProducts.length} ${selectedProducts.length === 1 ? 'product' : 'products'}: ${formatCurrency(totalProductPrice)} × ${days} ${days === 1 ? 'day' : 'days'} × ${numberOfPeople} ${numberOfPeople === 1 ? 'person' : 'people'}) = ${formatCurrency(parseFloat(formData.totalPrice))}`
                         }
                         return ''
                       })()}
@@ -444,7 +530,7 @@ const BookingPage = () => {
                 disabled={submitting}
                 className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg transition-colors text-[18px] font-bold disabled:opacity-50"
               >
-                {submitting ? 'Submitting...' : t('save')}
+                {submitting ? t('submitting') : t('save')}
               </button>
               <button
                 type="button"

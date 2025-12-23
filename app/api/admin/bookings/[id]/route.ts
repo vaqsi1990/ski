@@ -9,12 +9,22 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { id } = await params
     const booking = await prisma.booking.findUnique({
       where: { id },
-      include: { product: true },
+      include: {
+        products: {
+          include: {
+            product: true,
+          },
+        },
+      },
     })
 
     if (!booking) {
       return NextResponse.json({ message: 'Booking not found' }, { status: 404 })
     }
+
+    const equipmentList = booking.products
+      .map((bp) => `${bp.product.type}${bp.product.size ? ` (${bp.product.size})` : ''}`)
+      .join(', ')
 
     return NextResponse.json({
       id: booking.id,
@@ -24,8 +34,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       email: booking.email,
       phoneNumber: booking.phoneNumber,
       personalId: booking.personalId,
-      equipment: booking.product ? `${booking.product.type}${booking.product.size ? ` (${booking.product.size})` : ''}` : '—',
-      productId: booking.productId,
+      equipment: equipmentList || '—',
+      productIds: booking.products.map((bp) => bp.productId),
       startDate: booking.startDate,
       endDate: booking.endDate,
       status: booking.status,
@@ -69,8 +79,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const booking = await prisma.booking.update({
       where: { id },
       data: updateData,
-      include: { product: true },
+      include: {
+        products: {
+          include: {
+            product: true,
+          },
+        },
+      },
     })
+
+    const equipmentList = booking.products
+      .map((bp) => `${bp.product.type}${bp.product.size ? ` (${bp.product.size})` : ''}`)
+      .join(', ')
 
     return NextResponse.json({
       id: booking.id,
@@ -80,8 +100,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       email: booking.email,
       phoneNumber: booking.phoneNumber,
       personalId: booking.personalId,
-      equipment: booking.product ? `${booking.product.type}${booking.product.size ? ` (${booking.product.size})` : ''}` : '—',
-      productId: booking.productId,
+      equipment: equipmentList || '—',
+      productIds: booking.products.map((bp) => bp.productId),
       startDate: booking.startDate,
       endDate: booking.endDate,
       status: booking.status,

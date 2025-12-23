@@ -105,6 +105,7 @@
     "location": "Гудаури, Грузия",
     "phone": "+995 XXX XXX XXX",
     "email": "info@skirental.ge",
+    "followUs": "Следите за нами:",
     "copyright": "Все права защищены."
   },
   "admin": {
@@ -167,7 +168,18 @@
         "totalPrice": "Общая цена:",
         "status": "Статус",
         "save": "Сохранить",
-        "cancel": "Отмена"
+        "cancel": "Отмена",
+        "title": "Бронирование",
+        "success": "Бронирование успешно создано! Перенаправление...",
+        "selectProduct": "Выберите продукт",
+        "selectProductOptional": "Выберите продукт (необязательно)",
+        "addProduct": "Добавить продукт",
+        "delete": "Удалить",
+        "numberOfPeople": "Количество человек",
+        "numberOfPeoplePlaceholder": "напр. 2",
+        "submitting": "Отправка...",
+        "selectStartDate": "Выберите дату начала",
+        "selectEndDate": "Выберите дату окончания"
       }
     },
     "equipment": {
