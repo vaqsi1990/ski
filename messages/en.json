@@ -30,15 +30,15 @@
     "book": "Book Now",
     "items": {
       "skis": {
-        "name": "Skis",
+        "name": "Equipment",
         "price": "From £25/Day"
       },
       "snowboards": {
-        "name": "Snowboards",
+        "name": "Cars",
         "price": "From £50/Day"
       },
       "accessories": {
-        "name": "Accessories",
+        "name": "Lessons",
         "price": "From £50/Day"
       }
     }

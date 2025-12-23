@@ -107,9 +107,9 @@ const BookingPage = () => {
     fetchProducts()
   }, [])
 
-  // Auto-calculate price when product and dates change
+  // Auto-calculate price when product, dates, and number of people change
   useEffect(() => {
-    if (formData.productId && formData.startDate && formData.endDate) {
+    if (formData.productId && formData.startDate && formData.endDate && formData.numberOfPeople) {
       const product = products.find((p) => p.id === formData.productId)
       if (product) {
         const start = new Date(formData.startDate)
@@ -123,7 +123,8 @@ const BookingPage = () => {
           // Calculate days including both start and end dates
           const timeDiff = end.getTime() - start.getTime()
           const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1 // +1 to include both start and end day
-          const calculatedPrice = (product.price * days).toFixed(2)
+          const numberOfPeople = parseInt(formData.numberOfPeople) || 1
+          const calculatedPrice = (product.price * days * numberOfPeople).toFixed(2)
           setFormData((prev) => ({ ...prev, totalPrice: calculatedPrice }))
         } else {
           setFormData((prev) => ({ ...prev, totalPrice: '' }))
@@ -132,7 +133,7 @@ const BookingPage = () => {
     } else {
       setFormData((prev) => ({ ...prev, totalPrice: '' }))
     }
-  }, [formData.productId, formData.startDate, formData.endDate, products])
+  }, [formData.productId, formData.startDate, formData.endDate, formData.numberOfPeople, products])
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat(locale || 'ka-GE', { style: 'currency', currency: 'GEL' }).format(amount)
@@ -416,17 +417,18 @@ const BookingPage = () => {
                 <div className="text-[18px] text-black">
                   <span className="font-semibold">{t('totalPrice')} </span>
                   <span className="text-orange-600 font-bold">{formatCurrency(parseFloat(formData.totalPrice))}</span>
-                  {formData.productId && formData.startDate && formData.endDate && (
+                  {formData.productId && formData.startDate && formData.endDate && formData.numberOfPeople && (
                     <span className="text-gray-600 text-[16px] block mt-1">
                       {(() => {
                         const product = products.find((p) => p.id === formData.productId)
-                        if (product && formData.startDate && formData.endDate) {
+                        if (product && formData.startDate && formData.endDate && formData.numberOfPeople) {
                           const start = new Date(formData.startDate)
                           const end = new Date(formData.endDate)
                           start.setHours(0, 0, 0, 0)
                           end.setHours(0, 0, 0, 0)
                           const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
-                          return `${formatCurrency(product.price)} × ${days} ${days === 1 ? 'day' : 'days'} = ${formatCurrency(parseFloat(formData.totalPrice))}`
+                          const numberOfPeople = parseInt(formData.numberOfPeople) || 1
+                          return `${formatCurrency(product.price)} × ${days} ${days === 1 ? 'day' : 'days'} × ${numberOfPeople} ${numberOfPeople === 1 ? 'person' : 'people'} = ${formatCurrency(parseFloat(formData.totalPrice))}`
                         }
                         return ''
                       })()}
