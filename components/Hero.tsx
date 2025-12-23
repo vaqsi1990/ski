@@ -22,7 +22,7 @@ const Hero = () => {
                     quality={90}
                 />
                 {/* Subtle Overlay */}
-                <div className="absolute inset-0 bg-black/30" />
+                <div className="absolute inset-0 bg-black/60" />
             </div>
 
             {/* Content */}
@@ -37,7 +37,7 @@ const Hero = () => {
                             ease: 'easeOut',
                         }}
                     >
-                        <h1 className=" md:text-[30px] text-[20px] font-bold text-white uppercase tracking-tight">
+                        <h1 className=" md:text-[30px] text-[20px] font-bold text-[#08964c] uppercase tracking-tight">
                             {t('title')}
                         </h1>
 
