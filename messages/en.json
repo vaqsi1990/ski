@@ -7,7 +7,7 @@
     "bookNow": "Book Now"
   },
   "hero": {
-    "title": "SKI RENTAL IN GUDAURI",
+    "title": "SkiRentFanatic",
     "subtitle": "Best Equipment • Best Prices",
     "cta": "Book Now",
     "alt": "Ski rental in Gudauri"
@@ -125,22 +125,130 @@
       "settings": "Settings"
     },
     "bookings": {
+      "title": "Bookings Management",
+      "subtitle": "Manage all bookings and reservations",
       "recent": "Recent Bookings",
       "viewAll": "View All",
       "loading": "Loading bookings…",
       "empty": "No bookings found.",
+      "add": "Add Booking",
+      "edit": "Edit Booking",
+      "delete": "Delete",
+      "filter": "Filter by Status",
+      "all": "All",
       "table": {
         "customer": "Customer",
         "equipment": "Equipment",
         "date": "Date",
-        "status": "Status"
+        "status": "Status",
+        "price": "Price",
+        "actions": "Actions"
       },
       "status": {
         "pending": "Pending",
         "confirmed": "Confirmed",
         "cancelled": "Cancelled",
         "completed": "Completed"
+      },
+      "form": {
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "email": "Email",
+        "phone": "Phone",
+        "personalId": "Personal ID",
+        "product": "Equipment",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "price": "Total Price",
+        "status": "Status",
+        "save": "Save",
+        "cancel": "Cancel"
       }
+    },
+    "equipment": {
+      "title": "Equipment Management",
+      "subtitle": "Manage your rental equipment inventory",
+      "loading": "Loading equipment…",
+      "empty": "No equipment found.",
+      "add": "Add Equipment",
+      "edit": "Edit Equipment",
+      "delete": "Delete",
+      "filter": "Filter by Type",
+      "all": "All",
+      "table": {
+        "title": "Title",
+        "type": "Type",
+        "price": "Price",
+        "bookings": "Bookings",
+        "actions": "Actions"
+      },
+      "types": {
+        "SKI": "Ski",
+        "SNOWBOARD": "Snowboard",
+        "OTHER": "Cloth"
+      },
+      "form": {
+        "title": "Title",
+        "type": "Type",
+        "price": "Price",
+        "images": "Images",
+        "save": "Save",
+        "cancel": "Cancel"
+      }
+    },
+    "customers": {
+      "title": "Customers",
+      "subtitle": "View and manage customer information",
+      "loading": "Loading customers…",
+      "empty": "No customers found.",
+      "table": {
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "bookings": "Bookings",
+        "totalSpent": "Total Spent",
+        "lastBooking": "Last Booking"
+      }
+    },
+    "reports": {
+      "title": "Reports & Analytics",
+      "subtitle": "View business insights and statistics",
+      "loading": "Loading reports…",
+      "revenue": {
+        "title": "Revenue",
+        "total": "Total Revenue",
+        "confirmed": "Confirmed Revenue"
+      },
+      "bookings": {
+        "title": "Bookings Statistics",
+        "total": "Total Bookings",
+        "byStatus": "By Status",
+        "byMonth": "By Month"
+      },
+      "topProducts": {
+        "title": "Top Products",
+        "bookings": "Bookings"
+      },
+      "dateRange": {
+        "start": "Start Date",
+        "end": "End Date",
+        "apply": "Apply Filter"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Configure your admin panel",
+      "general": {
+        "title": "General Settings",
+        "siteName": "Site Name",
+        "currency": "Currency"
+      },
+      "notifications": {
+        "title": "Notifications",
+        "email": "Email Notifications",
+        "sms": "SMS Notifications"
+      },
+      "save": "Save Changes"
     },
     "quickActions": {
       "title": "Quick Actions",
