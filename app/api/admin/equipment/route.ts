@@ -73,8 +73,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Invalid product type' }, { status: 400 })
     }
 
-    const sizeRequiringTypes = [ProductType.ADULT_CLOTH, ProductType.CHILD_CLOTH, ProductType.ACCESSORY]
-    const shouldHaveSize = sizeRequiringTypes.includes(type as ProductType)
+    const sizeRequiringTypes: ProductType[] = [ProductType.ADULT_CLOTH, ProductType.CHILD_CLOTH, ProductType.ACCESSORY]
+    const shouldHaveSize = (sizeRequiringTypes as readonly ProductType[]).includes(type)
 
     const product = await prisma.product.create({
       data: {
