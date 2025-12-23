@@ -68,7 +68,7 @@ const Equipment = () => {
         {
             id: 3,
             key: 'accessories',
-            type: 'OTHER',
+            type: 'ACCESSORY',
             image: '/images/3.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
         },

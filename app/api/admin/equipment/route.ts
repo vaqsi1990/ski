@@ -36,10 +36,10 @@ export async function GET(request: Request) {
     const formattedProducts = products.map((product) => ({
       id: product.id,
       type: product.type,
-      images: product.images,
-      title: product.title,
       price: product.price,
       size: product.size,
+      standard: product.standard,
+      professional: product.professional,
       bookingsCount: product._count.bookings,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
@@ -63,9 +63,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { type, images, title, price, size } = body
+    const { type, price, size, standard, professional } = body
 
-    if (!type || !title || price === undefined) {
+    if (!type || price === undefined) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
     }
 
@@ -73,13 +73,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Invalid product type' }, { status: 400 })
     }
 
+    const sizeRequiringTypes = [ProductType.ADULT_CLOTH, ProductType.CHILD_CLOTH, ProductType.ACCESSORY]
+    const shouldHaveSize = sizeRequiringTypes.includes(type as ProductType)
+
     const product = await prisma.product.create({
       data: {
         type: type as ProductType,
-        images: Array.isArray(images) ? images : images ? [images] : [],
-        title,
         price: parseFloat(price),
-        size: type === ProductType.OTHER && size ? size : null,
+        size: shouldHaveSize && size ? size : null,
+        standard: standard === true,
+        professional: professional === true,
       },
       include: {
         _count: {
@@ -91,10 +94,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       id: product.id,
       type: product.type,
-      images: product.images,
-      title: product.title,
       price: product.price,
       size: product.size,
+      standard: product.standard,
+      professional: product.professional,
       bookingsCount: product._count.bookings,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,

@@ -31,10 +31,10 @@ export async function GET(request: Request) {
     const formattedProducts = products.map((product) => ({
       id: product.id,
       type: product.type,
-      images: product.images,
-      title: product.title,
       price: product.price,
       size: product.size,
+      standard: product.standard,
+      professional: product.professional,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     }))

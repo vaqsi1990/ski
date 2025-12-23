@@ -136,9 +136,9 @@ export async function GET(request: Request) {
       },
       topProducts: topProducts.map((product) => ({
         id: product.id,
-        title: product.title,
         type: product.type,
         price: product.price,
+        size: product.size,
         bookingsCount: product._count.bookings,
       })),
     })

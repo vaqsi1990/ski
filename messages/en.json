@@ -189,7 +189,13 @@
       "types": {
         "SKI": "Ski",
         "SNOWBOARD": "Snowboard",
-        "OTHER": "Cloth"
+        "ADULT_CLOTH": "Adult Clothing",
+        "CHILD_CLOTH": "Child Clothing",
+        "ADULT_SKI_SET": "Adult Ski Set",
+        "CHILD_SKI_SET": "Child Ski Set",
+        "CHILD_SNOWBOARD_SET": "Child Snowboard Set",
+        "ADULT_SNOWBOARD_SET": "Adult Snowboard Set",
+        "ACCESSORY": "Accessory"
       },
       "form": {
         "title": "Title",
@@ -198,6 +204,8 @@
         "selectSize": "Select Size",
         "price": "Price",
         "images": "Images",
+        "standard": "Standard",
+        "professional": "Professional",
         "save": "Save",
         "cancel": "Cancel"
       }

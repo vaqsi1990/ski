@@ -10,8 +10,6 @@ import 'react-datepicker/dist/react-datepicker.css'
 type Product = {
   id: string
   type: string
-  images: string[]
-  title: string
   price: number
   size?: string | null
 }
@@ -299,10 +297,13 @@ const BookingPage = () => {
                       const selectedProduct = products.find((p) => p.id === formData.productId)
                       return selectedProduct ? (
                         <div>
-                          <div className="font-semibold">{selectedProduct.title}</div>
+                          <div className="font-semibold">
+                            {selectedProduct.type}
+                            {(selectedProduct.type === 'ADULT_CLOTH' || selectedProduct.type === 'CHILD_CLOTH' || selectedProduct.type === 'ACCESSORY') && selectedProduct.size && ` (${selectedProduct.size})`}
+                          </div>
                           <div className="text-gray-600 text-[16px] mt-1">
                             {formatCurrency(selectedProduct.price)}
-                            {selectedProduct.type === 'OTHER' && selectedProduct.size && ` • Size: ${selectedProduct.size}`}
+                            {(selectedProduct.type === 'ADULT_CLOTH' || selectedProduct.type === 'CHILD_CLOTH' || selectedProduct.type === 'ACCESSORY') && selectedProduct.size && ` • Size: ${selectedProduct.size}`}
                           </div>
                         </div>
                       ) : (
@@ -322,8 +323,7 @@ const BookingPage = () => {
                   <option value="">{t('product')}</option>
                   {products.map((product) => (
                     <option key={product.id} value={product.id}>
-                      {product.title} - {formatCurrency(product.price)}
-                      {product.type === 'OTHER' && product.size && ` (${product.size})`}
+                      {product.type}{(product.type === 'ADULT_CLOTH' || product.type === 'CHILD_CLOTH' || product.type === 'ACCESSORY') && product.size ? ` (${product.size})` : ''} - {formatCurrency(product.price)}
                     </option>
                   ))}
                 </select>

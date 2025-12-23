@@ -23,10 +23,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({
       id: product.id,
       type: product.type,
-      images: product.images,
-      title: product.title,
       price: product.price,
       size: product.size,
+      standard: product.standard,
+      professional: product.professional,
       bookingsCount: product._count.bookings,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
@@ -44,27 +44,30 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const updateData: {
       type?: ProductType
-      images?: string[]
-      title?: string
       price?: number
       size?: ProductSize | null
+      standard?: boolean
+      professional?: boolean
     } = {}
 
     if (body.type && Object.values(ProductType).includes(body.type)) {
       updateData.type = body.type as ProductType
     }
-    if (body.images !== undefined) {
-      updateData.images = Array.isArray(body.images) ? body.images : [body.images]
-    }
-    if (body.title) updateData.title = body.title
     if (body.price !== undefined) updateData.price = parseFloat(body.price)
+    
+    const sizeRequiringTypes = [ProductType.ADULT_CLOTH, ProductType.CHILD_CLOTH, ProductType.ACCESSORY]
     if (body.size !== undefined) {
-      if (body.type === ProductType.OTHER && body.size && Object.values(ProductSize).includes(body.size)) {
+      const productType = (body.type || updateData.type) as ProductType
+      const shouldHaveSize = productType && sizeRequiringTypes.includes(productType)
+      if (shouldHaveSize && body.size && Object.values(ProductSize).includes(body.size)) {
         updateData.size = body.size as ProductSize
       } else {
         updateData.size = null
       }
     }
+    
+    if (body.standard !== undefined) updateData.standard = body.standard === true
+    if (body.professional !== undefined) updateData.professional = body.professional === true
 
     const product = await prisma.product.update({
       where: { id },
@@ -79,10 +82,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({
       id: product.id,
       type: product.type,
-      images: product.images,
-      title: product.title,
       price: product.price,
       size: product.size,
+      standard: product.standard,
+      professional: product.professional,
       bookingsCount: product._count.bookings,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,

@@ -11,7 +11,13 @@ datasource db {
 enum ProductType {
   SKI
   SNOWBOARD
-  OTHER
+  ADULT_CLOTH
+  CHILD_CLOTH
+  ADULT_SKI_SET
+  CHILD_SKI_SET
+  CHILD_SNOWBOARD_SET
+  ADULT_SNOWBOARD_SET
+  ACCESSORY
 }
 
 enum ProductSize {
@@ -28,16 +34,17 @@ enum BookingStatus {
 }
 
 model Product {
-  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  type      ProductType
-  images    String[]
-  title     String
-  price     Float
-  size      ProductSize?
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type        ProductType
+  price       Float
+  size        ProductSize?
+  standard    Boolean      @default(false)
+  professional Boolean    @default(false)
+  description String?     // Description for sets - what items are included
  
-  bookings  Booking[]
-  createdAt DateTime     @default(now()) @db.Timestamp(6)
-  updatedAt DateTime     @updatedAt
+  bookings    Booking[]
+  createdAt   DateTime     @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime     @updatedAt
 }
 
 model Booking {

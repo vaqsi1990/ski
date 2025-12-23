@@ -35,7 +35,7 @@ export async function GET() {
     const bookings = recentBookings.map((booking: Prisma.BookingGetPayload<{ include: { product: true } }>) => ({
       id: booking.id,
       customer: `${booking.firstName} ${booking.lastName}`,
-      equipment: booking.product?.title ?? '—',
+      equipment: booking.product ? `${booking.product.type}${booking.product.size ? ` (${booking.product.size})` : ''}` : '—',
       startDate: booking.startDate,
       endDate: booking.endDate,
       status: booking.status,

@@ -6,7 +6,6 @@ import { useLocale, useTranslations } from 'next-intl'
 import { BookingStatus, ProductSize } from '@/app/generated/prisma/enums'
 import { ProductType } from '@/app/generated/prisma/enums'
 import { z } from 'zod'
-import ImageUpload from '@/components/CloudinaryUploader'
 
 // Types
 type AdminStats = {
@@ -51,10 +50,10 @@ type Booking = {
 type Product = {
   id: string
   type: string
-  images: string[]
-  title: string
   price: number
   size?: string | null
+  standard?: boolean
+  professional?: boolean
   bookingsCount: number
   createdAt: string
   updatedAt: string
@@ -80,9 +79,9 @@ type ReportData = {
   }
   topProducts: Array<{
     id: string
-    title: string
     type: string
     price: number
+    size?: string | null
     bookingsCount: number
   }>
 }
@@ -101,11 +100,11 @@ type BookingFormData = {
 }
 
 type EquipmentFormData = {
-  title: string
   type: ProductType
   price: string
-  images: string[]
   size?: ProductSize | null
+  standard?: boolean
+  professional?: boolean
 }
 
 // Constants
@@ -123,11 +122,11 @@ const INITIAL_BOOKING_FORM: BookingFormData = {
 }
 
 const INITIAL_EQUIPMENT_FORM: EquipmentFormData = {
-  title: '',
   type: ProductType.SKI,
   price: '',
-  images: [],
   size: null,
+  standard: false,
+  professional: false,
 }
 
 // Zod schemas
@@ -145,18 +144,19 @@ const bookingSchema = z.object({
 })
 
 const equipmentSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
   type: z.nativeEnum(ProductType),
   price: z.string().min(1, 'Price is required').refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Price must be a positive number'),
-  images: z.array(z.string()).optional(),
   size: z.nativeEnum(ProductSize).nullable().optional(),
+  standard: z.boolean().optional(),
+  professional: z.boolean().optional(),
 }).refine((data) => {
-  if (data.type === ProductType.OTHER && !data.size) {
+  const sizeRequiringTypes: ProductType[] = [ProductType.ADULT_CLOTH]
+  if (sizeRequiringTypes.includes(data.type) && !data.size) {
     return false
   }
   return true
 }, {
-  message: 'Size is required for OTHER products',
+  message: 'Size is required for this product type',
   path: ['size'],
 })
 
@@ -493,7 +493,6 @@ const AdminPage = () => {
         body: JSON.stringify({
           ...validated,
           price: parseFloat(validated.price),
-          images: equipmentFormData.images,
         }),
       })
 
@@ -505,11 +504,11 @@ const AdminPage = () => {
       setShowEquipmentForm(false)
       setEditingEquipment(null)
       setEquipmentFormData({
-        title: '',
         type: ProductType.SKI,
         price: '',
-        images: [],
         size: null,
+        standard: false,
+        professional: false,
       })
       fetchEquipment()
     } catch (err) {
@@ -530,11 +529,11 @@ const AdminPage = () => {
   const handleEditEquipment = (item: Product) => {
     setEditingEquipment(item)
     setEquipmentFormData({
-      title: item.title,
       type: item.type as ProductType,
       price: item.price.toString(),
-      images: item.images,
       size: item.size ? (item.size as ProductSize) : null,
+      standard: item.standard || false,
+      professional: item.professional || false,
     })
     setShowEquipmentForm(true)
   }
@@ -810,7 +809,7 @@ const AdminPage = () => {
                       <option value="">{t('bookings.form.product')}</option>
                       {availableProducts.map((product) => (
                         <option key={product.id} value={product.id}>
-                          {product.title} - {formatCurrency(product.price)}
+                          {product.type}{product.type === 'ADULT_CLOTH' && product.size ? ` (${product.size})` : ''} - {formatCurrency(product.price)}
                         </option>
                       ))}
                     </select>
@@ -1071,10 +1070,8 @@ const AdminPage = () => {
                       setEditingEquipment(null)
                       setEquipmentFormErrors({})
                       setEquipmentFormData({
-                        title: '',
                         type: ProductType.SKI,
                         price: '',
-                        images: [],
                         size: null,
                       })
                     }}
@@ -1089,44 +1086,40 @@ const AdminPage = () => {
                 <form onSubmit={handleEquipmentSubmit} className="space-y-4">
                   <div>
                     <label className="block text-[16px] font-medium text-black mb-1">
-                      {t('equipment.form.title')} *
-                    </label>
-                    <input
-                      type="text"
-                      value={equipmentFormData.title}
-                      onChange={(e) => setEquipmentFormData({ ...equipmentFormData, title: e.target.value })}
-                      className={`w-full border rounded-lg px-4 py-2 text-black ${
-                        equipmentFormErrors.title ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {equipmentFormErrors.title && (
-                      <p className="text-red-500 text-xs mt-1">{equipmentFormErrors.title}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-[16px] font-medium text-black mb-1">
                       {t('equipment.form.type')} *
                     </label>
                     <select
                       value={equipmentFormData.type}
                       onChange={(e) => {
                         const newType = e.target.value as ProductType
+                        const sizeRequiringTypes: ProductType[] = [ProductType.ADULT_CLOTH]
+                        const isChildType = newType === ProductType.CHILD_CLOTH || 
+                                           newType === ProductType.CHILD_SKI_SET || 
+                                           newType === ProductType.CHILD_SNOWBOARD_SET
+                        const isAccessory = newType === ProductType.ACCESSORY
                         setEquipmentFormData({ 
                           ...equipmentFormData, 
                           type: newType,
-                          size: newType === ProductType.OTHER ? equipmentFormData.size : null
+                          size: sizeRequiringTypes.includes(newType) ? equipmentFormData.size : null,
+                          standard: (isChildType || isAccessory) ? false : equipmentFormData.standard,
+                          professional: (isChildType || isAccessory) ? false : equipmentFormData.professional,
                         })
                       }}
                       className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black"
                     >
                       <option value="SKI">{t('equipment.types.SKI')}</option>
                       <option value="SNOWBOARD">{t('equipment.types.SNOWBOARD')}</option>
-                      <option value="OTHER">{t('equipment.types.OTHER')}</option>
+                      <option value="ADULT_CLOTH">{t('equipment.types.ADULT_CLOTH')}</option>
+                      <option value="CHILD_CLOTH">{t('equipment.types.CHILD_CLOTH')}</option>
+                      <option value="ADULT_SKI_SET">{t('equipment.types.ADULT_SKI_SET')}</option>
+                      <option value="CHILD_SKI_SET">{t('equipment.types.CHILD_SKI_SET')}</option>
+                      <option value="CHILD_SNOWBOARD_SET">{t('equipment.types.CHILD_SNOWBOARD_SET')}</option>
+                      <option value="ADULT_SNOWBOARD_SET">{t('equipment.types.ADULT_SNOWBOARD_SET')}</option>
+                      <option value="ACCESSORY">{t('equipment.types.ACCESSORY')}</option>
                     </select>
                   </div>
 
-                  {equipmentFormData.type === ProductType.OTHER && (
+                  {equipmentFormData.type === ProductType.ADULT_CLOTH && (
                     <div>
                       <label className="block text-[16px] font-medium text-black mb-1">
                         {t('equipment.form.size')} *
@@ -1154,6 +1147,38 @@ const AdminPage = () => {
                     </div>
                   )}
 
+                  {equipmentFormData.type !== ProductType.CHILD_CLOTH && 
+                   equipmentFormData.type !== ProductType.CHILD_SKI_SET && 
+                   equipmentFormData.type !== ProductType.CHILD_SNOWBOARD_SET &&
+                   equipmentFormData.type !== ProductType.ACCESSORY && (
+                    <div className="space-y-3">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="standard"
+                          checked={equipmentFormData.standard || false}
+                          onChange={(e) => setEquipmentFormData({ ...equipmentFormData, standard: e.target.checked })}
+                          className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                        />
+                        <label htmlFor="standard" className="ml-2 text-[16px] text-black">
+                          {t('equipment.form.standard')}
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="professional"
+                          checked={equipmentFormData.professional || false}
+                          onChange={(e) => setEquipmentFormData({ ...equipmentFormData, professional: e.target.checked })}
+                          className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                        />
+                        <label htmlFor="professional" className="ml-2 text-[16px] text-black">
+                          {t('equipment.form.professional')}
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-[16px] font-medium text-black mb-1">
                       {t('equipment.form.price')} *
@@ -1172,16 +1197,6 @@ const AdminPage = () => {
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-[16px] font-medium text-black mb-1">
-                      {t('equipment.form.images')}
-                    </label>
-                    <ImageUpload
-                      value={equipmentFormData.images}
-                      onChange={(urls) => setEquipmentFormData({ ...equipmentFormData, images: urls })}
-                    />
-                  </div>
-
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <button
                       type="submit"
@@ -1196,11 +1211,11 @@ const AdminPage = () => {
                         setEditingEquipment(null)
                         setEquipmentFormErrors({})
                         setEquipmentFormData({
-                          title: '',
                           type: ProductType.SKI,
                           price: '',
-                          images: [],
                           size: null,
+                          standard: false,
+                          professional: false,
                         })
                       }}
                       className="w-full sm:w-auto bg-gray-200 text-black px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm md:text-base"
@@ -1242,7 +1257,13 @@ const AdminPage = () => {
             <option value="all">{t('equipment.all')}</option>
             <option value="SKI">{t('equipment.types.SKI')}</option>
             <option value="SNOWBOARD">{t('equipment.types.SNOWBOARD')}</option>
-            <option value="OTHER">{t('equipment.types.OTHER')}</option>
+            <option value="ADULT_CLOTH">{t('equipment.types.ADULT_CLOTH')}</option>
+            <option value="CHILD_CLOTH">{t('equipment.types.CHILD_CLOTH')}</option>
+            <option value="ADULT_SKI_SET">{t('equipment.types.ADULT_SKI_SET')}</option>
+            <option value="CHILD_SKI_SET">{t('equipment.types.CHILD_SKI_SET')}</option>
+            <option value="CHILD_SNOWBOARD_SET">{t('equipment.types.CHILD_SNOWBOARD_SET')}</option>
+            <option value="ADULT_SNOWBOARD_SET">{t('equipment.types.ADULT_SNOWBOARD_SET')}</option>
+            <option value="ACCESSORY">{t('equipment.types.ACCESSORY')}</option>
           </select>
         </div>
 
@@ -1272,14 +1293,14 @@ const AdminPage = () => {
               <tbody>
                 {equipmentLoading && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={5}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={4}>
                       {t('equipment.loading')}
                     </td>
                   </tr>
                 )}
                 {!equipmentLoading && equipment.length === 0 && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={5}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={4}>
                       {t('equipment.empty')}
                     </td>
                   </tr>
@@ -1288,18 +1309,22 @@ const AdminPage = () => {
                   equipment.map((item) => (
                     <tr key={item.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
                       <td className="px-3 py-3 text-xs md:text-sm text-black">
-                        <div className="font-medium">{item.title}</div>
-                        {item.type === ProductType.OTHER && item.size && (
-                          <div className="text-gray-500 mt-1 text-xs">Size: {item.size}</div>
-                        )}
-                        <div className="text-gray-500 md:hidden mt-1 text-xs">{t(`equipment.types.${item.type}`)}</div>
-                        <div className="text-gray-500 lg:hidden mt-1 text-xs">{t('equipment.table.bookings')}: {item.bookingsCount}</div>
-                      </td>
-                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell">
+                        <div className="font-medium">
                         {t(`equipment.types.${item.type}`)}
-                        {item.type === ProductType.OTHER && item.size && (
+                        {item.type === ProductType.ADULT_CLOTH && item.size && (
                           <span className="ml-2 text-gray-500">({item.size})</span>
                         )}
+                        {item.type !== ProductType.CHILD_CLOTH && 
+                         item.type !== ProductType.CHILD_SKI_SET && 
+                         item.type !== ProductType.CHILD_SNOWBOARD_SET &&
+                         item.type !== ProductType.ACCESSORY && 
+                         (item.standard || item.professional) && (
+                          <span className="ml-2 text-xs text-gray-500">
+                            {item.standard && item.professional ? '(Standard, Professional)' : item.standard ? '(Standard)' : '(Professional)'}
+                          </span>
+                        )}
+                        </div>
+                        <div className="text-gray-500 lg:hidden mt-1 text-xs">{t('equipment.table.bookings')}: {item.bookingsCount}</div>
                       </td>
                       <td className="px-3 py-3 text-xs md:text-sm text-black whitespace-nowrap">{formatCurrency(item.price)}</td>
                       <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">{item.bookingsCount}</td>
@@ -1490,8 +1515,11 @@ const AdminPage = () => {
                 {reports.topProducts.map((product) => (
                   <tr key={product.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-3 py-3 text-xs md:text-sm text-black">
-                      <div className="font-medium">{product.title}</div>
-                      <div className="text-gray-500 md:hidden mt-1 text-xs">{t(`equipment.types.${product.type}`)}</div>
+                      <div className="font-medium">
+                        {t(`equipment.types.${product.type}`)}
+                        {product.type === 'ADULT_CLOTH' && product.size && ` (${product.size})`}
+                      </div>
+                      <div className="text-gray-500 md:hidden mt-1 text-xs">{formatCurrency(product.price)}</div>
                     </td>
                     <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell">{t(`equipment.types.${product.type}`)}</td>
                     <td className="px-3 py-3 text-xs md:text-sm text-black whitespace-nowrap">{formatCurrency(product.price)}</td>

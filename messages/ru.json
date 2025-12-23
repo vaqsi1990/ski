@@ -189,7 +189,13 @@
       "types": {
         "SKI": "Лыжи",
         "SNOWBOARD": "Сноуборд",
-        "OTHER": "Одежда"
+        "ADULT_CLOTH": "Взрослая одежда",
+        "CHILD_CLOTH": "Детская одежда",
+        "ADULT_SKI_SET": "Взрослый лыжный набор",
+        "CHILD_SKI_SET": "Детский лыжный набор",
+        "CHILD_SNOWBOARD_SET": "Детский набор для сноуборда",
+        "ADULT_SNOWBOARD_SET": "Взрослый набор для сноуборда",
+        "ACCESSORY": "Аксессуар"
       },
       "form": {
         "title": "Название",
@@ -198,6 +204,8 @@
         "selectSize": "Выберите размер",
         "price": "Цена",
         "images": "Изображения",
+        "standard": "Стандартный",
+        "professional": "Профессиональный",
         "save": "Сохранить",
         "cancel": "Отмена"
       }

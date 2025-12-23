@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       booking: {
         id: booking.id,
         customer: `${booking.firstName} ${booking.lastName}`,
-        equipment: booking.product?.title ?? '—',
+        equipment: booking.product ? `${booking.product.type}${booking.product.size ? ` (${booking.product.size})` : ''}` : '—',
         startDate: booking.startDate,
         endDate: booking.endDate,
         totalPrice: booking.totalPrice,
