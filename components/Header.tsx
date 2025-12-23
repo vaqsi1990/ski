@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from 'next-intl'
 import LanguageSwitcher from './LanguageSwitcher'
+import Image from 'next/image'
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -18,9 +19,7 @@ const Header = () => {
                     <div className="flex-shrink-0">
                         <Link href="/" className="flex items-center space-x-2">
                           
-                            <span className="text-2xl font-bold text-blue-600">
-                                SkiRental
-                            </span>
+                            <Image src="/logo.jpg" alt="logo" width={50} height={50} />
                         </Link>
                     </div>
 

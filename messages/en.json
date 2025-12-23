@@ -127,6 +127,8 @@
     "bookings": {
       "recent": "Recent Bookings",
       "viewAll": "View All",
+      "loading": "Loading bookings…",
+      "empty": "No bookings found.",
       "table": {
         "customer": "Customer",
         "equipment": "Equipment",
@@ -134,7 +136,9 @@
         "status": "Status"
       },
       "status": {
-        "active": "Active",
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "cancelled": "Cancelled",
         "completed": "Completed"
       }
     },

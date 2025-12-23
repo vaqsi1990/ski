@@ -1,0 +1,51 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProductType {
+  SKI
+  SNOWBOARD
+  OTHER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model Product {
+  id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type      ProductType
+  images    String[]
+  title     String
+  price     Float
+ 
+  bookings  Booking[]
+  createdAt DateTime    @default(now()) @db.Timestamp(6)
+  updatedAt DateTime    @updatedAt
+}
+
+model Booking {
+  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId  String        @db.Uuid
+  product    Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  firstName  String
+  lastName   String
+  phoneNumber String
+  email      String
+  personalId String
+  startDate  DateTime
+  endDate    DateTime
+  status     BookingStatus @default(PENDING)
+  totalPrice Float
+  createdAt  DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt  DateTime      @updatedAt
+}

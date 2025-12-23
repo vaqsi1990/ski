@@ -1,27 +1,81 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from '@/i18n/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 const AdminPage = () => {
   const t = useTranslations('admin')
+  const locale = useLocale()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  type AdminStats = {
+    totalBookings: number
+    activeRentals: number
+    totalRevenue: number
+    totalProducts: number
+  }
+
+  type AdminBooking = {
+    id: string
+    customer: string
+    equipment: string
+    startDate: string
+    endDate: string
+    status: string
+  }
+
+  type AdminOverview = {
+    stats: AdminStats
+    bookings: AdminBooking[]
+  }
+
+  const [data, setData] = useState<AdminOverview | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/admin/overview', { cache: 'no-store' })
+        if (!response.ok) throw new Error('Failed to load admin data')
+        const json = await response.json()
+        setData(json)
+      } catch (err) {
+        setError((err as Error).message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat(locale || 'ka-GE', { style: 'currency', currency: 'GEL' }).format(amount)
+
   const stats = [
-    { labelKey: 'stats.totalBookings', value: '124', change: '+12%' },
-    { labelKey: 'stats.activeRentals', value: '38', change: '+5%' },
-    { labelKey: 'stats.revenue', value: '$12,450', change: '+18%' },
-    { labelKey: 'stats.equipment', value: '156', change: '8 new' },
+    { labelKey: 'stats.totalBookings', value: data?.stats.totalBookings ?? 0 },
+    { labelKey: 'stats.activeRentals', value: data?.stats.activeRentals ?? 0 },
+    {
+      labelKey: 'stats.revenue',
+      value:
+        data?.stats.totalRevenue !== undefined
+          ? formatCurrency(data.stats.totalRevenue)
+          : formatCurrency(0),
+    },
+    { labelKey: 'stats.equipment', value: data?.stats.totalProducts ?? 0 },
   ]
 
-  const recentBookings = [
-    { id: 1, customer: 'John Smith', equipment: 'Ski Set', date: '2024-01-15', status: 'active' },
-    { id: 2, customer: 'Sarah Johnson', equipment: 'Snowboard', date: '2024-01-14', status: 'completed' },
-    { id: 3, customer: 'Mike Brown', equipment: 'Ski Set', date: '2024-01-13', status: 'active' },
-    { id: 4, customer: 'Emily Davis', equipment: 'Full Package', date: '2024-01-12', status: 'completed' },
-  ]
+  const recentBookings = data?.bookings ?? []
+
+  const formatDate = (value: string) =>
+    new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(
+      new Date(value),
+    )
+
+  const statusIsActive = (status: string) => ['PENDING', 'CONFIRMED'].includes(status)
 
   const menuItems = [
     { id: 'dashboard', labelKey: 'menu.dashboard' },
@@ -107,13 +161,13 @@ const AdminPage = () => {
               key={index}
               className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow"
             >
-              <div className="flex items-center justify-end mb-4">
-                <span className="text-sm font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">
-                  {stat.change}
-                </span>
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-sm text-gray-600">{t(stat.labelKey)}</div>
+                {loading && <div className="h-2 w-12 bg-gray-100 rounded animate-pulse" />}
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
-              <div className="text-sm text-gray-600">{t(stat.labelKey)}</div>
+              <div className="text-2xl font-bold text-gray-900 mb-1">
+                {loading ? '—' : String(stat.value)}
+              </div>
             </div>
           ))}
         </div>
@@ -128,6 +182,12 @@ const AdminPage = () => {
                 {t('bookings.viewAll')} →
               </button>
             </div>
+
+            {error && (
+              <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700 border border-red-100">
+                {error}
+              </div>
+            )}
             
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -140,24 +200,46 @@ const AdminPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentBookings.map((booking) => (
-                    <tr key={booking.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm text-gray-900">{booking.customer}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{booking.equipment}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{booking.date}</td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                            booking.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {t(`bookings.status.${booking.status}`)}
-                        </span>
+                  {loading && (
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 text-sm text-gray-400" colSpan={4}>
+                        {t('bookings.loading')}
                       </td>
                     </tr>
-                  ))}
+                  )}
+                  {!loading && recentBookings.length === 0 && (
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 text-sm text-gray-500" colSpan={4}>
+                        {t('bookings.empty')}
+                      </td>
+                    </tr>
+                  )}
+                  {!loading &&
+                    recentBookings.map((booking) => {
+                      const statusKey = booking.status.toLowerCase()
+                      return (
+                        <tr key={booking.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-4 text-sm text-gray-900">{booking.customer}</td>
+                          <td className="py-3 px-4 text-sm text-gray-600">{booking.equipment}</td>
+                          <td className="py-3 px-4 text-sm text-gray-600">
+                            {formatDate(booking.startDate)}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                                statusIsActive(booking.status)
+                                  ? 'bg-green-100 text-green-800'
+                                  : booking.status === 'CANCELLED'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {t(`bookings.status.${statusKey}`)}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
                 </tbody>
               </table>
             </div>
