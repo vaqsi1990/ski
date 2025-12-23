@@ -37,9 +37,9 @@
         "name": "ტექნიკა",
         "price": "50£ დღეში"
       },
-      "accessories": {
+      "lessons": {
         "name": "გაკვეთილები",
-        "price": "50£ დღეში"
+        "price": "დაწყება 120₾-დან"
       }
     }
   },
@@ -280,5 +280,43 @@
       "minutesAgo": "{count} წუთის წინ",
       "hourAgo": "{count} საათის წინ"
     }
+  },
+  "lessons": {
+    "title": "გაკვეთილების დაჯავშნა",
+    "numberOfPeople": "ადამიანების რაოდენობა",
+    "selectNumberOfPeople": "აირჩიეთ ადამიანების რაოდენობა",
+    "person": "ადამიანი",
+    "people": "ადამიანი",
+    "groupLesson": "ჯგუფური გაკვეთილი",
+    "duration": "ხანგრძლივობა",
+    "selectDuration": "აირჩიეთ ხანგრძლივობა",
+    "hour": "საათი",
+    "hours": "საათი",
+    "level": "დონე",
+    "selectLevel": "აირჩიეთ დონე",
+    "beginner": "დამწყები",
+    "intermediate": "საშუალოდ მცოდნე",
+    "expert": "ექსპერტი",
+    "date": "თარიღი",
+    "selectDate": "აირჩიეთ თარიღი",
+    "startTime": "დაწყების დრო",
+    "timeRange": "10:00 - 16:00",
+    "selectTime": "აირჩიეთ დრო",
+    "language": "ენა",
+    "selectLanguage": "აირჩიეთ ენა",
+    "georgian": "ქართული",
+    "english": "ინგლისური",
+    "russian": "რუსული",
+    "contactInfo": "საკონტაქტო ინფორმაცია",
+    "firstName": "სახელი",
+    "lastName": "გვარი",
+    "email": "ელ. ფოსტა",
+    "phoneNumber": "ტელეფონის ნომერი",
+    "personalId": "პირადი ნომერი",
+    "totalPrice": "საერთო ფასი",
+    "book": "დაჯავშნა",
+    "cancel": "გაუქმება",
+    "submitting": "იგზავნება...",
+    "success": "გაკვეთილი წარმატებით დაჯავშნა! გადამისამართება..."
   }
 }

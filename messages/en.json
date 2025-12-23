@@ -37,9 +37,9 @@
         "name": "Cars",
         "price": "From £50/Day"
       },
-      "accessories": {
+      "lessons": {
         "name": "Lessons",
-        "price": "From £50/Day"
+        "price": "Starting from 120₾"
       }
     }
   },
@@ -280,5 +280,43 @@
       "minutesAgo": "{count} minutes ago",
       "hourAgo": "{count} hour ago"
     }
+  },
+  "lessons": {
+    "title": "Book a Lesson",
+    "numberOfPeople": "Number of People",
+    "selectNumberOfPeople": "Select number of people",
+    "person": "person",
+    "people": "people",
+    "groupLesson": "group lesson",
+    "duration": "Duration",
+    "selectDuration": "Select duration",
+    "hour": "hour",
+    "hours": "hours",
+    "level": "Level",
+    "selectLevel": "Select level",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "expert": "Expert",
+    "date": "Date",
+    "selectDate": "Select date",
+    "startTime": "Start Time",
+    "timeRange": "10:00 - 16:00",
+    "selectTime": "Select time",
+    "language": "Language",
+    "selectLanguage": "Select language",
+    "georgian": "Georgian",
+    "english": "English",
+    "russian": "Russian",
+    "contactInfo": "Contact Information",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phoneNumber": "Phone Number",
+    "personalId": "Personal ID",
+    "totalPrice": "Total Price",
+    "book": "Book Lesson",
+    "cancel": "Cancel",
+    "submitting": "Submitting...",
+    "success": "Lesson booked successfully! Redirecting..."
   }
 }

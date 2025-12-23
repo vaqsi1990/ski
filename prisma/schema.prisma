@@ -33,6 +33,25 @@ enum BookingStatus {
   COMPLETED
 }
 
+enum LessonLevel {
+  BEGINNER      // დამწყები
+  INTERMEDIATE  // საშუალოდ მცოდნე
+  EXPERT        // ექსპერტი
+}
+
+enum LessonLanguage {
+  GEORGIAN  // ქართული
+  ENGLISH   // ინგლისური
+  RUSSIAN   // რუსული
+}
+
+enum LessonStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
 model Product {
   id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   type        ProductType
@@ -63,4 +82,23 @@ model Booking {
   totalPrice    Float
   createdAt     DateTime      @default(now()) @db.Timestamp(6)
   updatedAt     DateTime      @updatedAt
+}
+
+model Lesson {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  numberOfPeople Int           // 1-4 people
+  duration      Int            // 1, 2, or 3 hours
+  level         LessonLevel    // BEGINNER, INTERMEDIATE, EXPERT
+  date          DateTime       @db.Date
+  startTime     String         // Time in format "HH:MM" (10:00 to 16:00)
+  language      LessonLanguage // GEORGIAN, ENGLISH, RUSSIAN
+  firstName     String
+  lastName      String
+  phoneNumber   String
+  email         String
+  personalId    String
+  status        LessonStatus   @default(PENDING)
+  totalPrice    Float          // Price based on numberOfPeople and duration
+  createdAt     DateTime       @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime       @updatedAt
 }

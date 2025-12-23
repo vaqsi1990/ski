@@ -69,11 +69,11 @@ const Equipment = () => {
         },
         {
             id: 3,
-            key: 'accessories',
-            type: 'ACCESSORY',
+            key: 'lessons',
+            type: 'LESSON',
             image: '/images/serv3.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
-            link: '/booking?type=ACCESSORY',
+            link: '/lessons',
         },
     ]
 

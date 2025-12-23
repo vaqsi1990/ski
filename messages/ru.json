@@ -37,9 +37,9 @@
         "name": "Техника",
         "price": "От £50/день"
       },
-      "accessories": {
+      "lessons": {
         "name": "Уроки",
-        "price": "От £50/день"
+        "price": "От 120₾"
       }
     }
   },
@@ -280,5 +280,43 @@
       "minutesAgo": "{count} минут назад",
       "hourAgo": "{count} час назад"
     }
+  },
+  "lessons": {
+    "title": "Забронировать урок",
+    "numberOfPeople": "Количество человек",
+    "selectNumberOfPeople": "Выберите количество человек",
+    "person": "человек",
+    "people": "человека",
+    "groupLesson": "групповой урок",
+    "duration": "Продолжительность",
+    "selectDuration": "Выберите продолжительность",
+    "hour": "час",
+    "hours": "часа",
+    "level": "Уровень",
+    "selectLevel": "Выберите уровень",
+    "beginner": "Начинающий",
+    "intermediate": "Средний",
+    "expert": "Эксперт",
+    "date": "Дата",
+    "selectDate": "Выберите дату",
+    "startTime": "Время начала",
+    "timeRange": "10:00 - 16:00",
+    "selectTime": "Выберите время",
+    "language": "Язык",
+    "selectLanguage": "Выберите язык",
+    "georgian": "Грузинский",
+    "english": "Английский",
+    "russian": "Русский",
+    "contactInfo": "Контактная информация",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "email": "Эл. почта",
+    "phoneNumber": "Номер телефона",
+    "personalId": "Личный номер",
+    "totalPrice": "Общая цена",
+    "book": "Забронировать",
+    "cancel": "Отмена",
+    "submitting": "Отправка...",
+    "success": "Урок успешно забронирован! Перенаправление..."
   }
 }
