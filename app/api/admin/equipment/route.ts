@@ -26,7 +26,7 @@ export async function GET(request: Request) {
         orderBy: { createdAt: 'desc' },
         include: {
           _count: {
-            select: { bookings: true },
+            select: { bookingProducts: true },
           },
         },
       }),
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
       size: product.size,
       standard: product.standard,
       professional: product.professional,
-      bookingsCount: product._count.bookings,
+      bookingsCount: product._count.bookingProducts,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     }))
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       },
       include: {
         _count: {
-          select: { bookings: true },
+          select: { bookingProducts: true },
         },
       },
     })
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
       size: product.size,
       standard: product.standard,
       professional: product.professional,
-      bookingsCount: product._count.bookings,
+      bookingsCount: product._count.bookingProducts,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     })

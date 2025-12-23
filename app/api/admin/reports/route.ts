@@ -107,11 +107,11 @@ export async function GET(request: Request) {
         take: 10,
         include: {
           _count: {
-            select: { bookings: true },
+            select: { bookingProducts: true },
           },
         },
         orderBy: {
-          bookings: {
+          bookingProducts: {
             _count: 'desc',
           },
         },
@@ -139,7 +139,7 @@ export async function GET(request: Request) {
         type: product.type,
         price: product.price,
         size: product.size,
-        bookingsCount: product._count.bookings,
+        bookingsCount: product._count.bookingProducts,
       })),
     })
   } catch (error) {

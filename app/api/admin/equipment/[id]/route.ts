@@ -11,7 +11,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       where: { id },
       include: {
         _count: {
-          select: { bookings: true },
+          select: { bookingProducts: true },
         },
       },
     })
@@ -27,7 +27,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       size: product.size,
       standard: product.standard,
       professional: product.professional,
-      bookingsCount: product._count.bookings,
+      bookingsCount: product._count.bookingProducts,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     })
@@ -74,7 +74,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       data: updateData,
       include: {
         _count: {
-          select: { bookings: true },
+          select: { bookingProducts: true },
         },
       },
     })
@@ -86,7 +86,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       size: product.size,
       standard: product.standard,
       professional: product.professional,
-      bookingsCount: product._count.bookings,
+      bookingsCount: product._count.bookingProducts,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     })
