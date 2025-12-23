@@ -55,7 +55,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
     if (body.price !== undefined) updateData.price = parseFloat(body.price)
     
-    const sizeRequiringTypes = [ProductType.ADULT_CLOTH, ProductType.CHILD_CLOTH, ProductType.ACCESSORY]
+    const sizeRequiringTypes: ProductType[] = [ProductType.ADULT_CLOTH]
     if (body.size !== undefined) {
       const productType = (body.type || updateData.type) as ProductType
       const shouldHaveSize = productType && sizeRequiringTypes.includes(productType)
