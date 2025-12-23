@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import { Link } from '@/i18n/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { BookingStatus } from '@/app/generated/prisma/enums'
@@ -8,193 +8,248 @@ import { ProductType } from '@/app/generated/prisma/enums'
 import { z } from 'zod'
 import ImageUpload from '@/components/CloudinaryUploader'
 
+// Types
+type AdminStats = {
+  totalBookings: number
+  activeRentals: number
+  totalRevenue: number
+  totalProducts: number
+}
+
+type AdminBooking = {
+  id: string
+  customer: string
+  equipment: string
+  startDate: string
+  endDate: string
+  status: string
+}
+
+type AdminOverview = {
+  stats: AdminStats
+  bookings: AdminBooking[]
+}
+
+type Booking = {
+  id: string
+  customer: string
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string
+  personalId: string
+  equipment: string
+  productId: string
+  startDate: string
+  endDate: string
+  status: string
+  totalPrice: number
+  createdAt: string
+  updatedAt: string
+}
+
+type Product = {
+  id: string
+  type: string
+  images: string[]
+  title: string
+  price: number
+  bookingsCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+type Customer = {
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string
+  personalId: string
+  bookingsCount: number
+  totalSpent: number
+  lastBooking: string | null
+}
+
+type ReportData = {
+  revenue: { total: number; confirmed: number }
+  bookings: {
+    total: number
+    byStatus: Array<{ status: string; count: number }>
+    byMonth: Array<{ month: string; count: number }>
+  }
+  topProducts: Array<{
+    id: string
+    title: string
+    type: string
+    price: number
+    bookingsCount: number
+  }>
+}
+
+type BookingFormData = {
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string
+  personalId: string
+  productId: string
+  startDate: string
+  endDate: string
+  totalPrice: string
+  status: BookingStatus
+}
+
+type EquipmentFormData = {
+  title: string
+  type: ProductType
+  price: string
+  images: string[]
+}
+
+// Constants
+const INITIAL_BOOKING_FORM: BookingFormData = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phoneNumber: '',
+  personalId: '',
+  productId: '',
+  startDate: '',
+  endDate: '',
+  totalPrice: '',
+  status: BookingStatus.PENDING,
+}
+
+const INITIAL_EQUIPMENT_FORM: EquipmentFormData = {
+  title: '',
+  type: ProductType.SKI,
+  price: '',
+  images: [],
+}
+
+// Zod schemas
+const bookingSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  email: z.string().email('Invalid email address'),
+  phoneNumber: z.string().min(1, 'Phone number is required'),
+  personalId: z.string().optional(),
+  productId: z.string().min(1, 'Equipment is required'),
+  startDate: z.string().min(1, 'Start date is required'),
+  endDate: z.string().min(1, 'End date is required'),
+  totalPrice: z.string().min(1, 'Price is required').refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Price must be a positive number'),
+  status: z.nativeEnum(BookingStatus),
+})
+
+const equipmentSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  type: z.nativeEnum(ProductType),
+  price: z.string().min(1, 'Price is required').refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Price must be a positive number'),
+  images: z.array(z.string()).optional(),
+})
+
 const AdminPage = () => {
   const t = useTranslations('admin')
   const locale = useLocale()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   // Dashboard state
-  type AdminStats = {
-    totalBookings: number
-    activeRentals: number
-    totalRevenue: number
-    totalProducts: number
-  }
-
-  type AdminBooking = {
-    id: string
-    customer: string
-    equipment: string
-    startDate: string
-    endDate: string
-    status: string
-  }
-
-  type AdminOverview = {
-    stats: AdminStats
-    bookings: AdminBooking[]
-  }
-
   const [dashboardData, setDashboardData] = useState<AdminOverview | null>(null)
   const [dashboardLoading, setDashboardLoading] = useState(true)
 
   // Bookings state
-  type Booking = {
-    id: string
-    customer: string
-    firstName: string
-    lastName: string
-    email: string
-    phoneNumber: string
-    personalId: string
-    equipment: string
-    productId: string
-    startDate: string
-    endDate: string
-    status: string
-    totalPrice: number
-    createdAt: string
-    updatedAt: string
-  }
-
   const [bookings, setBookings] = useState<Booking[]>([])
   const [bookingsLoading, setBookingsLoading] = useState(false)
   const [bookingsFilter, setBookingsFilter] = useState<string>('all')
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
+  const [submittingBooking, setSubmittingBooking] = useState(false)
 
   // Equipment state
-  type Product = {
-    id: string
-    type: string
-    images: string[]
-    title: string
-    price: number
-    bookingsCount: number
-    createdAt: string
-    updatedAt: string
-  }
-
   const [equipment, setEquipment] = useState<Product[]>([])
   const [equipmentLoading, setEquipmentLoading] = useState(false)
   const [equipmentFilter, setEquipmentFilter] = useState<string>('all')
   const [showEquipmentForm, setShowEquipmentForm] = useState(false)
   const [editingEquipment, setEditingEquipment] = useState<Product | null>(null)
+  const [submittingEquipment, setSubmittingEquipment] = useState(false)
 
   // Customers state
-  type Customer = {
-    firstName: string
-    lastName: string
-    email: string
-    phoneNumber: string
-    personalId: string
-    bookingsCount: number
-    totalSpent: number
-    lastBooking: string | null
-  }
-
   const [customers, setCustomers] = useState<Customer[]>([])
   const [customersLoading, setCustomersLoading] = useState(false)
 
   // Form state
-  const [bookingFormData, setBookingFormData] = useState<{
-    firstName: string
-    lastName: string
-    email: string
-    phoneNumber: string
-    personalId: string
-    productId: string
-    startDate: string
-    endDate: string
-    totalPrice: string
-    status: BookingStatus
-  }>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phoneNumber: '',
-    personalId: '',
-    productId: '',
-    startDate: '',
-    endDate: '',
-    totalPrice: '',
-    status: BookingStatus.PENDING,
-  })
+  const [bookingFormData, setBookingFormData] = useState<BookingFormData>(INITIAL_BOOKING_FORM)
   const [bookingFormErrors, setBookingFormErrors] = useState<Record<string, string>>({})
-  const [equipmentFormData, setEquipmentFormData] = useState<{
-    title: string
-    type: ProductType
-    price: string
-    images: string[]
-  }>({
-    title: '',
-    type: ProductType.SKI,
-    price: '',
-    images: [],
-  })
+  const [equipmentFormData, setEquipmentFormData] = useState<EquipmentFormData>(INITIAL_EQUIPMENT_FORM)
   const [equipmentFormErrors, setEquipmentFormErrors] = useState<Record<string, string>>({})
   const [availableProducts, setAvailableProducts] = useState<Product[]>([])
 
-  // Zod schemas
-  const bookingSchema = z.object({
-    firstName: z.string().min(1, 'First name is required'),
-    lastName: z.string().min(1, 'Last name is required'),
-    email: z.string().email('Invalid email address'),
-    phoneNumber: z.string().min(1, 'Phone number is required'),
-    personalId: z.string().optional(),
-    productId: z.string().min(1, 'Equipment is required'),
-    startDate: z.string().min(1, 'Start date is required'),
-    endDate: z.string().min(1, 'End date is required'),
-    totalPrice: z.string().min(1, 'Price is required').refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Price must be a positive number'),
-    status: z.nativeEnum(BookingStatus),
-  })
-
-  const equipmentSchema = z.object({
-    title: z.string().min(1, 'Title is required'),
-    type: z.nativeEnum(ProductType),
-    price: z.string().min(1, 'Price is required').refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Price must be a positive number'),
-    images: z.array(z.string()).optional(),
-  })
-
   // Reports state
-  type ReportData = {
-    revenue: { total: number; confirmed: number }
-    bookings: {
-      total: number
-      byStatus: Array<{ status: string; count: number }>
-      byMonth: Array<{ month: string; count: number }>
-    }
-    topProducts: Array<{
-      id: string
-      title: string
-      type: string
-      price: number
-      bookingsCount: number
-    }>
-  }
-
   const [reports, setReports] = useState<ReportData | null>(null)
   const [reportsLoading, setReportsLoading] = useState(false)
+
+  // Helper functions
+  const showError = useCallback((message: string) => {
+    setError(message)
+    setTimeout(() => setError(null), 5000)
+  }, [])
+
+  const showSuccess = useCallback((message: string) => {
+    setSuccess(message)
+    setTimeout(() => setSuccess(null), 3000)
+  }, [])
+
+  const resetBookingForm = useCallback(() => {
+    setBookingFormData(INITIAL_BOOKING_FORM)
+    setBookingFormErrors({})
+    setEditingBooking(null)
+  }, [])
+
+  const resetEquipmentForm = useCallback(() => {
+    setEquipmentFormData(INITIAL_EQUIPMENT_FORM)
+    setEquipmentFormErrors({})
+    setEditingEquipment(null)
+  }, [])
+
+  // Auto-calculate price when product and dates change
+  useEffect(() => {
+    if (bookingFormData.productId && bookingFormData.startDate && bookingFormData.endDate) {
+      const product = availableProducts.find((p) => p.id === bookingFormData.productId)
+      if (product) {
+        const start = new Date(bookingFormData.startDate)
+        const end = new Date(bookingFormData.endDate)
+        if (end > start) {
+          const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+          const calculatedPrice = (product.price * days).toFixed(2)
+          setBookingFormData((prev) => ({ ...prev, totalPrice: calculatedPrice }))
+        }
+      }
+    }
+  }, [bookingFormData.productId, bookingFormData.startDate, bookingFormData.endDate, availableProducts])
 
   // Fetch dashboard data
   useEffect(() => {
     if (activeTab === 'dashboard') {
       const fetchData = async () => {
         try {
+          setDashboardLoading(true)
           const response = await fetch('/api/admin/overview', { cache: 'no-store' })
           if (!response.ok) throw new Error('Failed to load admin data')
           const json = await response.json()
           setDashboardData(json)
         } catch (err) {
           console.error(err)
+          showError(err instanceof Error ? err.message : 'Failed to load dashboard data')
         } finally {
           setDashboardLoading(false)
         }
       }
       fetchData()
     }
-  }, [activeTab])
+  }, [activeTab, showError])
 
   // Fetch available products for booking form
   useEffect(() => {
@@ -221,7 +276,7 @@ const AdminPage = () => {
     }
   }, [activeTab, bookingsFilter])
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setBookingsLoading(true)
     try {
       const url = `/api/admin/bookings${bookingsFilter !== 'all' ? `?status=${bookingsFilter}` : ''}`
@@ -231,10 +286,11 @@ const AdminPage = () => {
       setBookings(json.bookings || [])
     } catch (err) {
       console.error(err)
+      showError(err instanceof Error ? err.message : 'Failed to load bookings')
     } finally {
       setBookingsLoading(false)
     }
-  }
+  }, [bookingsFilter, showError])
 
   // Fetch equipment
   useEffect(() => {
@@ -243,7 +299,7 @@ const AdminPage = () => {
     }
   }, [activeTab, equipmentFilter])
 
-  const fetchEquipment = async () => {
+  const fetchEquipment = useCallback(async () => {
     setEquipmentLoading(true)
     try {
       const url = `/api/admin/equipment${equipmentFilter !== 'all' ? `?type=${equipmentFilter}` : ''}`
@@ -253,10 +309,11 @@ const AdminPage = () => {
       setEquipment(json.products || [])
     } catch (err) {
       console.error(err)
+      showError(err instanceof Error ? err.message : 'Failed to load equipment')
     } finally {
       setEquipmentLoading(false)
     }
-  }
+  }, [equipmentFilter, showError])
 
   // Fetch customers
   useEffect(() => {
@@ -412,8 +469,14 @@ const AdminPage = () => {
     try {
       const validated = equipmentSchema.parse(equipmentFormData)
       
-      const response = await fetch('/api/admin/equipment', {
-        method: 'POST',
+      const url = editingEquipment 
+        ? `/api/admin/equipment/${editingEquipment.id}`
+        : '/api/admin/equipment'
+      
+      const method = editingEquipment ? 'PATCH' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...validated,
@@ -424,10 +487,11 @@ const AdminPage = () => {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.message || 'Failed to create equipment')
+        throw new Error(error.message || `Failed to ${editingEquipment ? 'update' : 'create'} equipment`)
       }
 
       setShowEquipmentForm(false)
+      setEditingEquipment(null)
       setEquipmentFormData({
         title: '',
         type: ProductType.SKI,
@@ -445,9 +509,20 @@ const AdminPage = () => {
         })
         setEquipmentFormErrors(errors)
       } else {
-        alert(err instanceof Error ? err.message : 'Failed to create equipment')
+        alert(err instanceof Error ? err.message : `Failed to ${editingEquipment ? 'update' : 'create'} equipment`)
       }
     }
+  }
+
+  const handleEditEquipment = (item: Product) => {
+    setEditingEquipment(item)
+    setEquipmentFormData({
+      title: item.title,
+      type: item.type as ProductType,
+      price: item.price.toString(),
+      images: item.images,
+    })
+    setShowEquipmentForm(true)
   }
 
   const formatCurrency = (amount: number) =>
@@ -486,12 +561,12 @@ const AdminPage = () => {
 
     return (
       <>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('dashboard.title')}</h1>
-          <p className="text-gray-600">{t('dashboard.subtitle')}</p>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{t('dashboard.title')}</h1>
+          <p className="text-sm md:text-base text-gray-600">{t('dashboard.subtitle')}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
           {stats.map((stat, index) => (
             <div
               key={index}
@@ -508,35 +583,36 @@ const AdminPage = () => {
           ))}
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-[16px] font-bold text-black">{t('bookings.recent')}</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 md:mb-6">
+            <h2 className="text-sm md:text-base font-bold text-black">{t('bookings.recent')}</h2>
             <button
               onClick={() => setActiveTab('bookings')}
-              className="text-[16px] text-red-600 hover:text-red-700 font-medium"
+              className="text-sm md:text-base text-red-600 hover:text-red-700 font-medium whitespace-nowrap"
             >
               {t('bookings.viewAll')} →
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('bookings.table.customer')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('bookings.table.equipment')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('bookings.table.date')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('bookings.table.status')}
-                  </th>
-                </tr>
-              </thead>
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('bookings.table.customer')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden sm:table-cell">
+                      {t('bookings.table.equipment')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('bookings.table.date')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('bookings.table.status')}
+                    </th>
+                  </tr>
+                </thead>
               <tbody>
                 {dashboardLoading && (
                   <tr className="border-b border-gray-100">
@@ -556,13 +632,16 @@ const AdminPage = () => {
                   recentBookings.map((booking) => {
                     const statusKey = booking.status.toLowerCase()
                     return (
-                      <tr key={booking.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-3 px-4 text-[16px] text-black">{booking.customer}</td>
-                        <td className="py-3 px-4 text-[16px] text-black">{booking.equipment}</td>
-                        <td className="py-3 px-4 text-[16px] text-black">{formatDate(booking.startDate)}</td>
-                        <td className="py-3 px-4">
+                      <tr key={booking.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
+                        <td className="px-3 py-3 text-xs md:text-sm text-black">
+                          <div className="font-medium">{booking.customer}</div>
+                          <div className="text-gray-500 sm:hidden mt-1">{booking.equipment}</div>
+                        </td>
+                        <td className="px-3 py-3 text-xs md:text-sm text-black hidden sm:table-cell">{booking.equipment}</td>
+                        <td className="px-3 py-3 text-xs md:text-sm text-black whitespace-nowrap">{formatDate(booking.startDate)}</td>
+                        <td className="px-3 py-3">
                           <span
-                            className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                            className={`inline-block px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                               statusIsActive(booking.status)
                                 ? 'bg-green-100 text-green-800'
                                 : booking.status === 'CANCELLED'
@@ -580,6 +659,7 @@ const AdminPage = () => {
             </table>
           </div>
         </div>
+        </div>
       </>
     )
   }
@@ -589,11 +669,11 @@ const AdminPage = () => {
       <>
         {/* Booking Form Modal */}
         {showBookingForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-black">{t('bookings.add')}</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4 md:mb-6">
+                  <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-black">{t('bookings.add')}</h2>
                   <button
                     onClick={() => {
                       setShowBookingForm(false)
@@ -802,10 +882,10 @@ const AdminPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex gap-4 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <button
                       type="submit"
-                      className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                      className="w-full sm:w-auto bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm md:text-base"
                     >
                       {t('bookings.form.save')}
                     </button>
@@ -827,7 +907,7 @@ const AdminPage = () => {
                           status: BookingStatus.PENDING,
                         })
                       }}
-                      className="bg-gray-200 text-black px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                      className="w-full sm:w-auto bg-gray-200 text-black px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm md:text-base"
                     >
                       {t('bookings.form.cancel')}
                     </button>
@@ -838,23 +918,21 @@ const AdminPage = () => {
           </div>
         )}
 
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <h1 className="text-[16px] font-bold text-black mb-2">{t('bookings.title')}</h1>
-              <p className="text-[16px] text-black">{t('bookings.subtitle')}</p>
+              <h1 className="text-lg md:text-xl font-bold text-black mb-1 md:mb-2">{t('bookings.title')}</h1>
+              <p className="text-sm md:text-base text-black">{t('bookings.subtitle')}</p>
             </div>
-           
           </div>
         </div>
 
-        <div className="mb-4 flex items-center gap-4">
-          <label className="text-[16px] font-medium text-black">{t('bookings.filter')}:</label>
+        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+          <label className="text-sm md:text-base font-medium text-black whitespace-nowrap">{t('bookings.filter')}:</label>
           <select
             value={bookingsFilter}
             onChange={(e) => setBookingsFilter(e.target.value)}
-            
-            className="border border-gray-300 rounded-lg px-4 py-2 text-[16px] text-black"
+            className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 md:px-4 py-2 text-sm md:text-base text-black"
           >
             <option value="all">{t('bookings.all')}</option>
             <option value="PENDING">{t('bookings.status.pending')}</option>
@@ -864,32 +942,32 @@ const AdminPage = () => {
           </select>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('bookings.table.customer')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('bookings.table.equipment')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('bookings.table.date')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('bookings.table.price')}
-                  </th>
-                  
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('bookings.table.status')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('bookings.table.actions')}
-                  </th>
-                </tr>
-              </thead>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('bookings.table.customer')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell">
+                      {t('bookings.table.equipment')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden md:table-cell">
+                      {t('bookings.table.date')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell">
+                      {t('bookings.table.price')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('bookings.table.status')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('bookings.table.actions')}
+                    </th>
+                  </tr>
+                </thead>
               <tbody>
                 {bookingsLoading && (
                   <tr className="border-b border-gray-100">
@@ -909,18 +987,25 @@ const AdminPage = () => {
                   bookings.map((booking) => {
                     const statusKey = booking.status.toLowerCase()
                     return (
-                      <tr key={booking.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-3 px-4 text-[16px] text-black">{booking.customer}</td>
-                        <td className="py-3 px-4 text-[16px] text-black">{booking.equipment}</td>
-                        <td className="py-3 px-4 text-[16px] text-black">
+                      <tr key={booking.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
+                        <td className="px-3 py-3 text-xs md:text-sm text-black">
+                          <div className="font-medium">{booking.customer}</div>
+                          <div className="text-gray-500 lg:hidden mt-1 text-xs">{booking.equipment}</div>
+                          <div className="text-gray-500 md:hidden mt-1 text-xs">
+                            {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
+                          </div>
+                          <div className="text-gray-500 lg:hidden mt-1 text-xs">{formatCurrency(booking.totalPrice)}</div>
+                        </td>
+                        <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">{booking.equipment}</td>
+                        <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell whitespace-nowrap">
                           {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
                         </td>
-                     
-                        <td className="py-3 px-4">
+                        <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">{formatCurrency(booking.totalPrice)}</td>
+                        <td className="px-3 py-3">
                           <select
                             value={booking.status}
                             onChange={(e) => handleBookingStatusChange(booking.id, e.target.value)}
-                            className={`text-[16px] font-medium px-3 py-1 rounded-full border-0 ${
+                            className={`text-xs md:text-sm font-medium px-2 md:px-3 py-1 rounded-full border-0 w-full sm:w-auto ${
                               statusIsActive(booking.status)
                                 ? 'bg-green-100 text-green-800'
                                 : booking.status === 'CANCELLED'
@@ -934,10 +1019,10 @@ const AdminPage = () => {
                             <option value="COMPLETED">{t('bookings.status.completed')}</option>
                           </select>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="px-3 py-3">
                           <button
                             onClick={() => handleDeleteBooking(booking.id)}
-                            className="text-red-600 hover:text-red-700 text-[16px]"
+                            className="text-red-600 hover:text-red-700 text-xs md:text-sm whitespace-nowrap"
                           >
                             {t('bookings.delete')}
                           </button>
@@ -949,6 +1034,7 @@ const AdminPage = () => {
             </table>
           </div>
         </div>
+        </div>
       </>
     )
   }
@@ -958,14 +1044,17 @@ const AdminPage = () => {
       <>
         {/* Equipment Form Modal */}
         {showEquipmentForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-[16px] font-bold text-black">{t('equipment.add')}</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4 md:mb-6">
+                  <h2 className="text-lg md:text-xl font-bold text-black">
+                    {editingEquipment ? t('equipment.edit') : t('equipment.add')}
+                  </h2>
                   <button
                     onClick={() => {
                       setShowEquipmentForm(false)
+                      setEditingEquipment(null)
                       setEquipmentFormErrors({})
                       setEquipmentFormData({
                         title: '',
@@ -1045,10 +1134,10 @@ const AdminPage = () => {
                     />
                   </div>
 
-                  <div className="flex gap-4 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <button
                       type="submit"
-                      className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                      className="w-full sm:w-auto bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm md:text-base"
                     >
                       {t('equipment.form.save')}
                     </button>
@@ -1056,6 +1145,7 @@ const AdminPage = () => {
                       type="button"
                       onClick={() => {
                         setShowEquipmentForm(false)
+                        setEditingEquipment(null)
                         setEquipmentFormErrors({})
                         setEquipmentFormData({
                           title: '',
@@ -1064,7 +1154,7 @@ const AdminPage = () => {
                           images: [],
                         })
                       }}
-                      className="bg-gray-200 text-black px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                      className="w-full sm:w-auto bg-gray-200 text-black px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm md:text-base"
                     >
                       {t('equipment.form.cancel')}
                     </button>
@@ -1075,30 +1165,30 @@ const AdminPage = () => {
           </div>
         )}
 
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <h1 className="text-[16px] font-bold text-black mb-2">{t('equipment.title')}</h1>
-              <p className="text-[16px] text-gray-600">{t('equipment.subtitle')}</p>
+              <h1 className="text-lg md:text-xl font-bold text-black mb-1 md:mb-2">{t('equipment.title')}</h1>
+              <p className="text-sm md:text-base text-gray-600">{t('equipment.subtitle')}</p>
             </div>
             <button
               onClick={() => {
                 setEditingEquipment(null)
                 setShowEquipmentForm(true)
               }}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              className="w-full sm:w-auto bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm md:text-base"
             >
               {t('equipment.add')}
             </button>
           </div>
         </div>
 
-        <div className="mb-4 flex items-center gap-4">
-          <label className="text-[16px] font-medium text-black">{t('equipment.filter')}:</label>
+        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+          <label className="text-sm md:text-base font-medium text-black whitespace-nowrap">{t('equipment.filter')}:</label>
           <select
             value={equipmentFilter}
             onChange={(e) => setEquipmentFilter(e.target.value)}
-            className="border border-gray-300 rounded-lg px-4 py-2 text-[16px] text-black"
+            className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 md:px-4 py-2 text-sm md:text-base text-black"
           >
             <option value="all">{t('equipment.all')}</option>
             <option value="SKI">{t('equipment.types.SKI')}</option>
@@ -1107,28 +1197,29 @@ const AdminPage = () => {
           </select>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('equipment.table.title')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('equipment.table.type')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('equipment.table.price')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('equipment.table.bookings')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('equipment.table.actions')}
-                  </th>
-                </tr>
-              </thead>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('equipment.table.title')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden md:table-cell">
+                      {t('equipment.table.type')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('equipment.table.price')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell">
+                      {t('equipment.table.bookings')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('equipment.table.actions')}
+                    </th>
+                  </tr>
+                </thead>
               <tbody>
                 {equipmentLoading && (
                   <tr className="border-b border-gray-100">
@@ -1146,24 +1237,37 @@ const AdminPage = () => {
                 )}
                 {!equipmentLoading &&
                   equipment.map((item) => (
-                    <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-[16px] text-black">{item.title}</td>
-                      <td className="py-3 px-4 text-[16px] text-black">{t(`equipment.types.${item.type}`)}</td>
-                      <td className="py-3 px-4 text-[16px] text-black">{formatCurrency(item.price)}</td>
-                      <td className="py-3 px-4 text-[16px] text-black">{item.bookingsCount}</td>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() => handleDeleteEquipment(item.id)}
-                          className="text-red-600 hover:text-red-700 text-[16px]"
-                        >
-                          {t('equipment.delete')}
-                        </button>
+                    <tr key={item.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
+                      <td className="px-3 py-3 text-xs md:text-sm text-black">
+                        <div className="font-medium">{item.title}</div>
+                        <div className="text-gray-500 md:hidden mt-1 text-xs">{t(`equipment.types.${item.type}`)}</div>
+                        <div className="text-gray-500 lg:hidden mt-1 text-xs">{t('equipment.table.bookings')}: {item.bookingsCount}</div>
+                      </td>
+                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell">{t(`equipment.types.${item.type}`)}</td>
+                      <td className="px-3 py-3 text-xs md:text-sm text-black whitespace-nowrap">{formatCurrency(item.price)}</td>
+                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">{item.bookingsCount}</td>
+                      <td className="px-3 py-3">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <button
+                            onClick={() => handleEditEquipment(item)}
+                            className="w-full sm:w-auto flex text-xs md:text-sm items-center justify-center px-3 md:px-4 py-2 md:py-3 rounded-lg transition-colors bg-orange-600 text-white hover:bg-orange-700"
+                          >
+                            {t('equipment.edit')}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEquipment(item.id)}
+                            className="w-full sm:w-auto text-red-600 hover:text-red-700 text-xs md:text-sm px-3 py-2 text-center"
+                          >
+                            {t('equipment.delete')}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       </>
     )
@@ -1172,36 +1276,37 @@ const AdminPage = () => {
   const renderCustomers = () => {
     return (
       <>
-        <div className="mb-8">
-          <h1 className="text-[16px] font-bold text-black mb-2">{t('customers.title')}</h1>
-          <p className="text-[16px] text-black">{t('customers.subtitle')}</p>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-lg md:text-xl font-bold text-black mb-1 md:mb-2">{t('customers.title')}</h1>
+          <p className="text-sm md:text-base text-black">{t('customers.subtitle')}</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('customers.table.name')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('customers.table.email')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('customers.table.phone')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('customers.table.bookings')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('customers.table.totalSpent')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('customers.table.lastBooking')}
-                  </th>
-                </tr>
-              </thead>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('customers.table.name')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden md:table-cell">
+                      {t('customers.table.email')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell">
+                      {t('customers.table.phone')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden sm:table-cell">
+                      {t('customers.table.bookings')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell">
+                      {t('customers.table.totalSpent')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden xl:table-cell">
+                      {t('customers.table.lastBooking')}
+                    </th>
+                  </tr>
+                </thead>
               <tbody>
                 {customersLoading && (
                   <tr className="border-b border-gray-100">
@@ -1219,15 +1324,22 @@ const AdminPage = () => {
                 )}
                 {!customersLoading &&
                   customers.map((customer, index) => (
-                    <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-[16px] text-black">
-                        {customer.firstName} {customer.lastName}
+                    <tr key={index} className="bg-white border-b border-gray-100 hover:bg-gray-50">
+                      <td className="px-3 py-3 text-xs md:text-sm text-black">
+                        <div className="font-medium">{customer.firstName} {customer.lastName}</div>
+                        <div className="text-gray-500 md:hidden mt-1 text-xs">{customer.email}</div>
+                        <div className="text-gray-500 lg:hidden mt-1 text-xs">{customer.phoneNumber}</div>
+                        <div className="text-gray-500 sm:hidden mt-1 text-xs">{t('customers.table.bookings')}: {customer.bookingsCount}</div>
+                        <div className="text-gray-500 lg:hidden mt-1 text-xs">{formatCurrency(customer.totalSpent)}</div>
+                        <div className="text-gray-500 xl:hidden mt-1 text-xs">
+                          {customer.lastBooking ? formatDate(customer.lastBooking) : '—'}
+                        </div>
                       </td>
-                      <td className="py-3 px-4 text-[16px] text-black">{customer.email}</td>
-                      <td className="py-3 px-4 text-[16px] text-black">{customer.phoneNumber}</td>
-                      <td className="py-3 px-4 text-[16px] text-black">{customer.bookingsCount}</td>
-                      <td className="py-3 px-4 text-[16px] text-black">{formatCurrency(customer.totalSpent)}</td>
-                      <td className="py-3 px-4 text-[16px] text-black">
+                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell">{customer.email}</td>
+                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">{customer.phoneNumber}</td>
+                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden sm:table-cell">{customer.bookingsCount}</td>
+                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">{formatCurrency(customer.totalSpent)}</td>
+                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden xl:table-cell">
                         {customer.lastBooking ? formatDate(customer.lastBooking) : '—'}
                       </td>
                     </tr>
@@ -1235,6 +1347,7 @@ const AdminPage = () => {
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       </>
     )
@@ -1253,14 +1366,14 @@ const AdminPage = () => {
 
     return (
       <>
-        <div className="mb-8">
-          <h1 className="text-[16px] font-bold text-black mb-2">{t('reports.title')}</h1>
-          <p className="text-[16px] text-black">{t('reports.subtitle')}</p>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-lg md:text-xl font-bold text-black mb-1 md:mb-2">{t('reports.title')}</h1>
+          <p className="text-sm md:text-base text-black">{t('reports.subtitle')}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-[16px] font-bold text-black mb-4">{t('reports.revenue.title')}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+            <h2 className="text-base md:text-lg font-bold text-black mb-3 md:mb-4">{t('reports.revenue.title')}</h2>
             <div className="space-y-3">
               <div>
                 <div className="text-[16px] text-black">{t('reports.revenue.total')}</div>
@@ -1273,8 +1386,8 @@ const AdminPage = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-[16px] font-bold text-black mb-4">{t('reports.bookings.title')}</h2>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+            <h2 className="text-base md:text-lg font-bold text-black mb-3 md:mb-4">{t('reports.bookings.title')}</h2>
             <div className="space-y-3">
               <div>
                 <div className="text-[16px] text-black">{t('reports.bookings.total')}</div>
@@ -1295,38 +1408,43 @@ const AdminPage = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-[16px] font-bold text-black mb-4">{t('reports.topProducts.title')}</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('equipment.table.title')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('equipment.table.type')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('equipment.table.price')}
-                  </th>
-                  <th className="text-left py-3 px-4 text-[16px] font-semibold text-black">
-                    {t('reports.topProducts.bookings')}
-                  </th>
-                </tr>
-              </thead>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          <h2 className="text-base md:text-lg font-bold text-black mb-3 md:mb-4">{t('reports.topProducts.title')}</h2>
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('equipment.table.title')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden md:table-cell">
+                      {t('equipment.table.type')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('equipment.table.price')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('reports.topProducts.bookings')}
+                    </th>
+                  </tr>
+                </thead>
               <tbody>
                 {reports.topProducts.map((product) => (
-                  <tr key={product.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-3 px-4 text-[16px] text-black">{product.title}</td>
-                    <td className="py-3 px-4 text-[16px] text-black">{t(`equipment.types.${product.type}`)}</td>
-                    <td className="py-3 px-4 text-[16px] text-black">{formatCurrency(product.price)}</td>
-                    <td className="py-3 px-4 text-[16px] text-black">{product.bookingsCount}</td>
+                  <tr key={product.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
+                    <td className="px-3 py-3 text-xs md:text-sm text-black">
+                      <div className="font-medium">{product.title}</div>
+                      <div className="text-gray-500 md:hidden mt-1 text-xs">{t(`equipment.types.${product.type}`)}</div>
+                    </td>
+                    <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell">{t(`equipment.types.${product.type}`)}</td>
+                    <td className="px-3 py-3 text-xs md:text-sm text-black whitespace-nowrap">{formatCurrency(product.price)}</td>
+                    <td className="px-3 py-3 text-xs md:text-sm text-black">{product.bookingsCount}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       </>
     )
@@ -1335,12 +1453,12 @@ const AdminPage = () => {
   const renderSettings = () => {
     return (
       <>
-        <div className="mb-8">
-          <h1 className="text-[16px] font-bold text-black mb-2">{t('settings.title')}</h1>
-          <p className="text-gray-600">{t('settings.subtitle')}</p>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-lg md:text-xl font-bold text-black mb-1 md:mb-2">{t('settings.title')}</h1>
+          <p className="text-sm md:text-base text-gray-600">{t('settings.subtitle')}</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
           <div className="space-y-6">
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('settings.general.title')}</h2>
@@ -1410,7 +1528,7 @@ const AdminPage = () => {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-4 left-4 z-50 md:hidden bg-white p-2 rounded-lg shadow-lg"
+        className="fixed top-[70px] left-4 z-50 md:hidden bg-white p-2 rounded-lg shadow-lg"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -1427,14 +1545,14 @@ const AdminPage = () => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-40 transition-transform duration-300 ${
+        className={`fixed left-0 top-0 h-full w-56 sm:w-64 bg-white shadow-lg z-40 transition-transform duration-300 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        <div className="p-6">
-          <Link href="/" className="flex items-center space-x-2 mb-8">
-            <span className="text-2xl font-bold text-red-600">SkiRental</span>
-            <span className="text-[16px] text-black">{t('adminLabel')}</span>
+        <div className="p-4 sm:p-6">
+          <Link href="/" className="flex items-center space-x-2 mb-6 md:mb-8">
+            <span className="text-xl sm:text-2xl font-bold text-red-600">SkiRental</span>
+            <span className="text-sm sm:text-base text-black hidden sm:inline">{t('adminLabel')}</span>
           </Link>
 
           <nav className="space-y-2">
@@ -1470,7 +1588,7 @@ const AdminPage = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="md:ml-64 p-4 md:p-8 pt-16 md:pt-8">{renderContent()}</main>
+      <main className="md:ml-56 lg:ml-64 p-3 sm:p-4 md:p-6 lg:p-8 pt-14 sm:pt-16 md:pt-8">{renderContent()}</main>
     </div>
   )
 }

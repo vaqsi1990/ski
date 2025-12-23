@@ -32,7 +32,7 @@ const Header = () => {
                             {t('home')}
                         </Link>
                         <Link 
-                            href="/inventory" 
+                            href="/items" 
                             className="text-black md:text-[20px] text-[16px] hover:text-orange-500 transition-colors font-medium"
                         >
                           {t('equipment')}
@@ -95,7 +95,7 @@ const Header = () => {
                                 {t('home')}
                             </Link>
                             <Link
-                                href="/inventory"
+                                href="/items"
                                 className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
                                 onClick={() => setIsMenuOpen(false)}
                             >

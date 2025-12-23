@@ -24,6 +24,8 @@
   "equipment": {
     "title": "Equipment",
     "viewMore": "View More",
+    "loading": "Loading equipment...",
+    "empty": "No equipment found",
     "items": {
       "skis": {
         "name": "Skis",
@@ -171,7 +173,7 @@
       "loading": "Loading equipment…",
       "empty": "No equipment found.",
       "add": "Add Equipment",
-      "edit": "Edit Equipment",
+      "edit": "Edit",
       "delete": "Delete",
       "filter": "Filter by Type",
       "all": "All",

@@ -54,18 +54,21 @@ const Equipment = () => {
         {
             id: 1,
             key: 'skis',
+            type: 'SKI',
             image: '/images/1.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
         },
         {
             id: 2,
             key: 'snowboards',
+            type: 'SNOWBOARD',
             image: '/images/2.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
         },
         {
             id: 3,
             key: 'accessories',
+            type: 'OTHER',
             image: '/images/3.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
         },
@@ -100,7 +103,7 @@ const Equipment = () => {
                             }}
                         >
                             <Link
-                                href={`/equipment/${item.id}`}
+                                href={`/items?type=${item.type}`}
                                 className="group relative h-[500px] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 block"
                             >
                                 {/* Background Image */}
