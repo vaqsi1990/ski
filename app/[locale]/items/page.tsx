@@ -217,10 +217,10 @@ const ItemsPage = () => {
                         </p>
                         {/* Booking Button */}
                         <Link
-                          href={`/?productId=${product.id}`}
+                          href={`/booking?productId=${product.id}`}
                           className="inline-block px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
                         >
-                          დაჯავშნა
+                          {t('book')}
                         </Link>
                       </motion.div>
                     </div>

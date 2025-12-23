@@ -27,6 +27,7 @@
     "loading": "Loading equipment...",
     "empty": "No equipment found",
     "size": "Size",
+    "book": "Book Now",
     "items": {
       "skis": {
         "name": "Skis",
