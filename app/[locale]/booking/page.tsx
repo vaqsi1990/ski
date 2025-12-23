@@ -12,6 +12,8 @@ type Product = {
   type: string
   price: number
   size?: string | null
+  standard?: boolean | null
+  professional?: boolean | null
 }
 
 type BookingFormData = {
@@ -21,6 +23,7 @@ type BookingFormData = {
   phoneNumber: string
   personalId: string
   productId: string
+  numberOfPeople: string
   startDate: Date | null
   endDate: Date | null
   totalPrice: string
@@ -33,6 +36,7 @@ const bookingSchema = z.object({
   phoneNumber: z.string().min(1, 'Phone number is required'),
   personalId: z.string().optional(),
   productId: z.string().min(1, 'Equipment is required'),
+  numberOfPeople: z.string().min(1, 'Number of people is required'),
   startDate: z.date({ message: 'Start date is required' }).nullable().refine((val) => val !== null, {
     message: 'Start date is required',
   }),
@@ -47,6 +51,16 @@ const bookingSchema = z.object({
   return true
 }, {
   message: 'End date must be after or equal to start date',
+  path: ['endDate'],
+}).refine((data) => {
+  if (data.startDate && data.endDate) {
+    const diffTime = data.endDate.getTime() - data.startDate.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays <= 14
+  }
+  return true
+}, {
+  message: 'Booking period cannot exceed 2 weeks (14 days)',
   path: ['endDate'],
 })
 
@@ -70,6 +84,7 @@ const BookingPage = () => {
     phoneNumber: '',
     personalId: '',
     productId: productIdFromUrl || '',
+    numberOfPeople: '',
     startDate: null,
     endDate: null,
     totalPrice: '',
@@ -155,6 +170,7 @@ const BookingPage = () => {
           phoneNumber: validated.phoneNumber,
           personalId: validated.personalId,
           productId: validated.productId,
+          numberOfPeople: validated.numberOfPeople,
           startDate: validated.startDate.toISOString(),
           endDate: validated.endDate.toISOString(),
           totalPrice: parseFloat(formData.totalPrice),
@@ -200,6 +216,118 @@ const BookingPage = () => {
 
         <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-[18px] font-medium text-black mb-2">
+                {t('product')} *
+              </label>
+              {loading ? (
+                <div className="text-[18px] text-black">Loading products...</div>
+              ) : products.length === 0 ? (
+                <div className="text-[18px] text-gray-500">No products available</div>
+              ) : (
+                <select
+                  value={formData.productId}
+                  onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
+                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                    errors.productId ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">აირჩიეთ აღჭურვილობა</option>
+                  {products.map((product) => {
+                    let label = product.type.replace(/_/g, ' ')
+                    if (product.type === 'ADULT_CLOTH' && product.size) {
+                      label += ` (${product.size})`
+                    }
+                    const badges = []
+                    if (product.standard) badges.push('Standard')
+                    if (product.professional) badges.push('Professional')
+                    if (badges.length > 0) {
+                      label += ` [${badges.join(', ')}]`
+                    }
+                    label += ` - ${formatCurrency(product.price)}`
+                    return (
+                      <option key={product.id} value={product.id}>
+                        {label}
+                      </option>
+                    )
+                  })}
+                </select>
+              )}
+              {errors.productId && (
+                <p className="text-red-500 text-[18px] mt-1">{errors.productId}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-[18px] font-medium text-black mb-2">
+                  {t('startDate')} *
+                </label>
+                <DatePicker
+                  selected={formData.startDate}
+                  onChange={(date: Date | null) => setFormData({ ...formData, startDate: date })}
+                  minDate={new Date()}
+                  selectsStart
+                  startDate={formData.startDate}
+                  endDate={formData.endDate}
+                  dateFormat="yyyy-MM-dd"
+                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                    errors.startDate ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholderText="Select start date"
+                />
+                {errors.startDate && (
+                  <p className="text-red-500 text-[18px] mt-1">{errors.startDate}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[18px] font-medium text-black mb-2">
+                  {t('endDate')} *
+                </label>
+                <DatePicker
+                  selected={formData.endDate}
+                  onChange={(date: Date | null) => setFormData({ ...formData, endDate: date })}
+                  minDate={formData.startDate || new Date()}
+                  maxDate={formData.startDate ? (() => {
+                    const maxDate = new Date(formData.startDate)
+                    maxDate.setDate(maxDate.getDate() + 14)
+                    return maxDate
+                  })() : undefined}
+                  selectsEnd
+                  startDate={formData.startDate}
+                  endDate={formData.endDate}
+                  dateFormat="yyyy-MM-dd"
+                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                    errors.endDate ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholderText="Select end date"
+                />
+                {errors.endDate && (
+                  <p className="text-red-500 text-[18px] mt-1">{errors.endDate}</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[18px] font-medium text-black mb-2">
+                ადამიანების რაოდენობა *
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={formData.numberOfPeople}
+                onChange={(e) => setFormData({ ...formData, numberOfPeople: e.target.value })}
+                className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                  errors.numberOfPeople ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="მაგ: 2"
+              />
+              {errors.numberOfPeople && (
+                <p className="text-red-500 text-[18px] mt-1">{errors.numberOfPeople}</p>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-[18px] font-medium text-black mb-2">
@@ -281,109 +409,12 @@ const BookingPage = () => {
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 text-[18px] text-black"
               />
             </div>
-
-            <div>
-              <label className="block text-[18px] font-medium text-black mb-2">
-                {t('product')} *
-              </label>
-              {loading ? (
-                <div className="text-[18px] text-black">Loading products...</div>
-              ) : productIdFromUrl ? (
-                // Show selected product as read-only when coming from items page
-                <>
-                  <input type="hidden" name="productId" value={formData.productId} />
-                  <div className="w-full border border-gray-300 rounded-lg px-4 py-3 text-[18px] text-black bg-gray-50">
-                    {(() => {
-                      const selectedProduct = products.find((p) => p.id === formData.productId)
-                      return selectedProduct ? (
-                        <div>
-                          <div className="font-semibold">
-                            {selectedProduct.type}
-                            {(selectedProduct.type === 'ADULT_CLOTH' || selectedProduct.type === 'CHILD_CLOTH' || selectedProduct.type === 'ACCESSORY') && selectedProduct.size && ` (${selectedProduct.size})`}
-                          </div>
-                          <div className="text-gray-600 text-[16px] mt-1">
-                            {formatCurrency(selectedProduct.price)}
-                            {(selectedProduct.type === 'ADULT_CLOTH' || selectedProduct.type === 'CHILD_CLOTH' || selectedProduct.type === 'ACCESSORY') && selectedProduct.size && ` • Size: ${selectedProduct.size}`}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-gray-500">Loading product...</div>
-                      )
-                    })()}
-                  </div>
-                </>
-              ) : (
-                <select
-                  value={formData.productId}
-                  onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
-                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                    errors.productId ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">{t('product')}</option>
-                  {products.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.type}{(product.type === 'ADULT_CLOTH' || product.type === 'CHILD_CLOTH' || product.type === 'ACCESSORY') && product.size ? ` (${product.size})` : ''} - {formatCurrency(product.price)}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {errors.productId && (
-                <p className="text-red-500 text-[18px] mt-1">{errors.productId}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-[18px] font-medium text-black mb-2">
-                  {t('startDate')} *
-                </label>
-                <DatePicker
-                  selected={formData.startDate}
-                  onChange={(date: Date | null) => setFormData({ ...formData, startDate: date })}
-                  minDate={new Date()}
-                  selectsStart
-                  startDate={formData.startDate}
-                  endDate={formData.endDate}
-                  dateFormat="yyyy-MM-dd"
-                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                    errors.startDate ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholderText="Select start date"
-                />
-                {errors.startDate && (
-                  <p className="text-red-500 text-[18px] mt-1">{errors.startDate}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-[18px] font-medium text-black mb-2">
-                  {t('endDate')} *
-                </label>
-                <DatePicker
-                  selected={formData.endDate}
-                  onChange={(date: Date | null) => setFormData({ ...formData, endDate: date })}
-                  minDate={formData.startDate || new Date()}
-                  selectsEnd
-                  startDate={formData.startDate}
-                  endDate={formData.endDate}
-                  dateFormat="yyyy-MM-dd"
-                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                    errors.endDate ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholderText="Select end date"
-                />
-                {errors.endDate && (
-                  <p className="text-red-500 text-[18px] mt-1">{errors.endDate}</p>
-                )}
-              </div>
-            </div>
             
             {/* Display calculated price */}
             {formData.totalPrice && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                 <div className="text-[18px] text-black">
-                  <span className="font-semibold">Total Price: </span>
+                  <span className="font-semibold">{t('totalPrice')} </span>
                   <span className="text-orange-600 font-bold">{formatCurrency(parseFloat(formData.totalPrice))}</span>
                   {formData.productId && formData.startDate && formData.endDate && (
                     <span className="text-gray-600 text-[16px] block mt-1">

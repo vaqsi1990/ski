@@ -14,12 +14,13 @@ export async function POST(request: Request) {
       phoneNumber,
       email,
       personalId,
+      numberOfPeople,
       startDate,
       endDate,
       totalPrice,
     } = body
 
-    if (!productId || !firstName || !lastName || !phoneNumber || !email || !startDate || !endDate || !totalPrice) {
+    if (!productId || !firstName || !lastName || !phoneNumber || !email || !startDate || !endDate || !totalPrice || !numberOfPeople) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
     }
 
@@ -28,6 +29,13 @@ export async function POST(request: Request) {
     const end = new Date(endDate)
     if (end <= start) {
       return NextResponse.json({ message: 'End date must be after start date' }, { status: 400 })
+    }
+    
+    // Validate booking period (max 2 weeks / 14 days)
+    const diffTime = end.getTime() - start.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    if (diffDays > 14) {
+      return NextResponse.json({ message: 'Booking period cannot exceed 2 weeks (14 days)' }, { status: 400 })
     }
 
     // Check if product exists
@@ -47,6 +55,7 @@ export async function POST(request: Request) {
         phoneNumber,
         email,
         personalId: personalId || '',
+        numberOfPeople: numberOfPeople || null,
         startDate: start,
         endDate: end,
         totalPrice: parseFloat(totalPrice),

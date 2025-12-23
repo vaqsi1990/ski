@@ -809,7 +809,7 @@ const AdminPage = () => {
                       <option value="">{t('bookings.form.product')}</option>
                       {availableProducts.map((product) => (
                         <option key={product.id} value={product.id}>
-                          {product.type}{product.type === 'ADULT_CLOTH' && product.size ? ` (${product.size})` : ''} - {formatCurrency(product.price)}
+                          {product.type.replace(/_/g, ' ')}{product.type === 'ADULT_CLOTH' && product.size ? ` (${product.size})` : ''} - {formatCurrency(product.price)}
                         </option>
                       ))}
                     </select>

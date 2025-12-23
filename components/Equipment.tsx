@@ -57,20 +57,23 @@ const Equipment = () => {
             type: 'SKI',
             image: '/images/1.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
+            link: '/booking?type=SKI',
         },
         {
             id: 2,
             key: 'snowboards',
             type: 'SNOWBOARD',
-            image: '/images/2.png',
+            image: '/images/serv6.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
+            link: '/booking?type=SNOWBOARD',
         },
         {
             id: 3,
             key: 'accessories',
             type: 'ACCESSORY',
-            image: '/images/3.png',
+            image: '/images/serv3.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
+            link: '/booking?type=ACCESSORY',
         },
     ]
 
@@ -103,7 +106,7 @@ const Equipment = () => {
                             }}
                         >
                             <Link
-                                href={`/items?type=${item.type}`}
+                                href={item.link}
                                 className="group relative h-[500px] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 block"
                             >
                                 {/* Background Image */}

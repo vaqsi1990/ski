@@ -48,18 +48,19 @@ model Product {
 }
 
 model Booking {
-  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  productId  String        @db.Uuid
-  product    Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
-  firstName  String
-  lastName   String
-  phoneNumber String
-  email      String
-  personalId String
-  startDate  DateTime
-  endDate    DateTime
-  status     BookingStatus @default(PENDING)
-  totalPrice Float
-  createdAt  DateTime      @default(now()) @db.Timestamp(6)
-  updatedAt  DateTime      @updatedAt
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId     String        @db.Uuid
+  product       Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  firstName     String
+  lastName      String
+  phoneNumber   String
+  email         String
+  personalId    String
+  numberOfPeople String?      // Number of people for the booking
+  startDate     DateTime
+  endDate       DateTime
+  status        BookingStatus @default(PENDING)
+  totalPrice    Float
+  createdAt     DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime      @updatedAt
 }
