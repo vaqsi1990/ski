@@ -20,6 +20,7 @@ const Header = () => {
                         <Link href="/" className="flex items-center space-x-2">
                           
                             <Image src="/logo.jpg" alt="logo" width={50} height={50} />
+                            <span className="text-xl   sm:text-2xl font-bold text-[#08964c]">Fanatic</span>
                         </Link>
                     </div>
 
@@ -27,28 +28,23 @@ const Header = () => {
                     <nav className="hidden md:flex space-x-8 items-center">
                     <Link 
                             href="/" 
-                            className="text-black md:text-[20px] text-[16px] hover:text-orange-500 transition-colors font-medium"
+                            className="text-black md:text-[20px] text-[16px] hover:text-[#08964c] transition-colors font-medium"
                         >
                             {t('home')}
                         </Link>
                         <Link 
                             href="/items" 
-                            className="text-black md:text-[20px] text-[16px] hover:text-orange-500 transition-colors font-medium"
+                            className="text-black md:text-[20px] text-[16px] hover:text-[#08964c] transition-colors font-medium"
                         >
                           {t('equipment')}
                         </Link>
                         <Link 
                             href="/about" 
-                            className="text-black md:text-[20px] text-[16px] hover:text-orange-500 transition-colors font-medium"
+                            className="text-black md:text-[20px] text-[16px] hover:text-[#08964c] transition-colors font-medium"
                         >
                          {t('about')}
                         </Link>
-                        <Link 
-                            href="/contact" 
-                            className="text-black md:text-[20px] text-[16px] hover:text-orange-500 transition-colors font-medium"
-                        >
-                            {t('contact')}
-                        </Link>
+                     
                        
                     </nav>
 

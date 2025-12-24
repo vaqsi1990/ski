@@ -30,7 +30,8 @@
     "book": "დაჯავშნა",
     "items": {
       "skis": {
-        "name": "აღჭურვილობა",
+        "name": "თხილამურები/სნოუბორდები",
+        "description": "პრემიუმ ხარისხის თხილამურები ყველა დონისთვის",
         "price": "25£ დღეში"
       },
       "accessories": {
@@ -39,6 +40,7 @@
       },
       "snowboards": {
         "name": "ტექნიკა",
+        "description": "მაღალი შესრულების სნოუბორდები ყველა მხედველისთვის",
         "price": "50£ დღეში"
       },
       "lessons": {
@@ -106,11 +108,15 @@
     "quickLinks": "სწრაფი ბმულები",
     "services": "სერვისები",
     "contact": "კონტაქტი",
-    "location": "გუდაური, საქართველო",
-    "phone": "+995 XXX XXX XXX",
-    "email": "info@skirental.ge",
+   "location": "Gudauri, Redco IV Block",
+    "phone": "+995 57761 41 51",
+    "email": "Fanatic.ski@yahoo.com",
     "followUs": "გამოგვყევით:",
-    "copyright": "ყველა უფლება დაცულია."
+    "copyright": "ყველა უფლება დაცულია.",
+    "service1": "თხილამურების გაქირავება",
+    "service2": "სნოუბორდების გაქირავება",
+    "service3": "აქსესუარები",
+    "service4": "პროფესიონალური გაკვეთილები"
   },
   "admin": {
     "adminLabel": "ადმინისტრატორი",

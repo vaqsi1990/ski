@@ -30,7 +30,8 @@
     "book": "Book Now",
     "items": {
       "skis": {
-        "name": "Equipment",
+        "name": "Skis/Snowboards",
+        "description": "Premium quality skis for all skill levels",
         "price": "From £25/Day"
       },
       "accessories": {
@@ -39,6 +40,7 @@
       },
       "snowboards": {
         "name": "Cars",
+        "description": "High-performance snowboards for all riders",
         "price": "From £50/Day"
       },
       "lessons": {
@@ -106,11 +108,15 @@
     "quickLinks": "Quick Links",
     "services": "Services",
     "contact": "Contact",
-    "location": "Gudauri, Georgia",
-    "phone": "+995 XXX XXX XXX",
-    "email": "info@skirental.ge",
+    "location": "Gudauri, Redco IV Block",
+    "phone": "+995 57761 41 51",
+    "email": "Fanatic.ski@yahoo.com",
     "followUs": "Follow us:",
-    "copyright": "All rights reserved."
+    "copyright": "All rights reserved.",
+    "service1": "Ski Rental",
+    "service2": "Snowboard Rental",
+    "service3": "Accessories",
+    "service4": "Professional Lessons"
   },
   "admin": {
     "adminLabel": "Admin",

@@ -68,14 +68,6 @@ const Equipment = () => {
             link: '/booking?type=ACCESSORY',
         },
         {
-            id: 3,
-            key: 'snowboards',
-            type: 'SNOWBOARD',
-            image: '/images/serv6.png',
-            buttonColor: 'bg-orange-500 hover:bg-orange-600',
-            link: '/booking?type=SNOWBOARD',
-        },
-        {
             id: 4,
             key: 'lessons',
             type: 'LESSON',
@@ -83,6 +75,15 @@ const Equipment = () => {
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
             link: '/lessons',
         },
+        {
+            id: 3,
+            key: 'snowboards',
+            type: 'SNOWBOARD',
+            image: '/images/serv6.png',
+            buttonColor: 'bg-orange-500 hover:bg-orange-600',
+            link: '/booking?type=SNOWBOARD',
+        },
+     
     ]
 
     return (
@@ -151,10 +152,13 @@ const Equipment = () => {
                                     <motion.h3
                                         whileHover={{ scale: 1.05 }}
                                         transition={{ duration: 0.2 }}
-                                        className="md:text-[24px] text-[16px] font-bold text-white mb-3"
+                                        className="md:text-[24px] text-[16px] font-bold text-white mb-3 text-center"
                                     >
                                         {t(`items.${item.key}.name`)}
                                     </motion.h3>
+                                    
+                                    {/* Description for skis and snowboards */}
+                                   
                                    
                                     <motion.div
                                         whileHover={{ 

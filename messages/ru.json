@@ -30,7 +30,9 @@
     "book": "Забронировать",
     "items": {
       "skis": {
-        "name": "Оборудование",
+        "name": "Лыжи/Сноуборды",
+        "description": "Премиум качество лыж для всех уровней",
+       
         "price": "От £25/день"
       },
       "accessories": {
@@ -39,6 +41,7 @@
       },
       "snowboards": {
         "name": "Техника",
+        "description": "Высокопроизводительные сноуборды для всех райдеров",
         "price": "От £50/день"
       },
       "lessons": {
@@ -106,11 +109,15 @@
     "quickLinks": "Быстрые ссылки",
     "services": "Услуги",
     "contact": "Контакты",
-    "location": "Гудаури, Грузия",
-    "phone": "+995 XXX XXX XXX",
-    "email": "info@skirental.ge",
+   "location": "Gudauri, Redco IV Block",
+    "phone": "+995 57761 41 51",
+    "email": "Fanatic.ski@yahoo.com",
     "followUs": "Следите за нами:",
-    "copyright": "Все права защищены."
+    "copyright": "Все права защищены.",
+    "service1": "Прокат лыж",
+    "service2": "Прокат сноубордов",
+    "service3": "Аксессуары",
+    "service4": "Профессиональные уроки"
   },
   "admin": {
     "adminLabel": "Админ",

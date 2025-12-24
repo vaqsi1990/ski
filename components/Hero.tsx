@@ -30,8 +30,9 @@ const Hero = () => {
             {/* Content */}
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <div className="space-y-6">
-                    {/* Main Title */}
-                    <motion.div
+                   
+                   
+                    {/* <motion.div
                         initial={{ opacity: 0, y: -40, x: -20 }}
                         animate={{ opacity: 1, y: 0, x: 0 }}
                         transition={{
@@ -44,10 +45,11 @@ const Hero = () => {
                         </h1>
 
 
-                    </motion.div>
+                    </motion.div> */}
 
-                    {/* Subtitle */}
-                    <motion.div
+                 
+                 
+                    {/* <motion.div
                         initial={{ opacity: 0, y: -20, x: -20 }}
                         animate={{ opacity: 1, y: 0, x: 0 }}
                         transition={{
@@ -60,7 +62,7 @@ const Hero = () => {
                         </p>
 
 
-                    </motion.div>
+                    </motion.div> */}
 
 
 

@@ -3,8 +3,13 @@
 import React from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import Image from 'next/image'
+import { useTranslations } from 'next-intl'
+import { Link as I18nLink } from '@/i18n/navigation'
 
 const Footer = () => {
+    const t = useTranslations('footer')
+    const tHeader = useTranslations('header')
     const footerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -41,80 +46,72 @@ const Footer = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {/* Company Info */}
                     <motion.div variants={itemVariants}>
-                        <h3 className="text-xl font-bold mb-4 text-orange-500">
-                            SkiRental
-                        </h3>
+                    <div className="flex-shrink-0">
+                        <Link href="/" className="flex rounded-full items-center space-x-2">
+                          
+                            <Image src="/logo.jpg" alt="logo" className='rounded-full' width={50} height={50} />
+                            <span className="text-xl   sm:text-2xl font-bold text-[#08964c]">Fanatic</span>
+                        </Link>
+                    </div>
                         <p className="text-white md:text-[18px] text-[16px] leading-relaxed mb-4">
-                            პრემიუმ ხარისხის თხილამურებისა და სნოუბორდების გაქირავება გუდაურში. 
-                            ყველაფერი რაც გჭირდება სრულყოფილი სათხილამურო გამოცდილებისთვის.
+                            {t('description')}
                         </p>
                     </motion.div>
 
                     {/* Quick Links */}
                     <motion.div variants={itemVariants}>
-                        <h4 className="text-lg md:text-[20px] text-[16px] font-semibold mb-4">სწრაფი ბმულები</h4>
+                        <h4 className="text-lg md:text-[20px] text-[16px] font-semibold mb-4 text-white">{t('quickLinks')}</h4>
                         <ul className="space-y-2">
                             <li>
-                                <Link
+                                <I18nLink
                                     href="/"
                                     className="text-white hover:text-orange-500 transition-colors md:text-[18px] text-[16px]"
                                 >
-                                    მთავარი
-                                </Link>
+                                    {tHeader('home')}
+                                </I18nLink>
                             </li>
                             <li>
-                                <Link
-                                    href="/inventory"
+                                <I18nLink
+                                    href="/items"
                                     className="text-white hover:text-orange-500 transition-colors md:text-[18px] text-[16px]"
                                 >
-                                    აღჭურვილობა
-                                </Link>
+                                    {tHeader('equipment')}
+                                </I18nLink>
                             </li>
                             <li>
-                                <Link
+                                <I18nLink
                                     href="/about"
-                                    
                                     className="text-white hover:text-orange-500 transition-colors md:text-[18px] text-[16px]"
                                 >
-                                    ჩვენს შესახებ
-                                </Link>
+                                    {tHeader('about')}
+                                </I18nLink>
                             </li>
-                            <li>
-                                <Link
-                                    href="/contact"
-                                    
-                                    
-                                    className="text-white hover:text-orange-500 transition-colors md:text-[18px] text-[16px]"
-                                >
-                                    კონტაქტი
-                                </Link>
-                            </li>
+                          
                         </ul>
                     </motion.div>
 
                     {/* Services */}
                     <motion.div variants={itemVariants}>
-                        <h4 className="text-lg md:text-[20px] text-[16px] font-semibold mb-4">სერვისები</h4>
+                        <h4 className="text-lg md:text-[20px] text-[16px] font-semibold mb-4 text-white">{t('services')}</h4>
                         <ul className="space-y-2">
                             <li>
                                 <span className="text-white md:text-[18px] text-[16px]">
-                                    თხილამურების გაქირავება
+                                    {t('service1')}
                                 </span>
                             </li>
                             <li>
                                 <span className="text-white md:text-[18px] text-[16px]">
-                                    სნოუბორდების გაქირავება
+                                    {t('service2')}
                                 </span>
                             </li>
                             <li>
                                 <span className="text-white md:text-[18px] text-[16px]">
-                                    აქსესუარები
+                                    {t('service3')}
                                 </span>
                             </li>
                             <li>
-                                
-                                    <span className="text-white md:text-[18px] text-[16px]">
-                                    პროფესიონალური გაკვეთილები
+                                <span className="text-white md:text-[18px] text-[16px]">
+                                    {t('service4')}
                                 </span>
                             </li>
                         </ul>
@@ -122,7 +119,7 @@ const Footer = () => {
 
                     {/* Contact Info */}
                     <motion.div variants={itemVariants}>
-                        <h4 className="text-lg md:text-[20px] text-[16px] font-semibold mb-4">კონტაქტი</h4>
+                        <h4 className="text-lg md:text-[20px] text-[16px] font-semibold mb-4 text-white">{t('contact')}</h4>
                         <ul className="space-y-3">
                             <li className="flex items-start">
                                 <svg
@@ -145,7 +142,7 @@ const Footer = () => {
                                     />
                                 </svg>
                                 <span className="text-white md:text-[18px] text-[16px]">
-                                    გუდაური, საქართველო
+                                    {t('location')}
                                 </span>
                             </li>
                             <li className="flex items-center">
@@ -163,7 +160,7 @@ const Footer = () => {
                                     />
                                 </svg>
                                 <span className="text-white md:text-[18px] text-[16px]">
-                                    +995 XXX XXX XXX
+                                    {t('phone')}
                                 </span>
                             </li>
                             <li className="flex items-center">
@@ -181,7 +178,7 @@ const Footer = () => {
                                     />
                                 </svg>
                                 <span className="text-white md:text-[18px] text-[16px]">
-                                    info@skirental.ge
+                                    {t('email')}
                                 </span>
                             </li>
                         </ul>
