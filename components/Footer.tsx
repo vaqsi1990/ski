@@ -50,7 +50,7 @@ const Footer = () => {
                         <Link href="/" className="flex rounded-full items-center space-x-2">
                           
                             <Image src="/logo.jpg" alt="logo" className='rounded-full' width={50} height={50} />
-                            <span className="text-xl   sm:text-2xl font-bold text-[#08964c]">Fanatic</span>
+                            <span className="text-xl uppercase  sm:text-2xl font-bold text-[#08964c]">Fanatic</span>
                         </Link>
                     </div>
                         <p className="text-white md:text-[18px] text-[16px] leading-relaxed mb-4">
