@@ -92,7 +92,7 @@ const Equipment = () => {
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
             variants={containerVariants}
-            className="py-16 bg-[#FFFAFA]"
+            className="py-10 bg-[#FFFAFA]"
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Section Title */}
