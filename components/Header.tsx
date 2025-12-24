@@ -20,7 +20,7 @@ const Header = () => {
                         <Link href="/" className="flex items-center space-x-2">
                           
                             <Image src="/logo.jpg" alt="logo" width={50} height={50} />
-                            <span className="text-xl uppercase  sm:text-2xl font-bold text-[#08964c]">Fanatic</span>
+                            <span className="text-xl uppercase  sm:text-2xl font-bold text-[#08964c]">SKI RENT FANATIC </span>
                         </Link>
                     </div>
 
