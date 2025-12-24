@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 
 const Hero = () => {
     const t = useTranslations('hero')
-    
+
     return (
         <section className="relative h-[100vh]  flex items-center justify-center overflow-hidden">
             {/* Background Image */}
@@ -18,7 +18,9 @@ const Hero = () => {
                     alt={t('alt')}
                     fill
                     priority
-                    className="object-cover"
+                    className="  object-cover
+  object-[10%_70%]
+  md:object-center"
                     quality={90}
                 />
                 {/* Subtle Overlay */}
@@ -53,14 +55,14 @@ const Hero = () => {
                             ease: 'easeOut',
                         }}
                     >
-                          <p className="text-xl md:text-2xl text-white font-light">
+                        <p className="text-xl md:text-2xl text-white font-light">
                             {t('subtitle')}
                         </p>
 
 
                     </motion.div>
-                      
-                      
+
+
 
                     {/* CTA Button */}
                     <div className="pt-4">
