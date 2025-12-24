@@ -61,6 +61,14 @@ const Equipment = () => {
         },
         {
             id: 2,
+            key: 'accessories',
+            type: 'ACCESSORY',
+            image: '/images/serv2.png',
+            buttonColor: 'bg-orange-500 hover:bg-orange-600',
+            link: '/booking?type=ACCESSORY',
+        },
+        {
+            id: 3,
             key: 'snowboards',
             type: 'SNOWBOARD',
             image: '/images/serv6.png',
@@ -68,7 +76,7 @@ const Equipment = () => {
             link: '/booking?type=SNOWBOARD',
         },
         {
-            id: 3,
+            id: 4,
             key: 'lessons',
             type: 'LESSON',
             image: '/images/serv3.png',
@@ -95,7 +103,7 @@ const Equipment = () => {
                 </motion.h2>
 
                 {/* Equipment Cards with Text Overlay */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {equipment.map((item, index) => (
                         <motion.div
                             key={item.id}

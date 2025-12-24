@@ -54,6 +54,7 @@ type Product = {
   size?: string | null
   standard?: boolean
   professional?: boolean
+  description?: string | null
   bookingsCount: number
   createdAt: string
   updatedAt: string
@@ -105,6 +106,7 @@ type EquipmentFormData = {
   size?: ProductSize | null
   standard?: boolean
   professional?: boolean
+  description?: string
 }
 
 // Constants
@@ -127,6 +129,7 @@ const INITIAL_EQUIPMENT_FORM: EquipmentFormData = {
   size: null,
   standard: false,
   professional: false,
+  description: '',
 }
 
 // Zod schemas
@@ -149,6 +152,7 @@ const equipmentSchema = z.object({
   size: z.nativeEnum(ProductSize).nullable().optional(),
   standard: z.boolean().optional(),
   professional: z.boolean().optional(),
+  description: z.string().optional(),
 }).refine((data) => {
   const sizeRequiringTypes: ProductType[] = [ProductType.ADULT_CLOTH]
   if (sizeRequiringTypes.includes(data.type) && !data.size) {
@@ -202,6 +206,14 @@ const AdminPage = () => {
   // Reports state
   const [reports, setReports] = useState<ReportData | null>(null)
   const [reportsLoading, setReportsLoading] = useState(false)
+
+  // Lesson Pricing state
+  const [lessonPricing, setLessonPricing] = useState<Array<{ id: string; numberOfPeople: number; duration: number; price: number }>>([])
+  const [lessonPricingLoading, setLessonPricingLoading] = useState(false)
+  const [showLessonPricingForm, setShowLessonPricingForm] = useState(false)
+  const [editingLessonPricing, setEditingLessonPricing] = useState<{ id: string; numberOfPeople: number; duration: number; price: number } | null>(null)
+  const [lessonPricingFormData, setLessonPricingFormData] = useState({ numberOfPeople: '', duration: '', price: '' })
+  const [lessonPricingFormErrors, setLessonPricingFormErrors] = useState<Record<string, string>>({})
 
   // Helper functions
   const showError = useCallback((message: string) => {
@@ -354,6 +366,28 @@ const AdminPage = () => {
       fetchReports()
     }
   }, [activeTab])
+
+  // Fetch lesson pricing
+  useEffect(() => {
+    if (activeTab === 'lessonPricing') {
+      fetchLessonPricing()
+    }
+  }, [activeTab])
+
+  const fetchLessonPricing = async () => {
+    setLessonPricingLoading(true)
+    try {
+      const response = await fetch('/api/admin/lesson-pricing', { cache: 'no-store' })
+      if (!response.ok) throw new Error('Failed to load lesson pricing')
+      const json = await response.json()
+      setLessonPricing(json.items || [])
+    } catch (err) {
+      console.error(err)
+      showError(err instanceof Error ? err.message : 'Failed to load lesson pricing')
+    } finally {
+      setLessonPricingLoading(false)
+    }
+  }
 
   const fetchReports = async () => {
     setReportsLoading(true)
@@ -509,6 +543,7 @@ const AdminPage = () => {
         size: null,
         standard: false,
         professional: false,
+        description: '',
       })
       fetchEquipment()
     } catch (err) {
@@ -534,8 +569,82 @@ const AdminPage = () => {
       size: item.size ? (item.size as ProductSize) : null,
       standard: item.standard || false,
       professional: item.professional || false,
+      description: item.description || '',
     })
     setShowEquipmentForm(true)
+  }
+
+  // Lesson Pricing handlers
+  const handleLessonPricingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLessonPricingFormErrors({})
+
+    try {
+      const numberOfPeople = parseInt(lessonPricingFormData.numberOfPeople)
+      const duration = parseInt(lessonPricingFormData.duration)
+      const price = parseFloat(lessonPricingFormData.price)
+
+      if (!numberOfPeople || numberOfPeople < 1 || numberOfPeople > 4) {
+        setLessonPricingFormErrors({ numberOfPeople: 'Number of people must be between 1 and 4' })
+        return
+      }
+
+      if (!duration || ![1, 2, 3].includes(duration)) {
+        setLessonPricingFormErrors({ duration: 'Duration must be 1, 2, or 3 hours' })
+        return
+      }
+
+      if (!price || price <= 0) {
+        setLessonPricingFormErrors({ price: 'Price must be greater than 0' })
+        return
+      }
+
+      const response = await fetch('/api/admin/lesson-pricing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          numberOfPeople,
+          duration,
+          price,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to save lesson pricing')
+      }
+
+      setShowLessonPricingForm(false)
+      setLessonPricingFormData({ numberOfPeople: '', duration: '', price: '' })
+      setEditingLessonPricing(null)
+      fetchLessonPricing()
+      showSuccess('Lesson pricing saved successfully')
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to save lesson pricing')
+    }
+  }
+
+  const handleEditLessonPricing = (item: { id: string; numberOfPeople: number; duration: number; price: number }) => {
+    setEditingLessonPricing(item)
+    setLessonPricingFormData({
+      numberOfPeople: item.numberOfPeople.toString(),
+      duration: item.duration.toString(),
+      price: item.price.toString(),
+    })
+    setShowLessonPricingForm(true)
+  }
+
+  const handleDeleteLessonPricing = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this pricing?')) return
+    try {
+      const response = await fetch(`/api/admin/lesson-pricing/${id}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error('Failed to delete lesson pricing')
+      fetchLessonPricing()
+      showSuccess('Lesson pricing deleted successfully')
+    } catch (err) {
+      console.error(err)
+      showError('Failed to delete lesson pricing')
+    }
   }
 
   const formatCurrency = (amount: number) =>
@@ -553,7 +662,7 @@ const AdminPage = () => {
     { id: 'bookings', labelKey: 'menu.bookings' },
     { id: 'equipment', labelKey: 'menu.equipment' },
     { id: 'customers', labelKey: 'menu.customers' },
-   
+    { id: 'lessonPricing', labelKey: 'menu.lessonPricing' },
   ]
 
   const renderDashboard = () => {
@@ -1073,6 +1182,9 @@ const AdminPage = () => {
                         type: ProductType.SKI,
                         price: '',
                         size: null,
+                        standard: false,
+                        professional: false,
+                        description: '',
                       })
                     }}
                     className="text-gray-500 hover:text-black"
@@ -1181,6 +1293,19 @@ const AdminPage = () => {
 
                   <div>
                     <label className="block text-[16px] font-medium text-black mb-1">
+                      {t('equipment.form.description')}
+                    </label>
+                    <textarea
+                      value={equipmentFormData.description || ''}
+                      onChange={(e) => setEquipmentFormData({ ...equipmentFormData, description: e.target.value })}
+                      rows={4}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black"
+                      placeholder={t('equipment.form.descriptionPlaceholder')}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[16px] font-medium text-black mb-1">
                       {t('equipment.form.price')} *
                     </label>
                     <input
@@ -1216,6 +1341,7 @@ const AdminPage = () => {
                           size: null,
                           standard: false,
                           professional: false,
+                          description: '',
                         })
                       }}
                       className="w-full sm:w-auto bg-gray-200 text-black px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm md:text-base"
@@ -1273,19 +1399,19 @@ const AdminPage = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider w-32">
                       {t('equipment.table.title')}
                     </th>
-                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden md:table-cell">
-                      {t('equipment.table.type')}
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell w-80">
+                      {t('equipment.table.description')}
                     </th>
-                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider w-28">
                       {t('equipment.table.price')}
                     </th>
-                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell">
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell w-24">
                       {t('equipment.table.bookings')}
                     </th>
-                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider w-40">
                       {t('equipment.table.actions')}
                     </th>
                   </tr>
@@ -1293,14 +1419,14 @@ const AdminPage = () => {
               <tbody>
                 {equipmentLoading && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={4}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={5}>
                       {t('equipment.loading')}
                     </td>
                   </tr>
                 )}
                 {!equipmentLoading && equipment.length === 0 && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={4}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={5}>
                       {t('equipment.empty')}
                     </td>
                   </tr>
@@ -1308,7 +1434,7 @@ const AdminPage = () => {
                 {!equipmentLoading &&
                   equipment.map((item) => (
                     <tr key={item.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
-                      <td className="px-3 py-3 text-xs md:text-sm text-black">
+                      <td className="px-3 py-3 text-xs md:text-sm text-black w-32">
                         <div className="font-medium">
                         {t(`equipment.types.${item.type}`)}
                         {item.type === ProductType.ADULT_CLOTH && item.size && (
@@ -1324,10 +1450,22 @@ const AdminPage = () => {
                           </span>
                         )}
                         </div>
+                        {item.description && (
+                          <div className="text-gray-500 lg:hidden mt-1 text-xs">{t('equipment.table.description')}: {item.description}</div>
+                        )}
                         <div className="text-gray-500 lg:hidden mt-1 text-xs">{t('equipment.table.bookings')}: {item.bookingsCount}</div>
                       </td>
-                      <td className="px-3 py-3 text-xs md:text-sm text-black whitespace-nowrap">{formatCurrency(item.price)}</td>
-                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">{item.bookingsCount}</td>
+                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell w-80">
+                        {item.description ? (
+                          <div className="truncate" title={item.description}>
+                            {item.description}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-3 text-xs md:text-sm text-black whitespace-nowrap w-28">{formatCurrency(item.price)}</td>
+                      <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell w-24">{item.bookingsCount}</td>
                       <td className="px-3 py-3">
                         <div className="flex flex-col sm:flex-row gap-2">
                           <button
@@ -1589,6 +1727,212 @@ const AdminPage = () => {
     )
   }
 
+  const renderLessonPricing = () => {
+    return (
+      <>
+        {/* Lesson Pricing Form Modal */}
+        {showLessonPricingForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4 md:mb-6">
+                  <h2 className="text-lg md:text-xl font-bold text-black">
+                    {editingLessonPricing ? t('lessonPricing.edit') : t('lessonPricing.add')}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowLessonPricingForm(false)
+                      setEditingLessonPricing(null)
+                      setLessonPricingFormErrors({})
+                      setLessonPricingFormData({ numberOfPeople: '', duration: '', price: '' })
+                    }}
+                    className="text-gray-500 hover:text-black"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <form onSubmit={handleLessonPricingSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-[16px] font-medium text-black mb-1">
+                      {t('lessonPricing.form.numberOfPeople')} *
+                    </label>
+                    <select
+                      value={lessonPricingFormData.numberOfPeople}
+                      onChange={(e) => setLessonPricingFormData({ ...lessonPricingFormData, numberOfPeople: e.target.value })}
+                      className={`w-full border rounded-lg px-4 py-2 text-black ${
+                        lessonPricingFormErrors.numberOfPeople ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">{t('lessonPricing.form.selectPeople')}</option>
+                      <option value="1">1 {t('lessonPricing.people')}</option>
+                      <option value="2">2 {t('lessonPricing.peoplePlural')}</option>
+                      <option value="3">3 {t('lessonPricing.peoplePlural')}</option>
+                      <option value="4">4 {t('lessonPricing.peoplePlural')}</option>
+                    </select>
+                    {lessonPricingFormErrors.numberOfPeople && (
+                      <p className="text-red-500 text-xs mt-1">{lessonPricingFormErrors.numberOfPeople}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[16px] font-medium text-black mb-1">
+                      {t('lessonPricing.form.duration')} *
+                    </label>
+                    <select
+                      value={lessonPricingFormData.duration}
+                      onChange={(e) => setLessonPricingFormData({ ...lessonPricingFormData, duration: e.target.value })}
+                      className={`w-full border rounded-lg px-4 py-2 text-black ${
+                        lessonPricingFormErrors.duration ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">{t('lessonPricing.form.selectDuration')}</option>
+                      <option value="1">1 {t('lessonPricing.hour')}</option>
+                      <option value="2">2 {t('lessonPricing.hours')}</option>
+                      <option value="3">3 {t('lessonPricing.hours')}</option>
+                    </select>
+                    {lessonPricingFormErrors.duration && (
+                      <p className="text-red-500 text-xs mt-1">{lessonPricingFormErrors.duration}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[16px] font-medium text-black mb-1">
+                      {t('lessonPricing.form.price')} *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={lessonPricingFormData.price}
+                      onChange={(e) => setLessonPricingFormData({ ...lessonPricingFormData, price: e.target.value })}
+                      className={`w-full border rounded-lg px-4 py-2 text-black ${
+                        lessonPricingFormErrors.price ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {lessonPricingFormErrors.price && (
+                      <p className="text-red-500 text-xs mt-1">{lessonPricingFormErrors.price}</p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                    <button
+                      type="submit"
+                      className="w-full sm:w-auto bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm md:text-base"
+                    >
+                      {t('lessonPricing.save')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowLessonPricingForm(false)
+                        setEditingLessonPricing(null)
+                        setLessonPricingFormErrors({})
+                        setLessonPricingFormData({ numberOfPeople: '', duration: '', price: '' })
+                      }}
+                      className="w-full sm:w-auto bg-gray-200 text-black px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm md:text-base"
+                    >
+                      {t('lessonPricing.cancel')}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-lg md:text-xl font-bold text-black mb-1 md:mb-2">{t('lessonPricing.title')}</h1>
+              <p className="text-sm md:text-base text-black">{t('lessonPricing.subtitle')}</p>
+            </div>
+            <button
+              onClick={() => {
+                setEditingLessonPricing(null)
+                setLessonPricingFormData({ numberOfPeople: '', duration: '', price: '' })
+                setShowLessonPricingForm(true)
+              }}
+              className="w-full sm:w-auto bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm md:text-base"
+            >
+              {t('lessonPricing.add')}
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('lessonPricing.table.people')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('lessonPricing.table.duration')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('lessonPricing.table.price')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('lessonPricing.table.actions')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lessonPricingLoading && (
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 text-[16px] text-black" colSpan={4}>
+                        {t('lessonPricing.loading')}
+                      </td>
+                    </tr>
+                  )}
+                  {!lessonPricingLoading && lessonPricing.length === 0 && (
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 text-[16px] text-black" colSpan={4}>
+                        {t('lessonPricing.empty')}
+                      </td>
+                    </tr>
+                  )}
+                  {!lessonPricingLoading &&
+                    lessonPricing.map((item) => (
+                      <tr key={item.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
+                        <td className="px-3 py-3 text-xs md:text-sm text-black">
+                          {item.numberOfPeople} {item.numberOfPeople === 1 ? t('lessonPricing.people') : t('lessonPricing.peoplePlural')}
+                        </td>
+                        <td className="px-3 py-3 text-xs md:text-sm text-black">
+                          {item.duration} {item.duration === 1 ? t('lessonPricing.hour') : t('lessonPricing.hours')}
+                        </td>
+                        <td className="px-3 py-3 text-xs md:text-sm text-black">{formatCurrency(item.price)}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <button
+                              onClick={() => handleEditLessonPricing(item)}
+                              className="w-full sm:w-auto flex text-xs md:text-sm items-center justify-center px-3 md:px-4 py-2 md:py-3 rounded-lg transition-colors bg-orange-600 text-white hover:bg-orange-700"
+                            >
+                              {t('lessonPricing.edit')}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteLessonPricing(item.id)}
+                              className="w-full sm:w-auto text-red-600 hover:text-red-700 text-xs md:text-sm px-3 py-2 text-center"
+                            >
+                              {t('lessonPricing.delete')}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -1603,6 +1947,8 @@ const AdminPage = () => {
         return renderReports()
       case 'settings':
         return renderSettings()
+      case 'lessonPricing':
+        return renderLessonPricing()
       default:
         return renderDashboard()
     }

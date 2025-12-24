@@ -27,6 +27,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       size: product.size,
       standard: product.standard,
       professional: product.professional,
+      description: product.description,
       bookingsCount: product._count.bookingProducts,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
@@ -48,6 +49,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       size?: ProductSize | null
       standard?: boolean
       professional?: boolean
+      description?: string | null
     } = {}
 
     if (body.type && Object.values(ProductType).includes(body.type)) {
@@ -68,6 +70,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     
     if (body.standard !== undefined) updateData.standard = body.standard === true
     if (body.professional !== undefined) updateData.professional = body.professional === true
+    if (body.description !== undefined) updateData.description = body.description || null
 
     const product = await prisma.product.update({
       where: { id },
@@ -86,6 +89,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       size: product.size,
       standard: product.standard,
       professional: product.professional,
+      description: product.description,
       bookingsCount: product._count.bookingProducts,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,

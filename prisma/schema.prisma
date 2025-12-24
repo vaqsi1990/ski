@@ -112,3 +112,14 @@ model Lesson {
   createdAt     DateTime       @default(now()) @db.Timestamp(6)
   updatedAt     DateTime       @updatedAt
 }
+
+model LessonPricing {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  numberOfPeople Int      // 1-4 people
+  duration      Int       // 1, 2, or 3 hours
+  price         Float
+  createdAt     DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([numberOfPeople, duration])
+}

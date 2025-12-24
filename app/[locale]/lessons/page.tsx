@@ -48,7 +48,8 @@ const lessonSchema = z.object({
   personalId: z.string().min(1, 'Personal ID is required'),
 })
 
-const PRICING: Record<number, Record<number, number>> = {
+// Default pricing fallback
+const DEFAULT_PRICING: Record<number, Record<number, number>> = {
   1: { 1: 120, 2: 200, 3: 270 },
   2: { 1: 200, 2: 360, 3: 480 },
   3: { 1: 270, 2: 480, 3: 720 },
@@ -63,6 +64,7 @@ const LessonsPage = () => {
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [success, setSuccess] = useState(false)
+  const [pricing, setPricing] = useState<Record<number, Record<number, number>>>(DEFAULT_PRICING)
 
   const [formData, setFormData] = useState<LessonFormData>({
     numberOfPeople: '',
@@ -79,6 +81,25 @@ const LessonsPage = () => {
     totalPrice: 0,
   })
 
+  // Fetch pricing from API
+  useEffect(() => {
+    const fetchPricing = async () => {
+      try {
+        const response = await fetch('/api/lessons')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.pricing) {
+            setPricing(data.pricing)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch pricing', error)
+        // Use default pricing on error
+      }
+    }
+    fetchPricing()
+  }, [])
+
   // Generate time slots from 10:00 to 15:00 (last slot starts at 15:00 for 1-hour lesson)
   const timeSlots = []
   for (let hour = 10; hour <= 15; hour++) {
@@ -90,12 +111,12 @@ const LessonsPage = () => {
     if (formData.numberOfPeople && formData.duration) {
       const people = parseInt(formData.numberOfPeople)
       const hours = parseInt(formData.duration)
-      const price = PRICING[people]?.[hours] || 0
+      const price = pricing[people]?.[hours] || 0
       setFormData((prev) => ({ ...prev, totalPrice: price }))
     } else {
       setFormData((prev) => ({ ...prev, totalPrice: 0 }))
     }
-  }, [formData.numberOfPeople, formData.duration])
+  }, [formData.numberOfPeople, formData.duration, pricing])
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat(locale || 'ka-GE', { style: 'currency', currency: 'GEL' }).format(amount)

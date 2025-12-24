@@ -16,6 +16,7 @@ type Product = {
   size?: string | null
   standard?: boolean | null
   professional?: boolean | null
+  description?: string | null
 }
 
 type BookingFormData = {
@@ -77,6 +78,7 @@ const BookingPage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const productIdFromUrl = searchParams.get('productId')
+  const typeFromUrl = searchParams.get('type')
 
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -272,19 +274,34 @@ const BookingPage = () => {
                               {index === 0 ? t('selectProduct') : t('selectProductOptional')}
                             </option>
                             {products
-                              .filter((product) => !otherSelectedIds.includes(product.id))
+                              .filter((product) => {
+                                // Filter by type if typeFromUrl is provided
+                                if (typeFromUrl && product.type !== typeFromUrl) {
+                                  return false
+                                }
+                                // Exclude already selected products
+                                return !otherSelectedIds.includes(product.id)
+                              })
                               .map((product) => {
-                                let label = product.type.replace(/_/g, ' ')
+                                // Use description as name if available, otherwise use type
+                                let label = product.description || product.type.replace(/_/g, ' ')
+                                
+                                // Add size for ADULT_CLOTH
                                 if (product.type === 'ADULT_CLOTH' && product.size) {
                                   label += ` (${product.size})`
                                 }
+                                
+                                // Add badges for standard/professional
                                 const badges = []
                                 if (product.standard) badges.push('Standard')
                                 if (product.professional) badges.push('Professional')
                                 if (badges.length > 0) {
                                   label += ` [${badges.join(', ')}]`
                                 }
+                                
+                                // Add price at the end
                                 label += ` - ${formatCurrency(product.price)}`
+                                
                                 return (
                                   <option key={product.id} value={product.id}>
                                     {label}

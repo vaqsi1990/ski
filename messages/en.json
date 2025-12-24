@@ -33,6 +33,10 @@
         "name": "Equipment",
         "price": "From £25/Day"
       },
+      "accessories": {
+        "name": "Accessories",
+        "price": "From £15/Day"
+      },
       "snowboards": {
         "name": "Cars",
         "price": "From £50/Day"
@@ -127,7 +131,8 @@
       "equipment": "Equipment",
       "customers": "Customers",
       "reports": "Reports",
-      "settings": "Settings"
+      "settings": "Settings",
+      "lessonPricing": "Lesson Pricing"
     },
     "bookings": {
       "title": "Bookings Management",
@@ -194,7 +199,8 @@
       "all": "All",
       "table": {
         "title": "Title",
-        "type": "Type",
+        "type": "Description",
+        "description": "Description",
         "price": "Price",
         "bookings": "Bookings",
         "actions": "Actions"
@@ -219,6 +225,8 @@
         "images": "Images",
         "standard": "Standard",
         "professional": "Professional",
+        "description": "Description",
+        "descriptionPlaceholder": "Enter accessory description...",
         "save": "Save",
         "cancel": "Cancel"
       }
@@ -276,6 +284,34 @@
         "sms": "SMS Notifications"
       },
       "save": "Save Changes"
+    },
+    "lessonPricing": {
+      "title": "Lesson Pricing Management",
+      "subtitle": "Manage lesson prices based on number of people and duration",
+      "loading": "Loading lesson pricing…",
+      "empty": "No pricing found. Please add pricing configurations.",
+      "add": "Add Pricing",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "table": {
+        "people": "People",
+        "duration": "Duration",
+        "price": "Price",
+        "actions": "Actions"
+      },
+      "form": {
+        "numberOfPeople": "Number of People",
+        "duration": "Duration (hours)",
+        "price": "Price (GEL)",
+        "selectPeople": "Select number of people",
+        "selectDuration": "Select duration"
+      },
+      "people": "person",
+      "peoplePlural": "people",
+      "hour": "hour",
+      "hours": "hours"
     },
     "quickActions": {
       "title": "Quick Actions",

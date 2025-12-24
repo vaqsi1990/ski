@@ -4,16 +4,51 @@ import { LessonStatus } from '@/app/generated/prisma/enums'
 
 export const dynamic = 'force-dynamic'
 
-// Pricing matrix based on numberOfPeople and duration
-const PRICING: Record<number, Record<number, number>> = {
-  1: { 1: 120, 2: 200, 3: 270 },
-  2: { 1: 200, 2: 360, 3: 480 },
-  3: { 1: 270, 2: 480, 3: 720 },
-  4: { 1: 400, 2: 640, 3: 960 },
+// Get pricing from database
+async function getPricing() {
+  try {
+    const pricing = await prisma.lessonPricing.findMany({
+      orderBy: [
+        { numberOfPeople: 'asc' },
+        { duration: 'asc' },
+      ],
+    })
+
+    // Convert to matrix format for easier use
+    const pricingMatrix: Record<number, Record<number, number>> = {}
+    pricing.forEach((p: { numberOfPeople: number; duration: number; price: number }) => {
+      if (!pricingMatrix[p.numberOfPeople]) {
+        pricingMatrix[p.numberOfPeople] = {}
+      }
+      pricingMatrix[p.numberOfPeople][p.duration] = p.price
+    })
+
+    // Fallback to default pricing if database is empty
+    if (Object.keys(pricingMatrix).length === 0) {
+      return {
+        1: { 1: 120, 2: 200, 3: 270 },
+        2: { 1: 200, 2: 360, 3: 480 },
+        3: { 1: 270, 2: 480, 3: 720 },
+        4: { 1: 400, 2: 640, 3: 960 },
+      }
+    }
+
+    return pricingMatrix
+  } catch (error) {
+    console.error('Failed to fetch pricing from database, using defaults', error)
+    // Fallback to default pricing
+    return {
+      1: { 1: 120, 2: 200, 3: 270 },
+      2: { 1: 200, 2: 360, 3: 480 },
+      3: { 1: 270, 2: 480, 3: 720 },
+      4: { 1: 400, 2: 640, 3: 960 },
+    }
+  }
 }
 
-export function GET() {
-  return NextResponse.json({ pricing: PRICING })
+export async function GET() {
+  const pricing = await getPricing()
+  return NextResponse.json({ pricing })
 }
 
 export async function POST(request: Request) {
@@ -57,7 +92,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Start time must be between 10:00 and 16:00' }, { status: 400 })
     }
 
-    // Calculate price
+    // Get pricing from database
+    const PRICING = await getPricing()
     const price = PRICING[people]?.[hours]
     if (!price) {
       return NextResponse.json({ message: 'Invalid pricing combination' }, { status: 400 })

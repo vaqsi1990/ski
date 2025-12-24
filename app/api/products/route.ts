@@ -35,6 +35,7 @@ export async function GET(request: Request) {
       size: product.size,
       standard: product.standard,
       professional: product.professional,
+      description: product.description,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     }))

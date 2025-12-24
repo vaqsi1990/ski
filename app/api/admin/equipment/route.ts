@@ -40,6 +40,7 @@ export async function GET(request: Request) {
       size: product.size,
       standard: product.standard,
       professional: product.professional,
+      description: product.description,
       bookingsCount: product._count.bookingProducts,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
@@ -63,7 +64,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { type, price, size, standard, professional } = body
+    const { type, price, size, standard, professional, description } = body
 
     if (!type || price === undefined) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Invalid product type' }, { status: 400 })
     }
 
-    const sizeRequiringTypes: ProductType[] = [ProductType.ADULT_CLOTH, ProductType.CHILD_CLOTH, ProductType.ACCESSORY]
+    const sizeRequiringTypes: ProductType[] = [ProductType.ADULT_CLOTH]
     const shouldHaveSize = (sizeRequiringTypes as readonly ProductType[]).includes(type)
 
     const product = await prisma.product.create({
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
         size: shouldHaveSize && size ? size : null,
         standard: standard === true,
         professional: professional === true,
+        description: description || null,
       },
       include: {
         _count: {
@@ -98,6 +100,7 @@ export async function POST(request: Request) {
       size: product.size,
       standard: product.standard,
       professional: product.professional,
+      description: product.description,
       bookingsCount: product._count.bookingProducts,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
