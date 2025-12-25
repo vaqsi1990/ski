@@ -130,3 +130,13 @@ model LessonPricing {
 
   @@unique([numberOfPeople, duration])
 }
+
+model PriceList {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  itemKey       String   @unique // e.g., 'skiSetStandard', 'gogglesStandard'
+  type          String   // e.g., 'standard', 'professional', 'accessory'
+  includes      String   // e.g., 'Ski, Boots, Poles'
+  price         String   // e.g., '50 ₾', '60-150 ₾'
+  createdAt     DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime  @updatedAt
+}

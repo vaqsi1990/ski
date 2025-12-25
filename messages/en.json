@@ -139,7 +139,8 @@
       "customers": "Customers",
       "reports": "Reports",
       "settings": "Settings",
-      "lessonPricing": "Lesson Pricing"
+      "lessonPricing": "Lesson Pricing",
+      "prices": "Price List"
     },
     "bookings": {
       "title": "Bookings Management",
@@ -324,6 +325,37 @@
       "peoplePlural": "people",
       "hour": "hour",
       "hours": "hours"
+    },
+    "prices": {
+      "title": "Price List Management",
+      "subtitle": "Manage the price list displayed on the items page",
+      "loading": "Loading prices...",
+      "item": "Item",
+      "type": "Type/Description",
+      "includes": "Includes",
+      "price": "Price",
+      "save": "Save Prices",
+      "saving": "Saving...",
+      "skiSetStandard": "Ski Set (Standard)",
+      "skiSetProfessional": "Ski Set (Professional)",
+      "skiSetKidsStandard": "Ski Set for kids (Standard)",
+      "skiStandard": "Ski (Standard)",
+      "skiProfessional": "Ski (Professional)",
+      "skiBootsStandard": "Ski boots (Standard)",
+      "snowboardSetStandard": "Snowboard Set (Standard)",
+      "snowboardSetKidsStandard": "Snowboard Set for kids (Standard)",
+      "snowboardSetProfessional": "Snowboard Set (Professional)",
+      "boardStandard": "Board (Standard)",
+      "boardProfessional": "Board (Professional)",
+      "snowboardBootsStandard": "Snowboard Boots (Standard)",
+      "gogglesStandard": "Goggles (Standard)",
+      "helmetStandard": "Helmet (Standard)",
+      "polesStandard": "Poles (Standard)",
+      "glovesStandard": "Gloves (Standard)",
+      "jacket": "Jacket (Ski Jacket)",
+      "pants": "Pants (Ski pants)",
+      "sledge": "Sledge (Up to 14 years)",
+      "instructor": "Instructor (Lesson English/Russian)"
     },
     "quickActions": {
       "title": "Quick Actions",

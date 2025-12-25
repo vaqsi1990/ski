@@ -140,7 +140,8 @@
       "customers": "Клиенты",
       "reports": "Отчеты",
       "settings": "Настройки",
-      "lessonPricing": "Цены на уроки"
+      "lessonPricing": "Цены на уроки",
+      "prices": "Прайс-лист"
     },
     "bookings": {
       "title": "Управление бронированиями",
@@ -325,6 +326,37 @@
       "peoplePlural": "человека",
       "hour": "час",
       "hours": "часа"
+    },
+    "prices": {
+      "title": "Управление прайс-листом",
+      "subtitle": "Управляйте прайс-листом, отображаемым на странице оборудования",
+      "loading": "Загрузка цен...",
+      "item": "Товар",
+      "type": "Тип/Описание",
+      "includes": "Включает",
+      "price": "Цена",
+      "save": "Сохранить цены",
+      "saving": "Сохранение...",
+      "skiSetStandard": "Лыжный комплект (Стандартный)",
+      "skiSetProfessional": "Лыжный комплект (Профессиональный)",
+      "skiSetKidsStandard": "Детский лыжный комплект (Стандартный)",
+      "skiStandard": "Лыжи (Стандартные)",
+      "skiProfessional": "Лыжи (Профессиональные)",
+      "skiBootsStandard": "Лыжные ботинки (Стандартные)",
+      "snowboardSetStandard": "Комплект сноуборда (Стандартный)",
+      "snowboardSetKidsStandard": "Детский комплект сноуборда (Стандартный)",
+      "snowboardSetProfessional": "Комплект сноуборда (Профессиональный)",
+      "boardStandard": "Доска (Стандартная)",
+      "boardProfessional": "Доска (Профессиональная)",
+      "snowboardBootsStandard": "Ботинки для сноуборда (Стандартные)",
+      "gogglesStandard": "Очки (Стандартные)",
+      "helmetStandard": "Шлем (Стандартный)",
+      "polesStandard": "Палки (Стандартные)",
+      "glovesStandard": "Перчатки (Стандартные)",
+      "jacket": "Куртка (Лыжная куртка)",
+      "pants": "Брюки (Лыжные брюки)",
+      "sledge": "Санки (До 14 лет)",
+      "instructor": "Инструктор (Урок английский/русский)"
     },
     "quickActions": {
       "title": "Быстрые действия",

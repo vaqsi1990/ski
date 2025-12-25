@@ -215,6 +215,12 @@ const AdminPage = () => {
   const [lessonPricingFormData, setLessonPricingFormData] = useState({ numberOfPeople: '', duration: '', price: '' })
   const [lessonPricingFormErrors, setLessonPricingFormErrors] = useState<Record<string, string>>({})
 
+  // Prices state
+  const [prices, setPrices] = useState<Array<{ id: string; itemKey: string; type: string; includes: string; price: string }>>([])
+  const [pricesLoading, setPricesLoading] = useState(false)
+  const [submittingPrices, setSubmittingPrices] = useState(false)
+  const [editingPrices, setEditingPrices] = useState<Record<string, { type: string; includes: string; price: string }>>({})
+
   // Helper functions
   const showError = useCallback((message: string) => {
     setError(message)
@@ -372,6 +378,9 @@ const AdminPage = () => {
     if (activeTab === 'lessonPricing') {
       fetchLessonPricing()
     }
+    if (activeTab === 'prices') {
+      fetchPrices()
+    }
   }, [activeTab])
 
   const fetchLessonPricing = async () => {
@@ -386,6 +395,21 @@ const AdminPage = () => {
       showError(err instanceof Error ? err.message : 'Failed to load lesson pricing')
     } finally {
       setLessonPricingLoading(false)
+    }
+  }
+
+  const fetchPrices = async () => {
+    setPricesLoading(true)
+    try {
+      const response = await fetch('/api/admin/prices', { cache: 'no-store' })
+      if (!response.ok) throw new Error('Failed to load prices')
+      const json = await response.json()
+      setPrices(json.prices || [])
+    } catch (err) {
+      console.error(err)
+      showError(err instanceof Error ? err.message : 'Failed to load prices')
+    } finally {
+      setPricesLoading(false)
     }
   }
 
@@ -647,6 +671,29 @@ const AdminPage = () => {
     }
   }
 
+  const handlePricesSubmit = async (updatedPrices: Array<{ itemKey: string; type: string; includes: string; price: string }>) => {
+    setSubmittingPrices(true)
+    try {
+      const response = await fetch('/api/admin/prices', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prices: updatedPrices }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to save prices')
+      }
+
+      fetchPrices()
+      showSuccess('Prices saved successfully')
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to save prices')
+    } finally {
+      setSubmittingPrices(false)
+    }
+  }
+
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat(locale || 'ka-GE', { style: 'currency', currency: 'GEL' }).format(amount)
 
@@ -663,6 +710,7 @@ const AdminPage = () => {
     { id: 'equipment', labelKey: 'menu.equipment' },
     { id: 'customers', labelKey: 'menu.customers' },
     { id: 'lessonPricing', labelKey: 'menu.lessonPricing' },
+    { id: 'prices', labelKey: 'menu.prices' },
   ]
 
   const renderDashboard = () => {
@@ -1960,6 +2008,162 @@ const AdminPage = () => {
     )
   }
 
+  const renderPrices = () => {
+    // Helper function to convert camelCase to spaced words
+    const formatCamelCase = (text: string): string => {
+      if (!text) return text
+      // Replace camelCase with spaces
+      return text
+        .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space before capital letters
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2') // Handle consecutive capitals
+        .trim()
+    }
+
+    const priceKeys = [
+      'skiSetStandard', 'skiSetProfessional', 'skiSetKidsStandard',
+      'skiStandard', 'skiProfessional', 'skiBootsStandard',
+      'snowboardSetStandard', 'snowboardSetKidsStandard', 'snowboardSetProfessional',
+      'boardStandard', 'boardProfessional', 'snowboardBootsStandard',
+      'gogglesStandard', 'helmetStandard', 'polesStandard', 'glovesStandard',
+      'jacket', 'pants', 'sledge', 'instructor'
+    ]
+
+    const defaultPrices: Record<string, { type: string; includes: string; price: string }> = {
+      skiSetStandard: { type: 'standard', includes: 'includesSkiBootsPoles', price: '50 ₾' },
+      skiSetProfessional: { type: 'professional', includes: 'includesSkiBootsPoles', price: '60-150 ₾' },
+      skiSetKidsStandard: { type: 'standard', includes: 'includesSkiBootsPoles', price: '40 ₾' },
+      skiStandard: { type: 'standard', includes: 'includesSkiOnly', price: '40 ₾' },
+      skiProfessional: { type: 'professional', includes: 'includesSkiOnly', price: '70 ₾' },
+      skiBootsStandard: { type: 'standard', includes: 'includesBootsOnly', price: '30 ₾' },
+      snowboardSetStandard: { type: 'standard', includes: 'includesBoardBoots', price: '70 ₾' },
+      snowboardSetKidsStandard: { type: 'standard', includes: 'includesBoardBoots', price: '60 ₾' },
+      snowboardSetProfessional: { type: 'professional', includes: 'includesBoardBoots', price: '80-150 ₾' },
+      boardStandard: { type: 'standard', includes: 'includesBoardOnly', price: '50 ₾' },
+      boardProfessional: { type: 'professional', includes: 'includesBoardOnly', price: '70 ₾' },
+      snowboardBootsStandard: { type: 'standard', includes: 'includesBootsOnly', price: '40 ₾' },
+      gogglesStandard: { type: 'accessory', includes: 'accessory', price: '10 ₾' },
+      helmetStandard: { type: 'accessory', includes: 'accessory', price: '10 ₾' },
+      polesStandard: { type: 'accessory', includes: 'accessory', price: '10 ₾' },
+      glovesStandard: { type: 'accessory', includes: 'accessory', price: '10 ₾' },
+      jacket: { type: 'clothes', includes: 'clothes', price: '20 ₾' },
+      pants: { type: 'clothes', includes: 'clothes', price: '20 ₾' },
+      sledge: { type: 'forSnow', includes: 'forSnow', price: '30 ₾' },
+      instructor: { type: 'forOnePerson', includes: 'forOnePerson', price: '120 ₾' }
+    }
+
+    const handlePriceChange = (itemKey: string, field: string, value: string) => {
+      setEditingPrices(prev => ({
+        ...prev,
+        [itemKey]: {
+          ...(prev[itemKey] || (prices.find(p => p.itemKey === itemKey) || defaultPrices[itemKey as keyof typeof defaultPrices])),
+          [field]: value
+        }
+      }))
+    }
+
+    const handleSavePrices = () => {
+      const pricesToSave = priceKeys.map(itemKey => {
+        const edited = editingPrices[itemKey]
+        const existing = prices.find(p => p.itemKey === itemKey)
+        const defaultPrice = defaultPrices[itemKey as keyof typeof defaultPrices]
+        
+        return {
+          itemKey,
+          type: edited?.type || existing?.type || defaultPrice.type,
+          includes: edited?.includes || existing?.includes || defaultPrice.includes,
+          price: edited?.price || existing?.price || defaultPrice.price
+        }
+      })
+      
+      handlePricesSubmit(pricesToSave)
+      setEditingPrices({})
+    }
+
+    return (
+      <>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-lg md:text-xl font-bold text-black mb-1 md:mb-2">{t('prices.title')}</h1>
+          <p className="text-sm md:text-base text-gray-600">{t('prices.subtitle')}</p>
+        </div>
+
+        {pricesLoading ? (
+          <div className="text-center py-20">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+            <p className="mt-4 text-black text-[16px]">{t('prices.loading')}</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-orange-500 to-orange-600">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-white font-semibold text-sm md:text-base">{t('prices.item')}</th>
+                    <th className="px-4 py-3 text-left text-white font-semibold text-sm md:text-base">{t('prices.type')}</th>
+                    <th className="px-4 py-3 text-left text-white font-semibold text-sm md:text-base">{t('prices.includes')}</th>
+                    <th className="px-4 py-3 text-left text-white font-semibold text-sm md:text-base">{t('prices.price')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {priceKeys.map((itemKey) => {
+                    const existing = prices.find(p => p.itemKey === itemKey)
+                    const defaultPrice = defaultPrices[itemKey as keyof typeof defaultPrices]
+                    const edited = editingPrices[itemKey]
+                    const current = edited || existing || { itemKey, ...defaultPrice }
+
+                    return (
+                      <tr key={itemKey} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm md:text-base text-black font-medium">
+                          {t(`prices.${itemKey}`)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <input
+                            type="text"
+                            value={current.type}
+                            onChange={(e) => handlePriceChange(itemKey, 'type', e.target.value)}
+                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm md:text-base text-black"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input
+                            type="text"
+                            value={formatCamelCase(current.includes)}
+                            onChange={(e) => {
+                              // Keep the formatted value with spaces for better readability
+                              handlePriceChange(itemKey, 'includes', e.target.value)
+                            }}
+                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm md:text-base text-black"
+                            style={{ wordSpacing: '0.2em', letterSpacing: '0.02em' }}
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input
+                            type="text"
+                            value={current.price}
+                            onChange={(e) => handlePriceChange(itemKey, 'price', e.target.value)}
+                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm md:text-base text-black"
+                          />
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={handleSavePrices}
+                disabled={submittingPrices}
+                className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+              >
+                {submittingPrices ? t('prices.saving') : t('prices.save')}
+              </button>
+            </div>
+          </div>
+        )}
+      </>
+    )
+  }
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -1976,6 +2180,8 @@ const AdminPage = () => {
         return renderSettings()
       case 'lessonPricing':
         return renderLessonPricing()
+      case 'prices':
+        return renderPrices()
       default:
         return renderDashboard()
     }
