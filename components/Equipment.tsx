@@ -3,11 +3,13 @@
 import React from 'react'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
-import { Link } from '@/i18n/navigation'
+import { Link, usePathname } from '@/i18n/navigation'
 import { motion } from 'framer-motion'
 
 const Equipment = () => {
     const t = useTranslations('equipment')
+    const pathname = usePathname()
+    const isItemsPage = pathname === '/items'
     
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -100,7 +102,7 @@ const Equipment = () => {
                     variants={titleVariants}
                     className="text-xl md:text-2xl text-black text-bold text-center mb-12"
                 >
-                    {t('title')}
+                    {isItemsPage ? t('booking') : t('title')}
                 </motion.h2>
 
                 {/* Equipment Cards with Text Overlay */}

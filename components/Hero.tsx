@@ -69,7 +69,7 @@ const Hero = () => {
                     {/* CTA Button */}
                     <div className="pt-4">
                         <Link
-                            href="/book"
+                            href="/items"
                             className="inline-block bg-orange-500 md:text-[20px] text-[16px] font-bold hover:bg-orange-600 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors duration-200 shadow-lg"
                         >
                             {t('cta')}

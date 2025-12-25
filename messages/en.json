@@ -23,6 +23,7 @@
   },
   "equipment": {
     "title": "Equipment",
+    "booking": "Booking",
     "viewMore": "Book Now",
     "loading": "Loading equipment...",
     "empty": "No equipment found",
