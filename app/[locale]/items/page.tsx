@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { Link } from '@/i18n/navigation'
 import { ProductType } from '@/app/generated/prisma/enums'
 import Equipment from '@/components/Equipment'
+import Prices from '@/components/Prices'
 
 type Product = {
   id: string
@@ -120,6 +121,9 @@ const ItemsPage = () => {
     <div className="min-h-screen bg-[#FFFAFA]">
       {/* Show Equipment component when no specific type is selected */}
       {!type && <Equipment />}
+      
+      {/* Show Prices component when no specific type is selected */}
+      {!type && <Prices />}
       
       <div className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
