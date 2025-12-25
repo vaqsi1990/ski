@@ -20,8 +20,11 @@ export function generateHreflangTags(
     'x-default': `${baseUrl}/en${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`
   };
   
+  // Generate hreflang tags for all locales using proper ISO 639-1 language codes
   routing.locales.forEach((loc) => {
+    // Use proper language code (ka for geo, not geo)
     const langCode = localeMap[loc] || loc;
+    // URL still uses the locale code (geo, en, ru) but hreflang uses language code (ka, en, ru)
     alternateLanguages[langCode] = `${baseUrl}/${loc}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`;
   });
   
@@ -32,14 +35,52 @@ export function generateMetadataForPage(
   locale: string,
   title: string,
   description: string,
-  path: string = '/'
+  path: string = '/',
+  keywords?: string[]
 ): Metadata {
   const canonical = `${baseUrl}/${locale}${path === '/' ? '' : path}`;
   const logoUrl = `${baseUrl}/logo.jpg`;
   
+  // Default keywords based on locale
+  const defaultKeywords: Record<string, string[]> = {
+    en: [
+      'ski rental',
+      'snowboard rental',
+      'Gudauri',
+      'ski equipment',
+      'winter sports',
+      'Georgia',
+      'ski resort',
+      'snowboard equipment',
+      'ski gear rental',
+    ],
+    geo: [
+      'თხილამურების გაქირავება',
+      'სნოუბორდების გაქირავება',
+      'გუდაური',
+      'თხილამურების აღჭურვილობა',
+      'ზამთრის სპორტი',
+      'საქართველო',
+      'სათხილამურო კურორტი',
+    ],
+    ru: [
+      'прокат лыж',
+      'прокат сноубордов',
+      'Гудаури',
+      'лыжное снаряжение',
+      'зимний спорт',
+      'Грузия',
+      'лыжный курорт',
+      'сноубордическое снаряжение',
+    ],
+  };
+  
+  const pageKeywords = keywords || defaultKeywords[locale] || defaultKeywords.en;
+  
   return {
     title,
     description,
+    keywords: pageKeywords.join(', '),
     alternates: {
       languages: generateHreflangTags(locale, path),
       canonical,
@@ -72,6 +113,22 @@ export function generateMetadataForPage(
     icons: {
       icon: logoUrl,
       apple: logoUrl,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+    verification: {
+      // Add verification codes if available
+      // google: 'your-google-verification-code',
+      // yandex: 'your-yandex-verification-code',
     },
   };
 }

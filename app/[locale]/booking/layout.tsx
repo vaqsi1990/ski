@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { generateMetadataForPage } from '@/lib/metadata';
+import StructuredData from '@/components/StructuredData';
 
 export async function generateMetadata({
   params
@@ -28,11 +29,19 @@ export async function generateMetadata({
   );
 }
 
-export default function BookingLayout({
+export default async function BookingLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
-  return <>{children}</>;
+  const { locale } = await params;
+  return (
+    <>
+      <StructuredData locale={locale} type="booking" />
+      {children}
+    </>
+  );
 }
 

@@ -8,6 +8,7 @@ import "../globals.css"
 import type { Metadata } from 'next'
 import { generateMetadataForPage } from '@/lib/metadata'
 import Footer from '@/components/Footer';
+import StructuredData from '@/components/StructuredData';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -90,9 +91,18 @@ export default async function LocaleLayout({
 
   const messages = await getMessages()
 
+  // Map locale to proper HTML lang attribute (ISO 639-1 language codes)
+  const htmlLangMap: Record<string, string> = {
+    'en': 'en',
+    'geo': 'ka', // Georgian language code
+    'ru': 'ru'
+  };
+  const htmlLang = htmlLangMap[locale] || locale;
+
   return (
-    <html lang={locale}>
+    <html lang={htmlLang}>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <StructuredData locale={locale} type="home" />
         <NextIntlClientProvider messages={messages}>
           <Header />
           {children}
