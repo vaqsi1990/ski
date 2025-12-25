@@ -20,11 +20,11 @@ type Product = {
 }
 
 type BookingFormData = {
-  firstName: string
-  lastName: string
-  email: string
-  phoneNumber: string
-  personalId: string
+  firstName: string[]
+  lastName: string[]
+  email: string[]
+  phoneNumber: string[]
+  personalId: string[]
   selectedProductIds: string[] // Changed from productId to selectedProductIds array
   numberOfPeople: string
   startDate: Date | null
@@ -35,11 +35,11 @@ type BookingFormData = {
 }
 
 const bookingSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Invalid email address'),
-  phoneNumber: z.string().min(1, 'Phone number is required'),
-  personalId: z.string().optional(),
+  firstName: z.array(z.string().min(1, 'First name is required')).min(1, 'At least one first name is required'),
+  lastName: z.array(z.string().min(1, 'Last name is required')).min(1, 'At least one last name is required'),
+  email: z.array(z.string().email('Invalid email address')).min(1, 'At least one email is required'),
+  phoneNumber: z.array(z.string().min(1, 'Phone number is required')).min(1, 'At least one phone number is required'),
+  personalId: z.array(z.string().optional()),
   selectedProductIds: z.array(z.string()).refine((ids) => {
     const validIds = ids.filter(id => id && id !== '')
     return validIds.length > 0
@@ -93,11 +93,11 @@ const BookingPage = () => {
   const [success, setSuccess] = useState(false)
 
   const [formData, setFormData] = useState<BookingFormData>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phoneNumber: '',
-    personalId: '',
+    firstName: [''],
+    lastName: [''],
+    email: [''],
+    phoneNumber: [''],
+    personalId: [''],
     selectedProductIds: productIdFromUrl ? [productIdFromUrl] : [''],
     numberOfPeople: '',
     startDate: null,
@@ -130,7 +130,25 @@ const BookingPage = () => {
     fetchProducts()
   }, [])
 
-  // Auto-set numberOfPeople for vehicles based on selected product type
+  // Sync contact info arrays with selected products count
+  useEffect(() => {
+    // Use the length of selectedProductIds (including empty strings) to match number of dropdowns
+    const productCount = formData.selectedProductIds.length || 1
+    
+    // Ensure arrays match product count
+    if (formData.firstName.length !== productCount) {
+      const newArrays = {
+        firstName: Array(productCount).fill('').map((_, i) => formData.firstName[i] || ''),
+        lastName: Array(productCount).fill('').map((_, i) => formData.lastName[i] || ''),
+        email: Array(productCount).fill('').map((_, i) => formData.email[i] || ''),
+        phoneNumber: Array(productCount).fill('').map((_, i) => formData.phoneNumber[i] || ''),
+        personalId: Array(productCount).fill('').map((_, i) => formData.personalId[i] || ''),
+      }
+      setFormData((prev) => ({ ...prev, ...newArrays }))
+    }
+  }, [formData.selectedProductIds])
+
+  // Auto-set numberOfPeople and duration for vehicles based on selected product type
   useEffect(() => {
     const validProductIds = formData.selectedProductIds.filter(id => id && id !== '')
     if (validProductIds.length > 0 && typeFromUrl === 'SNOWBOARD') {
@@ -151,12 +169,21 @@ const BookingPage = () => {
           }
         }
         
+        // Set duration to 1 hour for all vehicles
+        const updates: Partial<BookingFormData> = {}
+        if (formData.duration !== '1') {
+          updates.duration = '1'
+        }
         if (peopleCount && formData.numberOfPeople !== peopleCount) {
-          setFormData((prev) => ({ ...prev, numberOfPeople: peopleCount }))
+          updates.numberOfPeople = peopleCount
+        }
+        
+        if (Object.keys(updates).length > 0) {
+          setFormData((prev) => ({ ...prev, ...updates }))
         }
       }
     }
-  }, [formData.selectedProductIds, products, typeFromUrl])
+  }, [formData.selectedProductIds, products, typeFromUrl, formData.duration, formData.numberOfPeople])
 
   // Auto-calculate price when products, dates, and number of people change
   useEffect(() => {
@@ -210,14 +237,11 @@ const BookingPage = () => {
     setSuccess(false)
 
     try {
-      // For vehicles (SNOWBOARD type), startTime, duration, and numberOfPeople are required
+      // For vehicles (SNOWBOARD type), startTime and numberOfPeople are required
+      // Duration is fixed at 1 hour
       if (typeFromUrl === 'SNOWBOARD') {
         if (!formData.startTime) {
           setErrors({ startTime: 'Start time is required' })
-          return
-        }
-        if (!formData.duration) {
-          setErrors({ duration: 'Duration is required' })
           return
         }
         if (!formData.numberOfPeople) {
@@ -230,10 +254,9 @@ const BookingPage = () => {
           setErrors({ startTime: 'Start time must be between 10:00 and 15:00' })
           return
         }
-        // Validate duration
-        if (!['1', '2', '3'].includes(formData.duration)) {
-          setErrors({ duration: 'Duration must be 1, 2, or 3 hours' })
-          return
+        // Set duration to 1 hour if not already set
+        if (formData.duration !== '1') {
+          setFormData((prev) => ({ ...prev, duration: '1' }))
         }
       }
       
@@ -252,24 +275,55 @@ const BookingPage = () => {
       // Filter out empty strings from product IDs
       const validProductIds = validated.selectedProductIds.filter(id => id && id !== '')
       
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: validated.firstName,
-          lastName: validated.lastName,
-          email: validated.email,
-          phoneNumber: validated.phoneNumber,
-          personalId: validated.personalId,
-          productIds: validProductIds,
-          numberOfPeople: validated.numberOfPeople,
-          startDate: validated.startDate.toISOString(),
-          endDate: validated.endDate.toISOString(),
-          startTime: validated.startTime,
-          duration: validated.duration,
-          totalPrice: parseFloat(formData.totalPrice),
-        }),
-      })
+      // Validate that contact info arrays match product count
+      if (validated.firstName.length !== validProductIds.length ||
+          validated.lastName.length !== validProductIds.length ||
+          validated.email.length !== validProductIds.length ||
+          validated.phoneNumber.length !== validProductIds.length) {
+        throw new Error('Contact information count must match number of selected products')
+      }
+
+      // For each product, create a booking with corresponding contact info
+      const bookings = validProductIds.map((productId, index) => ({
+        firstName: validated.firstName[index] || '',
+        lastName: validated.lastName[index] || '',
+        email: validated.email[index] || '',
+        phoneNumber: validated.phoneNumber[index] || '',
+        personalId: validated.personalId[index] || '',
+        productIds: [productId],
+        numberOfPeople: validated.numberOfPeople || '1',
+        startDate: validated.startDate!.toISOString(),
+        endDate: validated.endDate!.toISOString(),
+        startTime: validated.startTime || '',
+        duration: validated.duration || '',
+        totalPrice: (() => {
+          const selectedProduct = products.find(p => p.id === productId)
+          if (!selectedProduct) return 0
+          const start = new Date(validated.startDate!)
+          const end = new Date(validated.endDate!)
+          start.setHours(0, 0, 0, 0)
+          end.setHours(0, 0, 0, 0)
+          const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+          const numberOfPeople = parseInt(validated.numberOfPeople || '1') || 1
+          const isVehicle = ['QUAD_BIKE', 'BAG', 'BURAN', 'WRANGLER_JEEP'].includes(selectedProduct.type)
+          return isVehicle 
+            ? selectedProduct.price * days
+            : selectedProduct.price * days * numberOfPeople
+        })(),
+      }))
+
+      // Create all bookings
+      const responses = await Promise.all(
+        bookings.map(booking => 
+          fetch('/api/bookings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(booking),
+          })
+        )
+      )
+
+      const response = responses[0]
 
       if (!response.ok) {
         const error = await response.json()
@@ -284,8 +338,14 @@ const BookingPage = () => {
       if (err instanceof z.ZodError) {
         const newErrors: Record<string, string> = {}
         err.issues.forEach((issue) => {
-          if (issue.path[0]) {
-            newErrors[issue.path[0].toString()] = issue.message
+          if (issue.path.length > 0) {
+            // Handle array fields (e.g., firstName[0], email[1])
+            if (Array.isArray(issue.path) && issue.path.length > 1) {
+              const fieldName = `${String(issue.path[0])}.${String(issue.path[1])}`
+              newErrors[fieldName] = issue.message
+            } else if (issue.path[0]) {
+              newErrors[String(issue.path[0])] = issue.message
+            }
           }
         })
         setErrors(newErrors)
@@ -445,9 +505,17 @@ const BookingPage = () => {
                   <button
                     type="button"
                     onClick={() => {
+                      const newProductIds = [...formData.selectedProductIds, '']
+                      const newCount = newProductIds.length
                       setFormData({
                         ...formData,
-                        selectedProductIds: [...formData.selectedProductIds, ''],
+                        selectedProductIds: newProductIds,
+                        // Immediately sync contact info arrays
+                        firstName: Array(newCount).fill('').map((_, i) => formData.firstName[i] || ''),
+                        lastName: Array(newCount).fill('').map((_, i) => formData.lastName[i] || ''),
+                        email: Array(newCount).fill('').map((_, i) => formData.email[i] || ''),
+                        phoneNumber: Array(newCount).fill('').map((_, i) => formData.phoneNumber[i] || ''),
+                        personalId: Array(newCount).fill('').map((_, i) => formData.personalId[i] || ''),
                       })
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-[16px] font-bold transition-colors"
@@ -540,27 +608,18 @@ const BookingPage = () => {
               </div>
             )}
 
-            {/* Duration - Only for vehicles (SNOWBOARD type) */}
+            {/* Duration - Only for vehicles (SNOWBOARD type) - Fixed at 1 hour */}
             {typeFromUrl === 'SNOWBOARD' && (
               <div>
                 <label className="block text-[18px] font-medium text-black mb-2">
                   {tLessons('duration')} *
                 </label>
-                <select
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                    errors.duration ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">{tLessons('selectDuration')}</option>
-                  <option value="1">1 {tLessons('hour')}</option>
-                  <option value="2">2 {tLessons('hours')}</option>
-                  <option value="3">3 {tLessons('hours')}</option>
-                </select>
-                {errors.duration && (
-                  <p className="text-red-500 text-[18px] mt-1">{errors.duration}</p>
-                )}
+                <input
+                  type="text"
+                  value={`1 ${tLessons('hour')}`}
+                  readOnly
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-[18px] text-black bg-gray-100 cursor-not-allowed"
+                />
               </div>
             )}
 
@@ -619,99 +678,135 @@ const BookingPage = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-[18px] font-medium text-black mb-2">
-                  {t('firstName')} *
-                </label>
-                <input
-                  type="text"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                    errors.firstName ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.firstName && (
-                  <p className="text-red-500 text-[18px] mt-1">{errors.firstName}</p>
-                )}
-              </div>
+            {/* Contact Information - Dynamic based on number of products */}
+            {formData.selectedProductIds.map((productId, index) => {
+              const selectedProduct = productId ? products.find(p => p.id === productId) : null
+              const productLabel = selectedProduct 
+                ? `${tEquipment(selectedProduct.type)}${selectedProduct.description ? ` (${selectedProduct.description})` : ''}`
+                : `${t('product')} ${index + 1}`
+              
+              return (
+                <div key={index} className="border-t pt-6 mt-6">
+                  <h3 className="text-xl font-bold text-black mb-4">
+                    {productLabel} - {tLessons('contactInfo')}
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[18px] font-medium text-black mb-2">
+                        {t('firstName')} *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.firstName[index] || ''}
+                        onChange={(e) => {
+                          const newArray = [...formData.firstName]
+                          newArray[index] = e.target.value
+                          setFormData({ ...formData, firstName: newArray })
+                        }}
+                        className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                          errors[`firstName.${index}`] ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors[`firstName.${index}`] && (
+                        <p className="text-red-500 text-[18px] mt-1">{errors[`firstName.${index}`]}</p>
+                      )}
+                    </div>
 
-              <div>
-                <label className="block text-[18px] font-medium text-black mb-2">
-                  {t('lastName')} *
-                </label>
-                <input
-                  type="text"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                    errors.lastName ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.lastName && (
-                  <p className="text-red-500 text-[18px] mt-1">{errors.lastName}</p>
-                )}
-              </div>
-            </div>
+                    <div>
+                      <label className="block text-[18px] font-medium text-black mb-2">
+                        {t('lastName')} *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.lastName[index] || ''}
+                        onChange={(e) => {
+                          const newArray = [...formData.lastName]
+                          newArray[index] = e.target.value
+                          setFormData({ ...formData, lastName: newArray })
+                        }}
+                        className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                          errors[`lastName.${index}`] ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors[`lastName.${index}`] && (
+                        <p className="text-red-500 text-[18px] mt-1">{errors[`lastName.${index}`]}</p>
+                      )}
+                    </div>
+                  </div>
 
-            <div>
-              <label className="block text-[18px] font-medium text-black mb-2">
-                {t('email')} *
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                  errors.email ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-[18px] mt-1">{errors.email}</p>
-              )}
-            </div>
+                  <div>
+                    <label className="block text-[18px] font-medium text-black mb-2">
+                      {t('email')} *
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email[index] || ''}
+                      onChange={(e) => {
+                        const newArray = [...formData.email]
+                        newArray[index] = e.target.value
+                        setFormData({ ...formData, email: newArray })
+                      }}
+                      className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                        errors[`email.${index}`] ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors[`email.${index}`] && (
+                      <p className="text-red-500 text-[18px] mt-1">{errors[`email.${index}`]}</p>
+                    )}
+                  </div>
 
-            <div>
-              <label className="block text-[18px] font-medium text-black mb-2">
-                {t('phone')} *
-              </label>
-              <PhoneInput
-                country="ge"
-                value={formData.phoneNumber}
-                onChange={(value) => setFormData({ ...formData, phoneNumber: value })}
-                inputClass={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                  errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
-                }`}
-                buttonClass={`${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'}`}
-                containerClass=""
-                inputStyle={{
-                  width: '100%',
-                  height: '48px',
-                  fontSize: '18px',
-                }}
-                buttonStyle={{
-                  borderTopLeftRadius: '8px',
-                  borderBottomLeftRadius: '8px',
-                  borderRight: 'none',
-                }}
-              />
-              {errors.phoneNumber && (
-                <p className="text-red-500 text-[18px] mt-1">{errors.phoneNumber}</p>
-              )}
-            </div>
+                  <div>
+                    <label className="block text-[18px] font-medium text-black mb-2">
+                      {t('phone')} *
+                    </label>
+                    <PhoneInput
+                      country="ge"
+                      value={formData.phoneNumber[index] || ''}
+                      onChange={(value) => {
+                        const newArray = [...formData.phoneNumber]
+                        newArray[index] = value
+                        setFormData({ ...formData, phoneNumber: newArray })
+                      }}
+                      inputClass={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                        errors[`phoneNumber.${index}`] ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      buttonClass={`${errors[`phoneNumber.${index}`] ? 'border-red-500' : 'border-gray-300'}`}
+                      containerClass=""
+                      inputStyle={{
+                        width: '100%',
+                        height: '48px',
+                        fontSize: '18px',
+                      }}
+                      buttonStyle={{
+                        borderTopLeftRadius: '8px',
+                        borderBottomLeftRadius: '8px',
+                        borderRight: 'none',
+                      }}
+                    />
+                    {errors[`phoneNumber.${index}`] && (
+                      <p className="text-red-500 text-[18px] mt-1">{errors[`phoneNumber.${index}`]}</p>
+                    )}
+                  </div>
 
-            <div>
-              <label className="block text-[18px] font-medium text-black mb-2">
-                {t('personalId')}
-              </label>
-              <input
-                type="text"
-                value={formData.personalId}
-                onChange={(e) => setFormData({ ...formData, personalId: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-[18px] text-black"
-              />
-            </div>
+                  <div>
+                    <label className="block text-[18px] font-medium text-black mb-2">
+                      {t('personalId')}
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.personalId[index] || ''}
+                      onChange={(e) => {
+                        const newArray = [...formData.personalId]
+                        newArray[index] = e.target.value
+                        setFormData({ ...formData, personalId: newArray })
+                      }}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-[18px] text-black"
+                    />
+                  </div>
+                </div>
+              )
+            })}
             
             {/* Display calculated price */}
             {formData.totalPrice && (
