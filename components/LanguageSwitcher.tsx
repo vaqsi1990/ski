@@ -18,7 +18,7 @@ const LanguageSwitcher = () => {
   const languageNames: Record<Locale, string> = {
     en: 'EN',
     ru: 'RU',
-    geo: 'GEO',
+    ka: 'GEO',
   }
 
   const switchLocale = (newLocale: Locale) => {

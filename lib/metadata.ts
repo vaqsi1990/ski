@@ -3,13 +3,6 @@ import type { Metadata } from 'next';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://skirentfanatic.ge';
 
-// Map locale codes to proper language codes for hreflang
-const localeMap: Record<string, string> = {
-  'en': 'en',
-  'geo': 'ka',
-  'ru': 'ru'
-};
-
 export function generateHreflangTags(
   locale: string,
   path: string = '/'
@@ -22,10 +15,8 @@ export function generateHreflangTags(
   
   // Generate hreflang tags for all locales using proper ISO 639-1 language codes
   routing.locales.forEach((loc) => {
-    // Use proper language code (ka for geo, not geo)
-    const langCode = localeMap[loc] || loc;
-    // URL still uses the locale code (geo, en, ru) but hreflang uses language code (ka, en, ru)
-    alternateLanguages[langCode] = `${baseUrl}/${loc}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`;
+    // Locale codes are now already using proper ISO codes (ka, en, ru)
+    alternateLanguages[loc] = `${baseUrl}/${loc}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`;
   });
   
   return alternateLanguages;
@@ -54,7 +45,7 @@ export function generateMetadataForPage(
       'snowboard equipment',
       'ski gear rental',
     ],
-    geo: [
+    ka: [
       'თხილამურების გაქირავება',
       'სნოუბორდების გაქირავება',
       'გუდაური',
@@ -88,10 +79,10 @@ export function generateMetadataForPage(
     openGraph: {
       title,
       description,
-      locale: locale === 'geo' ? 'ka_GE' : locale === 'en' ? 'en_US' : 'ru_RU',
+      locale: locale === 'ka' ? 'ka_GE' : locale === 'en' ? 'en_US' : 'ru_RU',
       alternateLocale: routing.locales
         .filter(l => l !== locale)
-        .map(l => l === 'geo' ? 'ka_GE' : l === 'en' ? 'en_US' : 'ru_RU'),
+        .map(l => l === 'ka' ? 'ka_GE' : l === 'en' ? 'en_US' : 'ru_RU'),
       url: canonical,
       images: [
         {

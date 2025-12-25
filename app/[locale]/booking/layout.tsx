@@ -11,13 +11,13 @@ export async function generateMetadata({
   
   const titles: Record<string, string> = {
     en: "Book Ski Equipment - Ski Rent Fanatic",
-    geo: "თხილამურების დაჯავშნა - Ski Rent Fanatic",
+    ka: "თხილამურების დაჯავშნა - Ski Rent Fanatic",
     ru: "Забронировать лыжное снаряжение - Ski Rent Fanatic"
   };
   
   const descriptions: Record<string, string> = {
     en: "Book your ski and snowboard equipment online. Choose from premium gear, select dates, and complete your reservation in minutes.",
-    geo: "დაჯავშნეთ თქვენი თხილამურებისა და სნოუბორდების აღჭურვილობა ონლაინ. აირჩიეთ პრემიუმ აღჭურვილობა, აირჩიეთ თარიღები და დაასრულეთ დაჯავშნა წუთებში.",
+    ka: "დაჯავშნეთ თქვენი თხილამურებისა და სნოუბორდების აღჭურვილობა ონლაინ. აირჩიეთ პრემიუმ აღჭურვილობა, აირჩიეთ თარიღები და დაასრულეთ დაჯავშნა წუთებში.",
     ru: "Забронируйте свое лыжное и сноубордическое снаряжение онлайн. Выберите из премиум оборудования, выберите даты и завершите бронирование за минуты."
   };
 

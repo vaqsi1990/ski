@@ -32,7 +32,7 @@ const metadataTranslations: Record<string, Record<string, { title: string; descr
       description: "Best ski and snowboard rental in Gudauri. Premium equipment, competitive prices. Book your ski gear online today!"
     }
   },
-  geo: {
+  ka: {
     default: {
       title: "Ski Rent Fanatic - პრემიუმ თხილამურების გაქირავება გუდაურში",
       description: "საუკეთესო თხილამურებისა და სნოუბორდების გაქირავება გუდაურში. პრემიუმ აღჭურვილობა, კონკურენტუნარიანი ფასები. დაჯავშნეთ თქვენი სათხილამურო აღჭურვილობა ონლაინ დღესვე!"
@@ -91,13 +91,8 @@ export default async function LocaleLayout({
 
   const messages = await getMessages()
 
-  // Map locale to proper HTML lang attribute (ISO 639-1 language codes)
-  const htmlLangMap: Record<string, string> = {
-    'en': 'en',
-    'geo': 'ka', // Georgian language code
-    'ru': 'ru'
-  };
-  const htmlLang = htmlLangMap[locale] || locale;
+  // Locale is already using proper ISO 639-1 language codes (ka, en, ru)
+  const htmlLang = locale;
 
   return (
     <html lang={htmlLang}>

@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
 
-  const isAdminPath = /^\/(geo|en|ru)\/admin(\/.*)?$|^\/admin(\/.*)?$/.test(pathname);
+  const isAdminPath = /^\/(ka|en|ru)\/admin(\/.*)?$|^\/admin(\/.*)?$/.test(pathname);
 
   if (pathname === '/' ) {
     const url = request.nextUrl.clone();

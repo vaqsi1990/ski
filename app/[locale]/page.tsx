@@ -16,13 +16,13 @@ export async function generateMetadata({
   
   const titles: Record<string, string> = {
     en: "Ski Rent Fanatic - Premium Ski & Snowboard Rental in Gudauri",
-    geo: "Ski Rent Fanatic - პრემიუმ თხილამურების გაქირავება გუდაურში",
+    ka: "Ski Rent Fanatic - პრემიუმ თხილამურების გაქირავება გუდაურში",
     ru: "Ski Rent Fanatic - Премиум прокат лыж и сноубордов в Гудаури"
   };
   
   const descriptions: Record<string, string> = {
     en: "Best ski and snowboard rental in Gudauri. Premium equipment, competitive prices. Book your ski gear online today!",
-    geo: "საუკეთესო თხილამურებისა და სნოუბორდების გაქირავება გუდაურში. პრემიუმ აღჭურვილობა, კონკურენტუნარიანი ფასები. დაჯავშნეთ თქვენი სათხილამურო აღჭურვილობა ონლაინ დღესვე!",
+    ka: "საუკეთესო თხილამურებისა და სნოუბორდების გაქირავება გუდაურში. პრემიუმ აღჭურვილობა, კონკურენტუნარიანი ფასები. დაჯავშნეთ თქვენი სათხილამურო აღჭურვილობა ონლაინ დღესვე!",
     ru: "Лучший прокат лыж и сноубордов в Гудаури. Премиум оборудование, конкурентоспособные цены. Забронируйте свое лыжное снаряжение онлайн сегодня!"
   };
 

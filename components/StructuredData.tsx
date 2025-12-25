@@ -2,11 +2,7 @@ import { routing } from '@/i18n/routing';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://skirentfanatic.ge';
 
-const localeMap: Record<string, string> = {
-  'en': 'en',
-  'geo': 'ka',
-  'ru': 'ru',
-};
+// Locale codes are now already using proper ISO codes (ka, en, ru)
 
 interface StructuredDataProps {
   locale: string;
@@ -17,22 +13,22 @@ function getPageName(loc: string, pageType: string): string {
   const names: Record<string, Record<string, string>> = {
     booking: {
       en: 'Booking',
-      geo: 'დაჯავშნა',
+      ka: 'დაჯავშნა',
       ru: 'Бронирование',
     },
     items: {
       en: 'Equipment',
-      geo: 'აღჭურვილობა',
+      ka: 'აღჭურვილობა',
       ru: 'Оборудование',
     },
     about: {
       en: 'About Us',
-      geo: 'ჩვენს შესახებ',
+      ka: 'ჩვენს შესახებ',
       ru: 'О нас',
     },
     lessons: {
       en: 'Lessons',
-      geo: 'გაკვეთილები',
+      ka: 'გაკვეთილები',
       ru: 'Уроки',
     },
   };
@@ -49,7 +45,7 @@ export default function StructuredData({ locale, type = 'home' }: StructuredData
     name: 'Ski Rent Fanatic',
     url: baseUrl,
     logo: `${baseUrl}/logo.jpg`,
-    description: locale === 'geo' 
+    description: locale === 'ka' 
       ? 'საუკეთესო თხილამურებისა და სნოუბორდების გაქირავება გუდაურში'
       : locale === 'ru'
       ? 'Лучший прокат лыж и сноубордов в Гудаури'
@@ -121,7 +117,7 @@ export default function StructuredData({ locale, type = 'home' }: StructuredData
       '@type': 'City',
       name: 'Gudauri',
     },
-    description: locale === 'geo'
+    description: locale === 'ka'
       ? 'თხილამურებისა და სნოუბორდების გაქირავება გუდაურში'
       : locale === 'ru'
       ? 'Прокат лыж и сноубордов в Гудаури'
@@ -142,7 +138,7 @@ export default function StructuredData({ locale, type = 'home' }: StructuredData
       },
       'query-input': 'required name=search_term_string',
     },
-    inLanguage: routing.locales.map(loc => localeMap[loc] || loc),
+    inLanguage: routing.locales, // Locales are already using proper ISO codes (ka, en, ru)
   };
 
   // Breadcrumb Schema
@@ -153,7 +149,7 @@ export default function StructuredData({ locale, type = 'home' }: StructuredData
       {
         '@type': 'ListItem',
         position: 1,
-        name: locale === 'geo' ? 'მთავარი' : locale === 'ru' ? 'Главная' : 'Home',
+        name: locale === 'ka' ? 'მთავარი' : locale === 'ru' ? 'Главная' : 'Home',
         item: `${baseUrl}/${locale}`,
       },
       {
