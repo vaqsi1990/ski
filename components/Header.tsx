@@ -161,13 +161,7 @@ const Header = () => {
                         >
                             {t('about')}
                         </Link>
-                        <Link
-                            href="/contact"
-                            className="block px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-[#08964c] transition-all duration-200 font-medium text-lg"
-                            onClick={closeMenu}
-                        >
-                            {t('contact')}
-                        </Link>
+                       
                         
                         {/* Book Now Button */}
                         <div className="pt-4">
