@@ -78,10 +78,10 @@ const Equipment = () => {
         {
             id: 3,
             key: 'snowboards',
-            type: 'SNOWBOARD',
+            type: 'VEHICLES',
             image: '/images/serv6.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
-            link: '/booking?type=SNOWBOARD',
+            link: '/booking?type=VEHICLES',
         },
      
     ]

@@ -151,7 +151,7 @@ const BookingPage = () => {
   // Auto-set numberOfPeople and duration for vehicles based on selected product type
   useEffect(() => {
     const validProductIds = formData.selectedProductIds.filter(id => id && id !== '')
-    if (validProductIds.length > 0 && typeFromUrl === 'SNOWBOARD') {
+    if (validProductIds.length > 0 && (typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD')) {
       const selectedProducts = products.filter((p) => validProductIds.includes(p.id))
       if (selectedProducts.length > 0) {
         // Get the first selected product (for vehicles, usually only one is selected)
@@ -237,9 +237,9 @@ const BookingPage = () => {
     setSuccess(false)
 
     try {
-      // For vehicles (SNOWBOARD type), startTime and numberOfPeople are required
+      // For vehicles (VEHICLES or SNOWBOARD type), startTime and numberOfPeople are required
       // Duration is fixed at 1 hour
-      if (typeFromUrl === 'SNOWBOARD') {
+      if (typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') {
         if (!formData.startTime) {
           setErrors({ startTime: 'Start time is required' })
           return
@@ -264,8 +264,8 @@ const BookingPage = () => {
         ...formData,
         startDate: formData.startDate,
         endDate: formData.endDate,
-        startTime: typeFromUrl === 'SNOWBOARD' ? formData.startTime : '',
-        duration: typeFromUrl === 'SNOWBOARD' ? formData.duration : '',
+        startTime: (typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') ? formData.startTime : '',
+        duration: (typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') ? formData.duration : '',
       })
       
       if (!validated.startDate || !validated.endDate) {
@@ -355,11 +355,36 @@ const BookingPage = () => {
     }
   }
 
+
+  const getPageTitle2 = () => {
+    if (typeFromUrl === 'SKI') {
+      return tEquipment('SKI') + ' / ' + tEquipment('SNOWBOARD')
+    } else if (typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') {
+      return tEquipment('VEHICLES')
+    } else if (typeFromUrl === 'ACCESSORY') {
+      return tEquipment('ACCESSORY')
+    } else if (typeFromUrl === 'ADULT_CLOTH') {
+      return tEquipment('ADULT_CLOTH')
+    } else if (typeFromUrl === 'CHILD_CLOTH') {
+      return tEquipment('CHILD_CLOTH')
+    } else if (typeFromUrl === 'ADULT_SKI_SET') {
+      return tEquipment('ADULT_SKI_SET')
+    } else if (typeFromUrl === 'CHILD_SKI_SET') {
+      return tEquipment('CHILD_SKI_SET')
+    } else if (typeFromUrl === 'ADULT_SNOWBOARD_SET') {
+      return tEquipment('ADULT_SNOWBOARD_SET')
+    } else if (typeFromUrl === 'CHILD_SNOWBOARD_SET') {
+      return tEquipment('CHILD_SNOWBOARD_SET')
+    } else {
+      return t('title')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#FFFAFA] py-16">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl md:text-4xl font-bold text-black text-center mb-8">
-          {t('title')}
+         Booking
         </h1>
 
         {success && (
@@ -372,9 +397,7 @@ const BookingPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Dynamic Product Dropdowns */}
             <div className="space-y-4">
-              <label className="block text-[18px] font-medium text-black mb-2">
-                {t('product')} *
-              </label>
+             
               {loading ? (
                 <div className="text-[18px] text-black">Loading products...</div>
               ) : products.length === 0 ? (
@@ -389,7 +412,7 @@ const BookingPage = () => {
                       <div key={index} className="flex gap-2 items-end">
                         <div className="flex-1">
                           <label className="block text-[16px] font-medium text-black mb-2">
-                            {t('product')} {index + 1} {index === 0 && '*'}
+                          {getPageTitle2()} {index + 1} {index === 0 && '*'}
                           </label>
                           <select
                             value={productId || ''}
@@ -427,8 +450,8 @@ const BookingPage = () => {
                                     if (!allowedTypes.includes(product.type)) {
                                       return false
                                     }
-                                  } else if (typeFromUrl === 'SNOWBOARD') {
-                                    // If type is SNOWBOARD, show only vehicles/technique
+                                  } else if (typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') {
+                                    // If type is VEHICLES or SNOWBOARD, show only vehicles/technique
                                     const allowedTypes = [
                                       'QUAD_BIKE',
                                       'BAG',
@@ -582,8 +605,8 @@ const BookingPage = () => {
               </div>
             </div>
 
-            {/* Start Time - Only for vehicles (SNOWBOARD type) */}
-            {typeFromUrl === 'SNOWBOARD' && (
+            {/* Start Time - Only for vehicles (VEHICLES or SNOWBOARD type) */}
+            {(typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') && (
               <div>
                 <label className="block text-[18px] font-medium text-black mb-2">
                   {tLessons('startTime')} * ({tLessons('timeRange')})
@@ -608,8 +631,8 @@ const BookingPage = () => {
               </div>
             )}
 
-            {/* Duration - Only for vehicles (SNOWBOARD type) - Fixed at 1 hour */}
-            {typeFromUrl === 'SNOWBOARD' && (
+            {/* Duration - Only for vehicles (VEHICLES or SNOWBOARD type) - Fixed at 1 hour */}
+            {(typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') && (
               <div>
                 <label className="block text-[18px] font-medium text-black mb-2">
                   {tLessons('duration')} *
@@ -623,8 +646,8 @@ const BookingPage = () => {
               </div>
             )}
 
-            {/* Number of People - Only for vehicles (SNOWBOARD type), not for SKI or SNOWBOARD equipment */}
-            {typeFromUrl === 'SNOWBOARD' && (
+            {/* Number of People - Only for vehicles (VEHICLES or SNOWBOARD type), not for SKI or SNOWBOARD equipment */}
+            {(typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') && (
               <div>
                 <label className="block text-[18px] font-medium text-black mb-2">
                   {t('numberOfPeople')} *
@@ -635,7 +658,7 @@ const BookingPage = () => {
                   const isVehicle = selectedProducts.some(p => 
                     ['QUAD_BIKE', 'BAG', 'BURAN', 'WRANGLER_JEEP'].includes(p.type)
                   )
-                  const isVehiclePage = typeFromUrl === 'SNOWBOARD'
+                  const isVehiclePage = typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD'
                   
                   // Check if it's a fixed 1-person vehicle
                   const isFixedOnePerson = selectedProducts.some(p => 
@@ -683,12 +706,12 @@ const BookingPage = () => {
               const selectedProduct = productId ? products.find(p => p.id === productId) : null
               const productLabel = selectedProduct 
                 ? `${tEquipment(selectedProduct.type)}${selectedProduct.description ? ` (${selectedProduct.description})` : ''}`
-                : `${t('product')} ${index + 1}`
+                : ` ${index + 1}`
               
               return (
                 <div key={index} className="border-t pt-6 mt-6">
                   <h3 className="text-xl font-bold text-black mb-4">
-                    {productLabel} - {tLessons('contactInfo')}
+                    {tLessons('contactInfo')} - {productLabel}
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

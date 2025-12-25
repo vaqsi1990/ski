@@ -2,6 +2,7 @@
 
 import { useLocale } from 'next-intl'
 import { usePathname, useRouter } from '@/i18n/navigation'
+import { useSearchParams } from 'next/navigation'
 import { routing } from '@/i18n/routing'
 import type { Locale } from '@/i18n'
 import { motion } from 'framer-motion'
@@ -11,6 +12,7 @@ const LanguageSwitcher = () => {
   const locale = useLocale() as Locale
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [isOpen, setIsOpen] = useState(false)
 
   const languageNames: Record<Locale, string> = {
@@ -20,7 +22,40 @@ const LanguageSwitcher = () => {
   }
 
   const switchLocale = (newLocale: Locale) => {
-    router.replace(pathname, { locale: newLocale })
+    // Preserve query parameters when switching locale
+    const queryString = searchParams.toString()
+    
+    // Construct the new URL with the new locale and preserved query params
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname
+      // Remove current locale prefix if present
+      const localePrefix = `/${locale}`
+      let pathWithoutLocale = currentPath
+      
+      // Check if path starts with any locale prefix
+      for (const loc of routing.locales) {
+        if (currentPath.startsWith(`/${loc}`)) {
+          pathWithoutLocale = currentPath.slice(`/${loc}`.length)
+          break
+        }
+      }
+      
+      // Ensure path starts with /
+      if (!pathWithoutLocale.startsWith('/')) {
+        pathWithoutLocale = `/${pathWithoutLocale}`
+      }
+      
+      // Build new path with new locale
+      const newLocalePath = `/${newLocale}${pathWithoutLocale}`
+      const fullUrl = queryString ? `${newLocalePath}?${queryString}` : newLocalePath
+      
+      // Navigate to the new URL, preserving query parameters
+      window.location.href = fullUrl
+    } else {
+      // Fallback for SSR
+      const newPath = queryString ? `${pathname}?${queryString}` : pathname
+      router.replace(newPath, { locale: newLocale })
+    }
     setIsOpen(false)
   }
 

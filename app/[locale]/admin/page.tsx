@@ -1237,6 +1237,7 @@ const AdminPage = () => {
                       <option value="CHILD_SNOWBOARD_SET">{t('equipment.types.CHILD_SNOWBOARD_SET')}</option>
                       <option value="ADULT_SNOWBOARD_SET">{t('equipment.types.ADULT_SNOWBOARD_SET')}</option>
                       <option value="ACCESSORY">{t('equipment.types.ACCESSORY')}</option>
+                      <option value="VEHICLES">{t('equipment.types.VEHICLES')}</option>
                       <option value="QUAD_BIKE">{t('equipment.types.QUAD_BIKE')}</option>
                       <option value="BAG">{t('equipment.types.BAG')}</option>
                       <option value="BURAN">{t('equipment.types.BURAN')}</option>
@@ -1407,6 +1408,7 @@ const AdminPage = () => {
             <option value="CHILD_SNOWBOARD_SET">{t('equipment.types.CHILD_SNOWBOARD_SET')}</option>
             <option value="ADULT_SNOWBOARD_SET">{t('equipment.types.ADULT_SNOWBOARD_SET')}</option>
             <option value="ACCESSORY">{t('equipment.types.ACCESSORY')}</option>
+            <option value="VEHICLES">{t('equipment.types.VEHICLES')}</option>
             <option value="QUAD_BIKE">{t('equipment.types.QUAD_BIKE')}</option>
             <option value="BAG">{t('equipment.types.BAG')}</option>
             <option value="BURAN">{t('equipment.types.BURAN')}</option>
