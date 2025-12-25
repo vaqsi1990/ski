@@ -6,8 +6,6 @@ const GUDUARI_LON = 44.4796
 export async function GET() {
   const apiKey = process.env.WEATHERAPI_KEY
 
-  console.log('WEATHER API KEY:', apiKey)
-
   if (!apiKey) {
     return NextResponse.json(
       { error: 'API key missing' },

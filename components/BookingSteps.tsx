@@ -17,7 +17,6 @@ const BookingSteps = () => {
             },
         },
     }
-console.log('d');
 
     const stepVariants = (index: number) => ({
         hidden: {
