@@ -220,7 +220,11 @@
         "CHILD_SKI_SET": "Child Ski Set",
         "CHILD_SNOWBOARD_SET": "Child Snowboard Set",
         "ADULT_SNOWBOARD_SET": "Adult Snowboard Set",
-        "ACCESSORY": "Accessory"
+        "ACCESSORY": "Accessory",
+        "QUAD_BIKE": "Quad Bike (1 person)",
+        "BAG": "Bag (max 3 people)",
+        "BURAN": "Buran (1 person)",
+        "WRANGLER_JEEP": "Wrangler Jeep (max 3 people)"
       },
       "form": {
         "title": "Title",

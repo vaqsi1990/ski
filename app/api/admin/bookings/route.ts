@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
     const formattedBookings = bookings.map((booking) => {
       const equipmentList = booking.products
-        .map((bp) => `${bp.product.type}${bp.product.size ? ` (${bp.product.size})` : ''}`)
+        .map((bp) => `${bp.product.type.replace(/_/g, ' ')}${bp.product.size ? ` (${bp.product.size})` : ''}`)
         .join(', ')
       return {
         id: booking.id,
@@ -123,7 +123,7 @@ export async function POST(request: Request) {
     })
 
     const equipmentList = booking.products
-      .map((bp) => `${bp.product.type}${bp.product.size ? ` (${bp.product.size})` : ''}`)
+      .map((bp) => `${bp.product.type.replace(/_/g, ' ')}${bp.product.size ? ` (${bp.product.size})` : ''}`)
       .join(', ')
 
     return NextResponse.json({

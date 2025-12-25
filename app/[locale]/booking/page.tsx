@@ -29,6 +29,8 @@ type BookingFormData = {
   numberOfPeople: string
   startDate: Date | null
   endDate: Date | null
+  startTime: string
+  duration: string
   totalPrice: string
 }
 
@@ -44,13 +46,15 @@ const bookingSchema = z.object({
   }, {
     message: 'At least one equipment item is required',
   }),
-  numberOfPeople: z.string().min(1, 'Number of people is required'),
+  numberOfPeople: z.string().optional(),
   startDate: z.date({ message: 'Start date is required' }).nullable().refine((val) => val !== null, {
     message: 'Start date is required',
   }),
   endDate: z.date({ message: 'End date is required' }).nullable().refine((val) => val !== null, {
     message: 'End date is required',
   }),
+  startTime: z.string().optional(),
+  duration: z.string().optional(),
   totalPrice: z.string().min(1, 'Price is required'),
 }).refine((data) => {
   if (data.startDate && data.endDate) {
@@ -74,6 +78,8 @@ const bookingSchema = z.object({
 
 const BookingPage = () => {
   const t = useTranslations('admin.bookings.form')
+  const tLessons = useTranslations('lessons')
+  const tEquipment = useTranslations('admin.equipment.types')
   const locale = useLocale()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -96,8 +102,16 @@ const BookingPage = () => {
     numberOfPeople: '',
     startDate: null,
     endDate: null,
+    startTime: '',
+    duration: '',
     totalPrice: '',
   })
+
+  // Generate time slots from 10:00 to 15:00 (last slot starts at 15:00)
+  const timeSlots: string[] = []
+  for (let hour = 10; hour <= 15; hour++) {
+    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`)
+  }
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -115,6 +129,34 @@ const BookingPage = () => {
     }
     fetchProducts()
   }, [])
+
+  // Auto-set numberOfPeople for vehicles based on selected product type
+  useEffect(() => {
+    const validProductIds = formData.selectedProductIds.filter(id => id && id !== '')
+    if (validProductIds.length > 0 && typeFromUrl === 'SNOWBOARD') {
+      const selectedProducts = products.filter((p) => validProductIds.includes(p.id))
+      if (selectedProducts.length > 0) {
+        // Get the first selected product (for vehicles, usually only one is selected)
+        const product = selectedProducts[0]
+        let peopleCount = ''
+        
+        // Set numberOfPeople based on vehicle type
+        if (product.type === 'QUAD_BIKE' || product.type === 'BURAN') {
+          // Fixed at 1 person
+          peopleCount = '1'
+        } else if (product.type === 'BAG' || product.type === 'WRANGLER_JEEP') {
+          // Default to 3, but user can change (max 3)
+          if (!formData.numberOfPeople || parseInt(formData.numberOfPeople) > 3) {
+            peopleCount = '3'
+          }
+        }
+        
+        if (peopleCount && formData.numberOfPeople !== peopleCount) {
+          setFormData((prev) => ({ ...prev, numberOfPeople: peopleCount }))
+        }
+      }
+    }
+  }, [formData.selectedProductIds, products, typeFromUrl])
 
   // Auto-calculate price when products, dates, and number of people change
   useEffect(() => {
@@ -135,9 +177,20 @@ const BookingPage = () => {
           const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1 // +1 to include both start and end day
           const numberOfPeople = parseInt(formData.numberOfPeople) || 1
           
+          // Check if any selected product is a vehicle
+          const isVehicle = selectedProducts.some(p => 
+            ['QUAD_BIKE', 'BAG', 'BURAN', 'WRANGLER_JEEP'].includes(p.type)
+          )
+          
           // Calculate total price for all selected products
           const totalProductPrice = selectedProducts.reduce((sum, product) => sum + product.price, 0)
-          const calculatedPrice = (totalProductPrice * days * numberOfPeople).toFixed(2)
+          
+          // For vehicles, price is per vehicle per day (not multiplied by numberOfPeople)
+          // For other products, multiply by numberOfPeople
+          const calculatedPrice = isVehicle 
+            ? (totalProductPrice * days).toFixed(2)
+            : (totalProductPrice * days * numberOfPeople).toFixed(2)
+          
           setFormData((prev) => ({ ...prev, totalPrice: calculatedPrice }))
         } else {
           setFormData((prev) => ({ ...prev, totalPrice: '' }))
@@ -157,17 +210,39 @@ const BookingPage = () => {
     setSuccess(false)
 
     try {
-      // Convert dates to ISO strings for validation and submission
-      const formDataForValidation = {
-        ...formData,
-        startDate: formData.startDate ? formData.startDate.toISOString().split('T')[0] : '',
-        endDate: formData.endDate ? formData.endDate.toISOString().split('T')[0] : '',
+      // For vehicles (SNOWBOARD type), startTime, duration, and numberOfPeople are required
+      if (typeFromUrl === 'SNOWBOARD') {
+        if (!formData.startTime) {
+          setErrors({ startTime: 'Start time is required' })
+          return
+        }
+        if (!formData.duration) {
+          setErrors({ duration: 'Duration is required' })
+          return
+        }
+        if (!formData.numberOfPeople) {
+          setErrors({ numberOfPeople: 'Number of people is required' })
+          return
+        }
+        // Validate startTime format
+        const [hour] = formData.startTime.split(':').map(Number)
+        if (hour < 10 || hour > 15) {
+          setErrors({ startTime: 'Start time must be between 10:00 and 15:00' })
+          return
+        }
+        // Validate duration
+        if (!['1', '2', '3'].includes(formData.duration)) {
+          setErrors({ duration: 'Duration must be 1, 2, or 3 hours' })
+          return
+        }
       }
       
       const validated = bookingSchema.parse({
         ...formData,
         startDate: formData.startDate,
         endDate: formData.endDate,
+        startTime: typeFromUrl === 'SNOWBOARD' ? formData.startTime : '',
+        duration: typeFromUrl === 'SNOWBOARD' ? formData.duration : '',
       })
       
       if (!validated.startDate || !validated.endDate) {
@@ -190,6 +265,8 @@ const BookingPage = () => {
           numberOfPeople: validated.numberOfPeople,
           startDate: validated.startDate.toISOString(),
           endDate: validated.endDate.toISOString(),
+          startTime: validated.startTime,
+          duration: validated.duration,
           totalPrice: parseFloat(formData.totalPrice),
         }),
       })
@@ -276,19 +353,56 @@ const BookingPage = () => {
                             {products
                               .filter((product) => {
                                 // Filter by type if typeFromUrl is provided
-                                if (typeFromUrl && product.type !== typeFromUrl) {
-                                  return false
+                                if (typeFromUrl) {
+                                  // If type is SKI, show SKI, SNOWBOARD and all related sets
+                                  if (typeFromUrl === 'SKI') {
+                                    const allowedTypes = [
+                                      'SKI',
+                                      'SNOWBOARD',
+                                      'ADULT_SKI_SET',
+                                      'CHILD_SKI_SET',
+                                      'ADULT_SNOWBOARD_SET',
+                                      'CHILD_SNOWBOARD_SET'
+                                    ]
+                                    if (!allowedTypes.includes(product.type)) {
+                                      return false
+                                    }
+                                  } else if (typeFromUrl === 'SNOWBOARD') {
+                                    // If type is SNOWBOARD, show only vehicles/technique
+                                    const allowedTypes = [
+                                      'QUAD_BIKE',
+                                      'BAG',
+                                      'BURAN',
+                                      'WRANGLER_JEEP'
+                                    ]
+                                    if (!allowedTypes.includes(product.type)) {
+                                      return false
+                                    }
+                                  } else {
+                                    // For other types, filter normally
+                                    if (product.type !== typeFromUrl) {
+                                      return false
+                                    }
+                                  }
                                 }
                                 // Exclude already selected products
                                 return !otherSelectedIds.includes(product.id)
                               })
                               .map((product) => {
-                                // Use description as name if available, otherwise use type
-                                let label = product.description || product.type.replace(/_/g, ' ')
+                                // Get translated type name
+                                const typeLabel = tEquipment(product.type) || product.type.replace(/_/g, ' ')
+                                
+                                // Build label: Type (Description) - Price
+                                let label = typeLabel
+                                
+                                // Add description if available
+                                if (product.description) {
+                                  label += ` (${product.description})`
+                                }
                                 
                                 // Add size for ADULT_CLOTH
                                 if (product.type === 'ADULT_CLOTH' && product.size) {
-                                  label += ` (${product.size})`
+                                  label += ` - ${product.size}`
                                 }
                                 
                                 // Add badges for standard/professional
@@ -400,24 +514,110 @@ const BookingPage = () => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-[18px] font-medium text-black mb-2">
-                {t('numberOfPeople')} *
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={formData.numberOfPeople}
-                onChange={(e) => setFormData({ ...formData, numberOfPeople: e.target.value })}
-                className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                  errors.numberOfPeople ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder={t('numberOfPeoplePlaceholder')}
-              />
-              {errors.numberOfPeople && (
-                <p className="text-red-500 text-[18px] mt-1">{errors.numberOfPeople}</p>
-              )}
-            </div>
+            {/* Start Time - Only for vehicles (SNOWBOARD type) */}
+            {typeFromUrl === 'SNOWBOARD' && (
+              <div>
+                <label className="block text-[18px] font-medium text-black mb-2">
+                  {tLessons('startTime')} * ({tLessons('timeRange')})
+                </label>
+                <select
+                  value={formData.startTime}
+                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                    errors.startTime ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">{tLessons('selectTime')}</option>
+                  {timeSlots.map((time) => (
+                    <option key={time} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </select>
+                {errors.startTime && (
+                  <p className="text-red-500 text-[18px] mt-1">{errors.startTime}</p>
+                )}
+              </div>
+            )}
+
+            {/* Duration - Only for vehicles (SNOWBOARD type) */}
+            {typeFromUrl === 'SNOWBOARD' && (
+              <div>
+                <label className="block text-[18px] font-medium text-black mb-2">
+                  {tLessons('duration')} *
+                </label>
+                <select
+                  value={formData.duration}
+                  onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                    errors.duration ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">{tLessons('selectDuration')}</option>
+                  <option value="1">1 {tLessons('hour')}</option>
+                  <option value="2">2 {tLessons('hours')}</option>
+                  <option value="3">3 {tLessons('hours')}</option>
+                </select>
+                {errors.duration && (
+                  <p className="text-red-500 text-[18px] mt-1">{errors.duration}</p>
+                )}
+              </div>
+            )}
+
+            {/* Number of People - Only for vehicles (SNOWBOARD type), not for SKI or SNOWBOARD equipment */}
+            {typeFromUrl === 'SNOWBOARD' && (
+              <div>
+                <label className="block text-[18px] font-medium text-black mb-2">
+                  {t('numberOfPeople')} *
+                </label>
+                {(() => {
+                  const validProductIds = formData.selectedProductIds.filter(id => id && id !== '')
+                  const selectedProducts = products.filter((p) => validProductIds.includes(p.id))
+                  const isVehicle = selectedProducts.some(p => 
+                    ['QUAD_BIKE', 'BAG', 'BURAN', 'WRANGLER_JEEP'].includes(p.type)
+                  )
+                  const isVehiclePage = typeFromUrl === 'SNOWBOARD'
+                  
+                  // Check if it's a fixed 1-person vehicle
+                  const isFixedOnePerson = selectedProducts.some(p => 
+                    ['QUAD_BIKE', 'BURAN'].includes(p.type)
+                  )
+                  
+                  // Check if it's a max 3-person vehicle
+                  const isMaxThreePerson = selectedProducts.some(p => 
+                    ['BAG', 'WRANGLER_JEEP'].includes(p.type)
+                  )
+                  
+                  return (
+                    <input
+                      type="number"
+                      min="1"
+                      max={isVehiclePage && isMaxThreePerson ? 3 : undefined}
+                      value={formData.numberOfPeople}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        // For max 3-person vehicles, limit to 3
+                        if (isVehiclePage && isMaxThreePerson && value && parseInt(value) > 3) {
+                          return // Don't update if value exceeds 3
+                        }
+                        // For fixed 1-person vehicles, don't allow changes
+                        if (!isVehiclePage || !isVehicle || !isFixedOnePerson) {
+                          setFormData({ ...formData, numberOfPeople: value })
+                        }
+                      }}
+                      readOnly={isVehiclePage && isFixedOnePerson}
+                      className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                        errors.numberOfPeople ? 'border-red-500' : 'border-gray-300'
+                      } ${isVehiclePage && isFixedOnePerson ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      placeholder={t('numberOfPeoplePlaceholder')}
+                    />
+                  )
+                })()}
+                {errors.numberOfPeople && (
+                  <p className="text-red-500 text-[18px] mt-1">{errors.numberOfPeople}</p>
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>

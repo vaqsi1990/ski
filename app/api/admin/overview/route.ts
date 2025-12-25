@@ -40,7 +40,7 @@ export async function GET() {
 
     const bookings = recentBookings.map((booking) => {
       const equipmentList = booking.products
-        .map((bp) => `${bp.product.type}${bp.product.size ? ` (${bp.product.size})` : ''}`)
+        .map((bp) => `${bp.product.type.replace(/_/g, ' ')}${bp.product.size ? ` (${bp.product.size})` : ''}`)
         .join(', ')
       return {
         id: booking.id,
@@ -49,6 +49,7 @@ export async function GET() {
         startDate: booking.startDate,
         endDate: booking.endDate,
         status: booking.status,
+        totalPrice: booking.totalPrice,
       }
     })
 

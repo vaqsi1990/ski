@@ -17,6 +17,8 @@ export async function POST(request: Request) {
       numberOfPeople,
       startDate,
       endDate,
+      startTime,
+      duration,
       totalPrice,
     } = body
 
@@ -61,6 +63,8 @@ export async function POST(request: Request) {
         numberOfPeople: numberOfPeople || null,
         startDate: start,
         endDate: end,
+        startTime: startTime || null,
+        duration: duration ? parseInt(duration) : null,
         totalPrice: parseFloat(totalPrice),
         status: BookingStatus.PENDING,
         products: {

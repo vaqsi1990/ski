@@ -18,6 +18,10 @@ enum ProductType {
   CHILD_SNOWBOARD_SET
   ADULT_SNOWBOARD_SET
   ACCESSORY
+  QUAD_BIKE
+  BAG
+  BURAN
+  WRANGLER_JEEP
 }
 
 enum ProductSize {
@@ -76,6 +80,8 @@ model Booking {
   numberOfPeople String?      // Number of people for the booking
   startDate     DateTime
   endDate       DateTime
+  startTime     String?       // Start time in format "HH:MM" (10:00 to 15:00)
+  duration      Int?          // Duration in hours (1, 2, or 3)
   status        BookingStatus @default(PENDING)
   totalPrice    Float
   products      BookingProduct[]

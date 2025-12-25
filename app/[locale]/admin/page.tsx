@@ -730,6 +730,9 @@ const AdminPage = () => {
                     <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
                       {t('bookings.table.date')}
                     </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden md:table-cell">
+                      {t('bookings.table.price')}
+                    </th>
                     <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
                       {t('bookings.table.status')}
                     </th>
@@ -738,14 +741,14 @@ const AdminPage = () => {
               <tbody>
                 {dashboardLoading && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={4}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={5}>
                       {t('bookings.loading')}
                     </td>
                   </tr>
                 )}
                 {!dashboardLoading && recentBookings.length === 0 && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={4}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={5}>
                       {t('bookings.empty')}
                     </td>
                   </tr>
@@ -758,9 +761,11 @@ const AdminPage = () => {
                         <td className="px-3 py-3 text-xs md:text-sm text-black">
                           <div className="font-medium">{booking.customer}</div>
                           <div className="text-gray-500 sm:hidden mt-1">{booking.equipment}</div>
+                          <div className="text-gray-500 md:hidden mt-1">{formatCurrency((booking as any).totalPrice || 0)}</div>
                         </td>
                         <td className="px-3 py-3 text-xs md:text-sm text-black hidden sm:table-cell">{booking.equipment}</td>
                         <td className="px-3 py-3 text-xs md:text-sm text-black whitespace-nowrap">{formatDate(booking.startDate)}</td>
+                        <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell whitespace-nowrap">{formatCurrency((booking as any).totalPrice || 0)}</td>
                         <td className="px-3 py-3">
                           <span
                             className={`inline-block px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
@@ -1209,12 +1214,16 @@ const AdminPage = () => {
                                            newType === ProductType.CHILD_SKI_SET || 
                                            newType === ProductType.CHILD_SNOWBOARD_SET
                         const isAccessory = newType === ProductType.ACCESSORY
+                        const isVehicle = newType === ProductType.QUAD_BIKE || 
+                                         newType === ProductType.BAG || 
+                                         newType === ProductType.BURAN || 
+                                         newType === ProductType.WRANGLER_JEEP
                         setEquipmentFormData({ 
                           ...equipmentFormData, 
                           type: newType,
                           size: sizeRequiringTypes.includes(newType) ? equipmentFormData.size : null,
-                          standard: (isChildType || isAccessory) ? false : equipmentFormData.standard,
-                          professional: (isChildType || isAccessory) ? false : equipmentFormData.professional,
+                          standard: (isChildType || isAccessory || isVehicle) ? false : equipmentFormData.standard,
+                          professional: (isChildType || isAccessory || isVehicle) ? false : equipmentFormData.professional,
                         })
                       }}
                       className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black"
@@ -1228,6 +1237,10 @@ const AdminPage = () => {
                       <option value="CHILD_SNOWBOARD_SET">{t('equipment.types.CHILD_SNOWBOARD_SET')}</option>
                       <option value="ADULT_SNOWBOARD_SET">{t('equipment.types.ADULT_SNOWBOARD_SET')}</option>
                       <option value="ACCESSORY">{t('equipment.types.ACCESSORY')}</option>
+                      <option value="QUAD_BIKE">{t('equipment.types.QUAD_BIKE')}</option>
+                      <option value="BAG">{t('equipment.types.BAG')}</option>
+                      <option value="BURAN">{t('equipment.types.BURAN')}</option>
+                      <option value="WRANGLER_JEEP">{t('equipment.types.WRANGLER_JEEP')}</option>
                     </select>
                   </div>
 
@@ -1262,7 +1275,11 @@ const AdminPage = () => {
                   {equipmentFormData.type !== ProductType.CHILD_CLOTH && 
                    equipmentFormData.type !== ProductType.CHILD_SKI_SET && 
                    equipmentFormData.type !== ProductType.CHILD_SNOWBOARD_SET &&
-                   equipmentFormData.type !== ProductType.ACCESSORY && (
+                   equipmentFormData.type !== ProductType.ACCESSORY &&
+                   equipmentFormData.type !== ProductType.QUAD_BIKE &&
+                   equipmentFormData.type !== ProductType.BAG &&
+                   equipmentFormData.type !== ProductType.BURAN &&
+                   equipmentFormData.type !== ProductType.WRANGLER_JEEP && (
                     <div className="space-y-3">
                       <div className="flex items-center">
                         <input
@@ -1390,6 +1407,10 @@ const AdminPage = () => {
             <option value="CHILD_SNOWBOARD_SET">{t('equipment.types.CHILD_SNOWBOARD_SET')}</option>
             <option value="ADULT_SNOWBOARD_SET">{t('equipment.types.ADULT_SNOWBOARD_SET')}</option>
             <option value="ACCESSORY">{t('equipment.types.ACCESSORY')}</option>
+            <option value="QUAD_BIKE">{t('equipment.types.QUAD_BIKE')}</option>
+            <option value="BAG">{t('equipment.types.BAG')}</option>
+            <option value="BURAN">{t('equipment.types.BURAN')}</option>
+            <option value="WRANGLER_JEEP">{t('equipment.types.WRANGLER_JEEP')}</option>
           </select>
         </div>
 
@@ -1443,7 +1464,11 @@ const AdminPage = () => {
                         {item.type !== ProductType.CHILD_CLOTH && 
                          item.type !== ProductType.CHILD_SKI_SET && 
                          item.type !== ProductType.CHILD_SNOWBOARD_SET &&
-                         item.type !== ProductType.ACCESSORY && 
+                         item.type !== ProductType.ACCESSORY &&
+                         item.type !== ProductType.QUAD_BIKE &&
+                         item.type !== ProductType.BAG &&
+                         item.type !== ProductType.BURAN &&
+                         item.type !== ProductType.WRANGLER_JEEP && 
                          (item.standard || item.professional) && (
                           <span className="ml-2 text-xs text-gray-500">
                             {item.standard && item.professional ? '(Standard, Professional)' : item.standard ? '(Standard)' : '(Professional)'}
