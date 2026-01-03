@@ -204,10 +204,18 @@ body {
 }
 
 .react-datepicker__input-container input:focus {
-  outline: none;
-  border-color: #ea580c;
-  ring: 2px;
-  ring-color: #ea580c;
+  outline: none !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5) !important;
+}
+
+.react-datepicker__input-container input.border-red-500 {
+  border-color: #ef4444 !important;
+}
+
+.react-datepicker__input-container input.border-red-500:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5) !important;
 }
 
 .react-datepicker {
@@ -272,9 +280,18 @@ body {
 }
 
 .react-tel-input .form-control:focus {
-  border-color: #ea580c !important;
+  border-color: #ef4444 !important;
   outline: none !important;
-  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.2) !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5) !important;
+}
+
+.react-tel-input .form-control.border-red-500 {
+  border-color: #ef4444 !important;
+}
+
+.react-tel-input .form-control.border-red-500:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5) !important;
 }
 
 .react-tel-input .flag-dropdown {

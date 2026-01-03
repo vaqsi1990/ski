@@ -483,6 +483,20 @@ const BookingPage = () => {
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Cancellation Info */}
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <p className="text-[16px] text-gray-700">
+                      {t('cancellationInfo')}{' '}
+                      <a 
+                        href={`tel:+995577614151`}
+                        className="text-orange-600 font-semibold hover:text-orange-700 underline"
+                      >
+                        {t('cancellationPhone')}
+                      </a>
+                      {' '}{t('cancellationOr')}
+                    </p>
+                  </div>
                 </div>
                 
                 <div className="flex justify-end">
@@ -835,9 +849,9 @@ const BookingPage = () => {
                           newArray[index] = e.target.value
                           setFormData({ ...formData, firstName: newArray })
                         }}
-                        className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                        className={`w-full border rounded-lg px-4 py-3 text-[18px] focus:ring-1 focus:ring-red-500 text-black ${
                           errors[`firstName.${index}`] ? 'border-red-500' : 'border-gray-300'
-                        }`}
+                        } focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500`}
                       />
                       {errors[`firstName.${index}`] && (
                         <p className="text-red-500 text-[18px] mt-1">{errors[`firstName.${index}`]}</p>
@@ -856,9 +870,9 @@ const BookingPage = () => {
                           newArray[index] = e.target.value
                           setFormData({ ...formData, lastName: newArray })
                         }}
-                        className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                        className={`w-full border rounded-lg px-4 py-3 text-[18px] focus:ring-1 focus:ring-red-500 text-black ${
                           errors[`lastName.${index}`] ? 'border-red-500' : 'border-gray-300'
-                        }`}
+                        } focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500`}
                       />
                       {errors[`lastName.${index}`] && (
                         <p className="text-red-500 text-[18px] mt-1">{errors[`lastName.${index}`]}</p>
@@ -880,7 +894,7 @@ const BookingPage = () => {
                       }}
                       className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
                         errors[`email.${index}`] ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      } focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500`}
                     />
                     {errors[`email.${index}`] && (
                       <p className="text-red-500 text-[18px] mt-1">{errors[`email.${index}`]}</p>
@@ -932,7 +946,7 @@ const BookingPage = () => {
                         newArray[index] = e.target.value
                         setFormData({ ...formData, personalId: newArray })
                       }}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-[18px] text-black"
+                      className="w-full border border-gray-300 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 rounded-lg px-4 py-3 text-[18px] focus:ring-1 focus:ring-red-500 text-black"
                     />
                   </div>
                 </div>

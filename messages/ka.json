@@ -198,7 +198,10 @@
         "bookingDetails": "დაჯავშნის დეტალები",
         "equipment": "აღჭურვილობა",
         "dates": "თარიღები",
-        "close": "დახურვა"
+        "close": "დახურვა",
+        "cancellationInfo": "ჯავშნის გაუქმების შემთხვევაში მოგვწერეთ",
+        "cancellationPhone": "+995 57761 41 51",
+        "cancellationOr": "ამ ნომერზე ან დაგვირეკეთ"
       }
     },
     "equipment": {

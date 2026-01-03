@@ -199,7 +199,10 @@
         "bookingDetails": "Детали бронирования",
         "equipment": "Оборудование",
         "dates": "Даты",
-        "close": "Закрыть"
+        "close": "Закрыть",
+        "cancellationInfo": "Для отмены бронирования напишите нам на",
+        "cancellationPhone": "+995 57761 41 51",
+        "cancellationOr": "или позвоните нам по этому номеру"
       }
     },
     "equipment": {

@@ -198,7 +198,10 @@
         "bookingDetails": "Booking Details",
         "equipment": "Equipment",
         "dates": "Dates",
-        "close": "Close"
+        "close": "Close",
+        "cancellationInfo": "To cancel your booking, please text us at",
+        "cancellationPhone": "+995 57761 41 51",
+        "cancellationOr": "or call us at this number"
       }
     },
     "equipment": {
