@@ -494,7 +494,7 @@ const BookingPage = () => {
                       >
                         {t('cancellationPhone')}
                       </a>
-                      {' '}{t('cancellationOr')}
+                    
                     </p>
                   </div>
                 </div>

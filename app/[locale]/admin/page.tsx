@@ -456,6 +456,14 @@ const AdminPage = () => {
       const response = await fetch(`/api/admin/bookings/${id}`, { method: 'DELETE' })
       if (!response.ok) throw new Error('Failed to delete booking')
       fetchBookings()
+      // Refresh dashboard data if on dashboard tab
+      if (activeTab === 'dashboard') {
+        const dashboardResponse = await fetch('/api/admin/overview', { cache: 'no-store' })
+        if (dashboardResponse.ok) {
+          const json = await dashboardResponse.json()
+          setDashboardData(json)
+        }
+      }
     } catch (err) {
       console.error(err)
       alert('Failed to delete booking')
@@ -784,19 +792,22 @@ const AdminPage = () => {
                     <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
                       {t('bookings.table.status')}
                     </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('bookings.table.actions')}
+                    </th>
                   </tr>
                 </thead>
               <tbody>
                 {dashboardLoading && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={5}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={6}>
                       {t('bookings.loading')}
                     </td>
                   </tr>
                 )}
                 {!dashboardLoading && recentBookings.length === 0 && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={5}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={6}>
                       {t('bookings.empty')}
                     </td>
                   </tr>
@@ -818,7 +829,7 @@ const AdminPage = () => {
                           <span
                             className={`inline-block px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                               statusIsActive(booking.status)
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-[#08964c] text-white'
                                 : booking.status === 'CANCELLED'
                                 ? 'bg-red-100 text-red-800'
                                 : 'bg-gray-100 text-gray-800'
@@ -826,6 +837,14 @@ const AdminPage = () => {
                           >
                             {t(`bookings.status.${statusKey}`)}
                           </span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <button
+                            onClick={() => handleDeleteBooking(booking.id)}
+                            className="text-red-600 hover:text-red-700 text-xs md:text-sm whitespace-nowrap"
+                          >
+                            {t('bookings.delete')}
+                          </button>
                         </td>
                       </tr>
                     )
@@ -1182,7 +1201,7 @@ const AdminPage = () => {
                             onChange={(e) => handleBookingStatusChange(booking.id, e.target.value)}
                             className={`text-xs md:text-sm font-medium px-2 md:px-3 py-1 rounded-full border-0 w-full sm:w-auto ${
                               statusIsActive(booking.status)
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-[#08964c] text-white'
                                 : booking.status === 'CANCELLED'
                                 ? 'bg-red-100 text-red-800'
                                 : 'bg-gray-100 text-gray-800'

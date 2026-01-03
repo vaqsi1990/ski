@@ -186,7 +186,7 @@ const LessonsPage = () => {
         </h1>
 
         {success && (
-          <div className="mb-6 p-4 bg-green-100 border border-green-400 rounded-lg text-[18px] text-black">
+          <div className="mb-6 p-4 bg-[#08964c] text-white border border-green-400 rounded-lg text-[18px] text-black">
             {t('success')}
           </div>
         )}
