@@ -192,7 +192,13 @@
         "numberOfPeoplePlaceholder": "e.g. 2",
         "submitting": "Submitting...",
         "selectStartDate": "Select start date",
-        "selectEndDate": "Select end date"
+        "selectEndDate": "Select end date",
+        "bookingSuccessTitle": "You have booked",
+        "bookingSuccessMessage": "Booking created successfully",
+        "bookingDetails": "Booking Details",
+        "equipment": "Equipment",
+        "dates": "Dates",
+        "close": "Close"
       }
     },
     "equipment": {

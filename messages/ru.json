@@ -193,7 +193,13 @@
         "numberOfPeoplePlaceholder": "напр. 2",
         "submitting": "Отправка...",
         "selectStartDate": "Выберите дату начала",
-        "selectEndDate": "Выберите дату окончания"
+        "selectEndDate": "Выберите дату окончания",
+        "bookingSuccessTitle": "Вы забронировали",
+        "bookingSuccessMessage": "Бронирование успешно создано",
+        "bookingDetails": "Детали бронирования",
+        "equipment": "Оборудование",
+        "dates": "Даты",
+        "close": "Закрыть"
       }
     },
     "equipment": {

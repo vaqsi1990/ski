@@ -192,7 +192,13 @@
         "numberOfPeoplePlaceholder": "მაგ: 2",
         "submitting": "იგზავნება...",
         "selectStartDate": "აირჩიეთ დაწყების თარიღი",
-        "selectEndDate": "აირჩიეთ დასრულების თარიღი"
+        "selectEndDate": "აირჩიეთ დასრულების თარიღი",
+        "bookingSuccessTitle": "თქვენ დაჯავშნეთ",
+        "bookingSuccessMessage": "დაჯავშნა წარმატებით შექმნილია",
+        "bookingDetails": "დაჯავშნის დეტალები",
+        "equipment": "აღჭურვილობა",
+        "dates": "თარიღები",
+        "close": "დახურვა"
       }
     },
     "equipment": {

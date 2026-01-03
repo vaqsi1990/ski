@@ -25,9 +25,12 @@ export async function POST(request: Request) {
     // Support both old format (single productId) and new format (productIds array)
     const productIdArray = productIds || (body.productId ? [body.productId] : [])
 
-    if (!productIdArray || productIdArray.length === 0 || !firstName || !lastName || !phoneNumber || !email || !startDate || !endDate || !totalPrice || !numberOfPeople) {
+    if (!productIdArray || productIdArray.length === 0 || !firstName || !lastName || !phoneNumber || !email || !startDate || !endDate || !totalPrice) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
     }
+
+    // Default numberOfPeople to '1' if not provided
+    const finalNumberOfPeople = numberOfPeople || '1'
 
     // Validate dates
     const start = new Date(startDate)
@@ -60,7 +63,7 @@ export async function POST(request: Request) {
         phoneNumber,
         email,
         personalId: personalId || '',
-        numberOfPeople: numberOfPeople || null,
+        numberOfPeople: finalNumberOfPeople || null,
         startDate: start,
         endDate: end,
         startTime: startTime || null,

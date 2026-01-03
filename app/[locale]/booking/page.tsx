@@ -91,6 +91,13 @@ const BookingPage = () => {
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [success, setSuccess] = useState(false)
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [bookingInfo, setBookingInfo] = useState<{
+    products: Product[]
+    startDate: Date | null
+    endDate: Date | null
+    totalPrice: string
+  } | null>(null)
 
   const [formData, setFormData] = useState<BookingFormData>({
     firstName: [''],
@@ -188,7 +195,7 @@ const BookingPage = () => {
   // Auto-calculate price when products, dates, and number of people change
   useEffect(() => {
     const validProductIds = formData.selectedProductIds.filter(id => id && id !== '')
-    if (validProductIds.length > 0 && formData.startDate && formData.endDate && formData.numberOfPeople) {
+    if (validProductIds.length > 0 && formData.startDate && formData.endDate) {
       const selectedProducts = products.filter((p) => validProductIds.includes(p.id))
       if (selectedProducts.length > 0) {
         const start = new Date(formData.startDate)
@@ -202,12 +209,16 @@ const BookingPage = () => {
           // Calculate days including both start and end dates
           const timeDiff = end.getTime() - start.getTime()
           const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1 // +1 to include both start and end day
-          const numberOfPeople = parseInt(formData.numberOfPeople) || 1
           
           // Check if any selected product is a vehicle
           const isVehicle = selectedProducts.some(p => 
             ['QUAD_BIKE', 'BAG', 'BURAN', 'WRANGLER_JEEP'].includes(p.type)
           )
+          
+          // For vehicles, numberOfPeople is required. For other products, default to 1 if not set
+          const numberOfPeople = isVehicle 
+            ? (parseInt(formData.numberOfPeople) || 1)
+            : (parseInt(formData.numberOfPeople) || 1)
           
           // Calculate total price for all selected products
           const totalProductPrice = selectedProducts.reduce((sum, product) => sum + product.price, 0)
@@ -235,6 +246,7 @@ const BookingPage = () => {
     e.preventDefault()
     setErrors({})
     setSuccess(false)
+    setSubmitting(true)
 
     try {
       // For vehicles (VEHICLES or SNOWBOARD type), startTime and numberOfPeople are required
@@ -330,10 +342,17 @@ const BookingPage = () => {
         throw new Error(error.message || 'Failed to create booking')
       }
 
+      // Store booking info for popup
+      const selectedProducts = products.filter((p) => validProductIds.includes(p.id))
+      setBookingInfo({
+        products: selectedProducts,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        totalPrice: formData.totalPrice,
+      })
+      
       setSuccess(true)
-      setTimeout(() => {
-        router.push('/')
-      }, 2000)
+      setShowSuccessPopup(true)
     } catch (err) {
       if (err instanceof z.ZodError) {
         const newErrors: Record<string, string> = {}
@@ -352,6 +371,8 @@ const BookingPage = () => {
       } else {
         alert(err instanceof Error ? err.message : 'Failed to create booking')
       }
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -387,9 +408,96 @@ const BookingPage = () => {
          Booking
         </h1>
 
-        {success && (
-          <div className="mb-6 p-4 bg-green-100 border border-green-400 rounded-lg text-[18px] text-black">
-            {t('success')}
+        {/* Success Popup Modal */}
+        {showSuccessPopup && bookingInfo && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 md:p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl md:text-3xl font-bold text-green-600">
+                    {t('bookingSuccessTitle')}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowSuccessPopup(false)
+                      router.push('/')
+                    }}
+                    className="text-gray-500 hover:text-gray-700 text-3xl font-bold transition-colors"
+                    aria-label={t('close')}
+                  >
+                    ×
+                  </button>
+                </div>
+                
+                <div className="mb-6">
+                  <p className="text-[18px] text-black mb-4">
+                    {t('bookingSuccessMessage')}
+                  </p>
+                  
+                  <div className="border-t border-b border-gray-200 py-4 space-y-4">
+                    <div>
+                      <h3 className="text-xl font-semibold text-black mb-2">
+                        {t('bookingDetails')}
+                      </h3>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <span className="font-semibold text-black">{t('equipment')}: </span>
+                          <span className="text-black">
+                            {bookingInfo.products.map((p, idx) => {
+                              const typeLabel = tEquipment(p.type) || p.type.replace(/_/g, ' ')
+                              let label = typeLabel
+                              if (p.description) label += ` (${p.description})`
+                              if (p.type === 'ADULT_CLOTH' && p.size) label += ` - ${p.size}`
+                              const badges = []
+                              if (p.standard) badges.push('Standard')
+                              if (p.professional) badges.push('Professional')
+                              if (badges.length > 0) label += ` [${badges.join(', ')}]`
+                              return (
+                                <span key={p.id}>
+                                  {idx > 0 && ', '}
+                                  {label}
+                                </span>
+                              )
+                            })}
+                          </span>
+                        </div>
+                        
+                        {bookingInfo.startDate && bookingInfo.endDate && (
+                          <div>
+                            <span className="font-semibold text-black">{t('dates')}: </span>
+                            <span className="text-black">
+                              {bookingInfo.startDate.toLocaleDateString(locale || 'ka-GE')} - {bookingInfo.endDate.toLocaleDateString(locale || 'ka-GE')}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {bookingInfo.totalPrice && (
+                          <div>
+                            <span className="font-semibold text-black">{t('totalPrice')}: </span>
+                            <span className="text-orange-600 font-bold text-[18px]">
+                              {formatCurrency(parseFloat(bookingInfo.totalPrice))}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      setShowSuccessPopup(false)
+                      router.push('/')
+                    }}
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg transition-colors text-[18px] font-bold"
+                  >
+                    {t('close')}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -835,13 +943,14 @@ const BookingPage = () => {
             {formData.totalPrice && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                 <div className="text-[18px] text-black">
-                  <span className="font-semibold">{t('totalPrice')} </span>
+                  <span className="font-semibold">{t('totalPrice')}: </span>
                   <span className="text-orange-600 font-bold">{formatCurrency(parseFloat(formData.totalPrice))}</span>
-                  {formData.selectedProductIds.length > 0 && formData.startDate && formData.endDate && formData.numberOfPeople && (
+                  {formData.selectedProductIds.length > 0 && formData.startDate && formData.endDate && (
                     <span className="text-gray-600 text-[16px] block mt-1">
                       {(() => {
-                        const selectedProducts = products.filter((p) => formData.selectedProductIds.includes(p.id))
-                        if (selectedProducts.length > 0 && formData.startDate && formData.endDate && formData.numberOfPeople) {
+                        const validProductIds = formData.selectedProductIds.filter(id => id && id !== '')
+                        const selectedProducts = products.filter((p) => validProductIds.includes(p.id))
+                        if (selectedProducts.length > 0 && formData.startDate && formData.endDate) {
                           const start = new Date(formData.startDate)
                           const end = new Date(formData.endDate)
                           start.setHours(0, 0, 0, 0)
@@ -849,7 +958,14 @@ const BookingPage = () => {
                           const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
                           const numberOfPeople = parseInt(formData.numberOfPeople) || 1
                           const totalProductPrice = selectedProducts.reduce((sum, p) => sum + p.price, 0)
-                          return `(${selectedProducts.length} ${selectedProducts.length === 1 ? 'product' : 'products'}: ${formatCurrency(totalProductPrice)} × ${days} ${days === 1 ? 'day' : 'days'} × ${numberOfPeople} ${numberOfPeople === 1 ? 'person' : 'people'}) = ${formatCurrency(parseFloat(formData.totalPrice))}`
+                          const isVehicle = selectedProducts.some(p => 
+                            ['QUAD_BIKE', 'BAG', 'BURAN', 'WRANGLER_JEEP'].includes(p.type)
+                          )
+                          if (isVehicle) {
+                            return `(${selectedProducts.length} ${selectedProducts.length === 1 ? 'product' : 'products'}: ${formatCurrency(totalProductPrice)} × ${days} ${days === 1 ? 'day' : 'days'}) = ${formatCurrency(parseFloat(formData.totalPrice))}`
+                          } else {
+                            return `(${selectedProducts.length} ${selectedProducts.length === 1 ? 'product' : 'products'}: ${formatCurrency(totalProductPrice)} × ${days} ${days === 1 ? 'day' : 'days'} × ${numberOfPeople} ${numberOfPeople === 1 ? 'person' : 'people'}) = ${formatCurrency(parseFloat(formData.totalPrice))}`
+                          }
                         }
                         return ''
                       })()}
