@@ -57,6 +57,11 @@ enum LessonStatus {
   COMPLETED
 }
 
+enum LessonType {
+  SKI
+  SNOWBOARD
+}
+
 model Product {
   id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   type        ProductType
@@ -106,6 +111,7 @@ model Lesson {
   numberOfPeople Int           // 1-4 people
   duration      Int            // 1, 2, or 3 hours
   level         LessonLevel    // BEGINNER, INTERMEDIATE, EXPERT
+  lessonType    LessonType     // SKI, SNOWBOARD
   date          DateTime       @db.Date
   startTime     String         // Time in format "HH:MM" (10:00 to 16:00)
   language      LessonLanguage // GEORGIAN, ENGLISH, RUSSIAN

@@ -9,20 +9,33 @@ import 'react-datepicker/dist/react-datepicker.css'
 import PhoneInput from 'react-phone-input-2'
 import 'react-phone-input-2/lib/style.css'
 
-type LessonFormData = {
-  numberOfPeople: string
-  duration: string
-  level: string
-  date: Date | null
-  startTime: string
-  language: string
+type PersonContactInfo = {
   firstName: string
   lastName: string
   email: string
   phoneNumber: string
   personalId: string
+}
+
+type LessonFormData = {
+  numberOfPeople: string
+  duration: string
+  level: string
+  lessonType: string
+  date: Date | null
+  startTime: string
+  language: string
+  participants: PersonContactInfo[]
   totalPrice: number
 }
+
+const createPersonSchema = () => z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  email: z.string().email('Invalid email address'),
+  phoneNumber: z.string().min(1, 'Phone number is required'),
+  personalId: z.string().min(1, 'Personal ID is required'),
+})
 
 const lessonSchema = z.object({
   numberOfPeople: z.string().min(1, 'Number of people is required').refine((val) => {
@@ -33,6 +46,9 @@ const lessonSchema = z.object({
     return ['1', '2', '3'].includes(val)
   }, { message: 'Duration must be 1, 2, or 3 hours' }),
   level: z.string().min(1, 'Level is required'),
+  lessonType: z.string().min(1, 'Lesson type is required').refine((val) => {
+    return ['SKI', 'SNOWBOARD'].includes(val)
+  }, { message: 'Lesson type must be SKI or SNOWBOARD' }),
   date: z.date({ message: 'Date is required' }).nullable().refine((val) => val !== null, {
     message: 'Date is required',
   }),
@@ -41,11 +57,7 @@ const lessonSchema = z.object({
     return hour >= 10 && hour < 16
   }, { message: 'Start time must be between 10:00 and 16:00' }),
   language: z.string().min(1, 'Language is required'),
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Invalid email address'),
-  phoneNumber: z.string().min(1, 'Phone number is required'),
-  personalId: z.string().min(1, 'Personal ID is required'),
+  participants: z.array(createPersonSchema()).min(1, 'At least one participant is required'),
 })
 
 // Default pricing fallback
@@ -64,22 +76,57 @@ const LessonsPage = () => {
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [success, setSuccess] = useState(false)
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [lessonInfo, setLessonInfo] = useState<{
+    lessonType: string
+    numberOfPeople: number
+    duration: number
+    level: string
+    date: Date | null
+    startTime: string
+    language: string
+    totalPrice: number
+  } | null>(null)
   const [pricing, setPricing] = useState<Record<number, Record<number, number>>>(DEFAULT_PRICING)
 
   const [formData, setFormData] = useState<LessonFormData>({
     numberOfPeople: '',
     duration: '',
     level: '',
+    lessonType: '',
     date: null,
     startTime: '',
     language: '',
-    firstName: '',
-    lastName: '',
-    email: '',
-    phoneNumber: '',
-    personalId: '',
+    participants: [],
     totalPrice: 0,
   })
+
+  // Initialize participants when numberOfPeople changes
+  useEffect(() => {
+    const numPeople = parseInt(formData.numberOfPeople) || 0
+    if (numPeople > 0 && numPeople <= 4) {
+      const currentParticipants = formData.participants || []
+      const newParticipants: PersonContactInfo[] = []
+      
+      for (let i = 0; i < numPeople; i++) {
+        if (currentParticipants[i]) {
+          newParticipants.push(currentParticipants[i])
+        } else {
+          newParticipants.push({
+            firstName: '',
+            lastName: '',
+            email: '',
+            phoneNumber: '',
+            personalId: '',
+          })
+        }
+      }
+      
+      setFormData((prev) => ({ ...prev, participants: newParticipants }))
+    } else if (numPeople === 0) {
+      setFormData((prev) => ({ ...prev, participants: [] }))
+    }
+  }, [formData.numberOfPeople])
 
   // Fetch pricing from API
   useEffect(() => {
@@ -127,6 +174,13 @@ const LessonsPage = () => {
     setSuccess(false)
 
     try {
+      // Validate number of participants matches numberOfPeople
+      const numPeople = parseInt(formData.numberOfPeople)
+      if (formData.participants.length !== numPeople) {
+        setErrors({ participants: `Please provide contact information for all ${numPeople} ${numPeople === 1 ? 'person' : 'people'}` })
+        return
+      }
+
       const validated = lessonSchema.parse({
         ...formData,
         date: formData.date,
@@ -136,6 +190,9 @@ const LessonsPage = () => {
         throw new Error('Date is required')
       }
 
+      // Use first participant as primary contact for API compatibility
+      const primaryParticipant = validated.participants[0]
+
       const response = await fetch('/api/lessons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -143,14 +200,16 @@ const LessonsPage = () => {
           numberOfPeople: validated.numberOfPeople,
           duration: validated.duration,
           level: validated.level,
+          lessonType: validated.lessonType,
           date: validated.date.toISOString().split('T')[0],
           startTime: validated.startTime,
           language: validated.language,
-          firstName: validated.firstName,
-          lastName: validated.lastName,
-          email: validated.email,
-          phoneNumber: validated.phoneNumber,
-          personalId: validated.personalId,
+          firstName: primaryParticipant.firstName,
+          lastName: primaryParticipant.lastName,
+          email: primaryParticipant.email,
+          phoneNumber: primaryParticipant.phoneNumber,
+          personalId: primaryParticipant.personalId,
+          participants: validated.participants, // Send all participants
         }),
       })
 
@@ -159,16 +218,36 @@ const LessonsPage = () => {
         throw new Error(error.message || 'Failed to create lesson booking')
       }
 
+      const responseData = await response.json()
+      
+      // Store lesson info for popup
+      setLessonInfo({
+        lessonType: validated.lessonType,
+        numberOfPeople: parseInt(validated.numberOfPeople),
+        duration: parseInt(validated.duration),
+        level: validated.level,
+        date: validated.date,
+        startTime: validated.startTime,
+        language: validated.language,
+        totalPrice: formData.totalPrice,
+      })
+      
       setSuccess(true)
-      setTimeout(() => {
-        router.push('/')
-      }, 2000)
+      setShowSuccessPopup(true)
     } catch (err) {
       if (err instanceof z.ZodError) {
         const newErrors: Record<string, string> = {}
         err.issues.forEach((issue) => {
-          if (issue.path[0]) {
-            newErrors[issue.path[0].toString()] = issue.message
+          const path = issue.path
+          if (path.length > 0) {
+            if (path[0] === 'participants' && path.length > 1) {
+              // Handle nested participant errors
+              const participantIndex = path[1] as number
+              const field = path[2] as string
+              newErrors[`participants.${participantIndex}.${field}`] = issue.message
+            } else {
+              newErrors[path[0].toString()] = issue.message
+            }
           }
         })
         setErrors(newErrors)
@@ -178,6 +257,15 @@ const LessonsPage = () => {
     }
   }
 
+  const updateParticipant = (index: number, field: keyof PersonContactInfo, value: string) => {
+    const updatedParticipants = [...formData.participants]
+    updatedParticipants[index] = {
+      ...updatedParticipants[index],
+      [field]: value,
+    }
+    setFormData({ ...formData, participants: updatedParticipants })
+  }
+
   return (
     <div className="min-h-screen bg-[#FFFAFA] py-16">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -185,9 +273,130 @@ const LessonsPage = () => {
           {t('title')}
         </h1>
 
-        {success && (
-          <div className="mb-6 p-4 bg-[#08964c] text-white border border-green-400 rounded-lg text-[18px] text-black">
-            {t('success')}
+        {/* Success Popup Modal */}
+        {showSuccessPopup && lessonInfo && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 md:p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl md:text-3xl font-bold text-green-600">
+                    {t('bookingSuccessTitle')}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowSuccessPopup(false)
+                      router.push('/')
+                    }}
+                    className="text-gray-500 hover:text-gray-700 text-3xl font-bold transition-colors"
+                    aria-label={t('close')}
+                  >
+                    ×
+                  </button>
+                </div>
+                
+                <div className="mb-6">
+                  <p className="text-[18px] text-black mb-4">
+                    {t('bookingSuccessMessage')}
+                  </p>
+                  
+                  <div className="border-t border-b border-gray-200 py-4 space-y-4">
+                    <div>
+                      <h3 className="text-xl font-semibold text-black mb-2">
+                        {t('bookingDetails')}
+                      </h3>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <span className="font-semibold text-black">{t('lessonType')}: </span>
+                          <span className="text-black">
+                            {lessonInfo.lessonType === 'SKI' ? t('ski') : t('snowboard')}
+                          </span>
+                        </div>
+                        
+                        <div>
+                          <span className="font-semibold text-black">{t('numberOfPeople')}: </span>
+                          <span className="text-black">
+                            {lessonInfo.numberOfPeople} {lessonInfo.numberOfPeople === 1 ? t('person') : t('people')}
+                          </span>
+                        </div>
+                        
+                        <div>
+                          <span className="font-semibold text-black">{t('duration')}: </span>
+                          <span className="text-black">
+                            {lessonInfo.duration} {lessonInfo.duration === 1 ? t('hour') : t('hours')}
+                          </span>
+                        </div>
+                        
+                        <div>
+                          <span className="font-semibold text-black">{t('level')}: </span>
+                          <span className="text-black">
+                            {t(lessonInfo.level.toLowerCase())}
+                          </span>
+                        </div>
+                        
+                        {lessonInfo.date && (
+                          <div>
+                            <span className="font-semibold text-black">{t('date')}: </span>
+                            <span className="text-black">
+                              {lessonInfo.date.toLocaleDateString(locale || 'ka-GE')}
+                            </span>
+                          </div>
+                        )}
+                        
+                        <div>
+                          <span className="font-semibold text-black">{t('startTime')}: </span>
+                          <span className="text-black">
+                            {lessonInfo.startTime}
+                          </span>
+                        </div>
+                        
+                        <div>
+                          <span className="font-semibold text-black">{t('language')}: </span>
+                          <span className="text-black">
+                            {t(lessonInfo.language.toLowerCase())}
+                          </span>
+                        </div>
+                        
+                        {lessonInfo.totalPrice > 0 && (
+                          <div>
+                            <span className="font-semibold text-black">{t('totalPrice')}: </span>
+                            <span className="text-orange-600 font-bold text-[18px]">
+                              {formatCurrency(lessonInfo.totalPrice)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Cancellation Info */}
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <p className="text-[16px] text-gray-700">
+                      {t('cancellationInfo')}{' '}
+                      <a 
+                        href={`tel:+995577614151`}
+                        className="text-orange-600 font-semibold hover:text-orange-700 underline"
+                      >
+                        {t('cancellationPhone')}
+                      </a>
+                      {' '}{t('cancellationOr')}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      setShowSuccessPopup(false)
+                      router.push('/')
+                    }}
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg transition-colors text-[18px] font-bold"
+                  >
+                    {t('close')}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -235,6 +444,27 @@ const LessonsPage = () => {
               </select>
               {errors.duration && (
                 <p className="text-red-500 text-[18px] mt-1">{errors.duration}</p>
+              )}
+            </div>
+
+            {/* Lesson Type */}
+            <div>
+              <label className="block text-[18px] font-medium text-black mb-2">
+                {t('lessonType')} *
+              </label>
+              <select
+                value={formData.lessonType}
+                onChange={(e) => setFormData({ ...formData, lessonType: e.target.value })}
+                className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                  errors.lessonType ? 'border-red-500' : 'border-gray-300'
+                }`}
+              >
+                <option value="">{t('selectLessonType')}</option>
+                <option value="SKI">{t('ski')}</option>
+                <option value="SNOWBOARD">{t('snowboard')}</option>
+              </select>
+              {errors.lessonType && (
+                <p className="text-red-500 text-[18px] mt-1">{errors.lessonType}</p>
               )}
             </div>
 
@@ -327,108 +557,122 @@ const LessonsPage = () => {
             </div>
 
             {/* Contact Information */}
-            <div className="border-t pt-6 mt-6">
-              <h3 className="text-xl font-bold text-black mb-4">{t('contactInfo')}</h3>
-            </div>
+            {formData.numberOfPeople && parseInt(formData.numberOfPeople) > 0 && (
+              <>
+                <div className="border-t pt-6 mt-6">
+                  <h3 className="text-xl font-bold text-black mb-4">{t('contactInfo')}</h3>
+                  {errors.participants && (
+                    <p className="text-red-500 text-[18px] mb-4">{errors.participants}</p>
+                  )}
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-[18px] font-medium text-black mb-2">
-                  {t('firstName')} *
-                </label>
-                <input
-                  type="text"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                    errors.firstName ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.firstName && (
-                  <p className="text-red-500 text-[18px] mt-1">{errors.firstName}</p>
-                )}
-              </div>
+                {formData.participants.map((participant, index) => (
+                  <div key={index} className="mb-8 p-4 bg-gray-50 rounded-lg">
+                    <h4 className="text-lg font-semibold text-black mb-4">
+                      {t('participant')} {index + 1}
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-[18px] font-medium text-black mb-2">
+                          {t('firstName')} *
+                        </label>
+                        <input
+                          type="text"
+                          value={participant.firstName}
+                          onChange={(e) => updateParticipant(index, 'firstName', e.target.value)}
+                          className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                            errors[`participants.${index}.firstName`] ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        />
+                        {errors[`participants.${index}.firstName`] && (
+                          <p className="text-red-500 text-[18px] mt-1">{errors[`participants.${index}.firstName`]}</p>
+                        )}
+                      </div>
 
-              <div>
-                <label className="block text-[18px] font-medium text-black mb-2">
-                  {t('lastName')} *
-                </label>
-                <input
-                  type="text"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                    errors.lastName ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.lastName && (
-                  <p className="text-red-500 text-[18px] mt-1">{errors.lastName}</p>
-                )}
-              </div>
-            </div>
+                      <div>
+                        <label className="block text-[18px] font-medium text-black mb-2">
+                          {t('lastName')} *
+                        </label>
+                        <input
+                          type="text"
+                          value={participant.lastName}
+                          onChange={(e) => updateParticipant(index, 'lastName', e.target.value)}
+                          className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                            errors[`participants.${index}.lastName`] ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        />
+                        {errors[`participants.${index}.lastName`] && (
+                          <p className="text-red-500 text-[18px] mt-1">{errors[`participants.${index}.lastName`]}</p>
+                        )}
+                      </div>
+                    </div>
 
-            <div>
-              <label className="block text-[18px] font-medium text-black mb-2">
-                {t('email')} *
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                  errors.email ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-[18px] mt-1">{errors.email}</p>
-              )}
-            </div>
+                    <div className="mt-4">
+                      <label className="block text-[18px] font-medium text-black mb-2">
+                        {t('email')} *
+                      </label>
+                      <input
+                        type="email"
+                        value={participant.email}
+                        onChange={(e) => updateParticipant(index, 'email', e.target.value)}
+                        className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                          errors[`participants.${index}.email`] ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors[`participants.${index}.email`] && (
+                        <p className="text-red-500 text-[18px] mt-1">{errors[`participants.${index}.email`]}</p>
+                      )}
+                    </div>
 
-            <div>
-              <label className="block text-[18px] font-medium text-black mb-2">
-                {t('phoneNumber')} *
-              </label>
-              <PhoneInput
-                country="ge"
-                value={formData.phoneNumber}
-                onChange={(value) => setFormData({ ...formData, phoneNumber: value })}
-                inputClass={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                  errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
-                }`}
-                buttonClass={`${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'}`}
-                containerClass=""
-                inputStyle={{
-                  width: '100%',
-                  height: '48px',
-                  fontSize: '18px',
-                }}
-                buttonStyle={{
-                  borderTopLeftRadius: '8px',
-                  borderBottomLeftRadius: '8px',
-                  borderRight: 'none',
-                }}
-              />
-              {errors.phoneNumber && (
-                <p className="text-red-500 text-[18px] mt-1">{errors.phoneNumber}</p>
-              )}
-            </div>
+                    <div className="mt-4">
+                      <label className="block text-[18px] font-medium text-black mb-2">
+                        {t('phoneNumber')} *
+                      </label>
+                      <PhoneInput
+                        country="ge"
+                        value={participant.phoneNumber}
+                        onChange={(value) => updateParticipant(index, 'phoneNumber', value)}
+                        inputClass={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                          errors[`participants.${index}.phoneNumber`] ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        buttonClass={`${errors[`participants.${index}.phoneNumber`] ? 'border-red-500' : 'border-gray-300'}`}
+                        containerClass=""
+                        inputStyle={{
+                          width: '100%',
+                          height: '48px',
+                          fontSize: '18px',
+                        }}
+                        buttonStyle={{
+                          borderTopLeftRadius: '8px',
+                          borderBottomLeftRadius: '8px',
+                          borderRight: 'none',
+                        }}
+                      />
+                      {errors[`participants.${index}.phoneNumber`] && (
+                        <p className="text-red-500 text-[18px] mt-1">{errors[`participants.${index}.phoneNumber`]}</p>
+                      )}
+                    </div>
 
-            <div>
-              <label className="block text-[18px] font-medium text-black mb-2">
-                {t('personalId')} *
-              </label>
-              <input
-                type="text"
-                value={formData.personalId}
-                onChange={(e) => setFormData({ ...formData, personalId: e.target.value })}
-                className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
-                  errors.personalId ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.personalId && (
-                <p className="text-red-500 text-[18px] mt-1">{errors.personalId}</p>
-              )}
-            </div>
+                    <div className="mt-4">
+                      <label className="block text-[18px] font-medium text-black mb-2">
+                        {t('personalId')} *
+                      </label>
+                      <input
+                        type="text"
+                        value={participant.personalId}
+                        onChange={(e) => updateParticipant(index, 'personalId', e.target.value)}
+                        className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                          errors[`participants.${index}.personalId`] ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {errors[`participants.${index}.personalId`] && (
+                        <p className="text-red-500 text-[18px] mt-1">{errors[`participants.${index}.personalId`]}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
 
             {/* Display calculated price */}
             {formData.totalPrice > 0 && (

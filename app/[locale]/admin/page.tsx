@@ -38,13 +38,15 @@ type Booking = {
   phoneNumber: string
   personalId: string
   equipment: string
-  productId: string
+  productId?: string
+  productIds?: string[]
   startDate: string
   endDate: string
   status: string
   totalPrice: number
   createdAt: string
   updatedAt: string
+  type?: string
 }
 
 type Product = {
@@ -428,9 +430,10 @@ const AdminPage = () => {
   }
 
   // Booking handlers
-  const handleBookingStatusChange = async (id: string, newStatus: string) => {
+  const handleBookingStatusChange = async (id: string, newStatus: string, type?: string) => {
     try {
-      const response = await fetch(`/api/admin/bookings/${id}`, {
+      const endpoint = type === 'lesson' ? `/api/admin/lessons/${id}` : `/api/admin/bookings/${id}`
+      const response = await fetch(endpoint, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -450,10 +453,11 @@ const AdminPage = () => {
     }
   }
 
-  const handleDeleteBooking = async (id: string) => {
+  const handleDeleteBooking = async (id: string, type?: string) => {
     if (!confirm('Are you sure you want to delete this booking?')) return
     try {
-      const response = await fetch(`/api/admin/bookings/${id}`, { method: 'DELETE' })
+      const endpoint = type === 'lesson' ? `/api/admin/lessons/${id}` : `/api/admin/bookings/${id}`
+      const response = await fetch(endpoint, { method: 'DELETE' })
       if (!response.ok) throw new Error('Failed to delete booking')
       fetchBookings()
       // Refresh dashboard data if on dashboard tab
@@ -815,12 +819,16 @@ const AdminPage = () => {
                 {!dashboardLoading &&
                   recentBookings.map((booking) => {
                     const statusKey = booking.status.toLowerCase()
+                    const bookingType = (booking as any).type || 'booking'
                     return (
                       <tr key={booking.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
                         <td className="px-3 py-3 text-xs md:text-sm text-black">
                           <div className="font-medium">{booking.customer}</div>
                           <div className="text-gray-500 sm:hidden mt-1">{booking.equipment}</div>
                           <div className="text-gray-500 md:hidden mt-1">{formatCurrency((booking as any).totalPrice || 0)}</div>
+                          {bookingType === 'lesson' && (
+                            <div className="text-xs text-orange-600 mt-1 font-semibold">Lesson</div>
+                          )}
                         </td>
                         <td className="px-3 py-3 text-xs md:text-sm text-black hidden sm:table-cell">{booking.equipment}</td>
                         <td className="px-3 py-3 text-xs md:text-sm text-black whitespace-nowrap">{formatDate(booking.startDate)}</td>
@@ -840,7 +848,7 @@ const AdminPage = () => {
                         </td>
                         <td className="px-3 py-3">
                           <button
-                            onClick={() => handleDeleteBooking(booking.id)}
+                            onClick={() => handleDeleteBooking(booking.id, bookingType)}
                             className="text-red-600 hover:text-red-700 text-xs md:text-sm whitespace-nowrap"
                           >
                             {t('bookings.delete')}
@@ -1180,6 +1188,7 @@ const AdminPage = () => {
                 {!bookingsLoading &&
                   bookings.map((booking) => {
                     const statusKey = booking.status.toLowerCase()
+                    const bookingType = (booking as any).type || 'booking'
                     return (
                       <tr key={booking.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
                         <td className="px-3 py-3 text-xs md:text-sm text-black">
@@ -1189,6 +1198,9 @@ const AdminPage = () => {
                             {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
                           </div>
                           <div className="text-gray-500 lg:hidden mt-1 text-xs">{formatCurrency(booking.totalPrice)}</div>
+                          {bookingType === 'lesson' && (
+                            <div className="text-xs text-orange-600 mt-1 font-semibold">Lesson</div>
+                          )}
                         </td>
                         <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">{booking.equipment}</td>
                         <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell whitespace-nowrap">
@@ -1198,7 +1210,7 @@ const AdminPage = () => {
                         <td className="px-3 py-3">
                           <select
                             value={booking.status}
-                            onChange={(e) => handleBookingStatusChange(booking.id, e.target.value)}
+                            onChange={(e) => handleBookingStatusChange(booking.id, e.target.value, bookingType)}
                             className={`text-xs md:text-sm font-medium px-2 md:px-3 py-1 rounded-full border-0 w-full sm:w-auto ${
                               statusIsActive(booking.status)
                                 ? 'bg-[#08964c] text-white'
@@ -1215,7 +1227,7 @@ const AdminPage = () => {
                         </td>
                         <td className="px-3 py-3">
                           <button
-                            onClick={() => handleDeleteBooking(booking.id)}
+                            onClick={() => handleDeleteBooking(booking.id, bookingType)}
                             className="text-red-600 hover:text-red-700 text-xs md:text-sm whitespace-nowrap"
                           >
                             {t('bookings.delete')}

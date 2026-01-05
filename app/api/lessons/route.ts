@@ -58,6 +58,7 @@ export async function POST(request: Request) {
       numberOfPeople,
       duration,
       level,
+      lessonType,
       date,
       startTime,
       language,
@@ -69,9 +70,14 @@ export async function POST(request: Request) {
     } = body
 
     // Validate required fields
-    if (!numberOfPeople || !duration || !level || !date || !startTime || !language || 
+    if (!numberOfPeople || !duration || !level || !lessonType || !date || !startTime || !language || 
         !firstName || !lastName || !phoneNumber || !email || !personalId) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Validate lessonType
+    if (!['SKI', 'SNOWBOARD'].includes(lessonType)) {
+      return NextResponse.json({ message: 'Lesson type must be SKI or SNOWBOARD' }, { status: 400 })
     }
 
     // Validate numberOfPeople (1-4)
@@ -117,6 +123,7 @@ export async function POST(request: Request) {
         numberOfPeople: people,
         duration: hours,
         level,
+        lessonType,
         date: lessonDate,
         startTime,
         language,
@@ -139,6 +146,7 @@ export async function POST(request: Request) {
         numberOfPeople: lesson.numberOfPeople,
         duration: lesson.duration,
         level: lesson.level,
+        lessonType: lesson.lessonType,
         date: lesson.date,
         startTime: lesson.startTime,
         language: lesson.language,

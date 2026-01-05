@@ -18,7 +18,12 @@ export async function GET(request: Request) {
       where.status = status as BookingStatus
     }
 
-    const [bookings, total] = await Promise.all([
+    const lessonWhere: any = {}
+    if (status) {
+      lessonWhere.status = status
+    }
+
+    const [bookings, totalBookings, lessons, totalLessons] = await Promise.all([
       prisma.booking.findMany({
         where,
         skip,
@@ -33,6 +38,13 @@ export async function GET(request: Request) {
         },
       }),
       prisma.booking.count({ where }),
+      prisma.lesson.findMany({
+        where: lessonWhere,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.lesson.count({ where: lessonWhere }),
     ])
 
     const formattedBookings = bookings.map((booking) => {
@@ -41,6 +53,7 @@ export async function GET(request: Request) {
         .join(', ')
       return {
         id: booking.id,
+        type: 'booking',
         customer: `${booking.firstName} ${booking.lastName}`,
         firstName: booking.firstName,
         lastName: booking.lastName,
@@ -58,13 +71,43 @@ export async function GET(request: Request) {
       }
     })
 
+    const formattedLessons = lessons.map((lesson) => {
+      const lessonTypeLabel = lesson.lessonType === 'SKI' ? 'Ski' : 'Snowboard'
+      const levelLabel = lesson.level === 'BEGINNER' ? 'Beginner' : lesson.level === 'INTERMEDIATE' ? 'Intermediate' : 'Expert'
+      return {
+        id: lesson.id,
+        type: 'lesson',
+        customer: `${lesson.firstName} ${lesson.lastName}`,
+        firstName: lesson.firstName,
+        lastName: lesson.lastName,
+        email: lesson.email,
+        phoneNumber: lesson.phoneNumber,
+        personalId: lesson.personalId,
+        equipment: `${lessonTypeLabel} Lesson (${levelLabel}, ${lesson.numberOfPeople} ${lesson.numberOfPeople === 1 ? 'person' : 'people'}, ${lesson.duration}h)`,
+        productIds: [],
+        startDate: lesson.date,
+        endDate: lesson.date,
+        status: lesson.status,
+        totalPrice: lesson.totalPrice,
+        createdAt: lesson.createdAt,
+        updatedAt: lesson.updatedAt,
+      }
+    })
+
+    // Combine and sort by createdAt (most recent first)
+    const allBookings = [...formattedBookings, ...formattedLessons].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime()
+      const dateB = new Date(b.createdAt).getTime()
+      return dateB - dateA
+    })
+
     return NextResponse.json({
-      bookings: formattedBookings,
+      bookings: allBookings,
       pagination: {
-        total,
+        total: totalBookings + totalLessons,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil((totalBookings + totalLessons) / limit),
       },
     })
   } catch (error) {

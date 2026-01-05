@@ -97,6 +97,9 @@ const BookingPage = () => {
     startDate: Date | null
     endDate: Date | null
     totalPrice: string
+    startTime?: string
+    duration?: string
+    numberOfPeople?: string
   } | null>(null)
 
   const [formData, setFormData] = useState<BookingFormData>({
@@ -349,6 +352,9 @@ const BookingPage = () => {
         startDate: formData.startDate,
         endDate: formData.endDate,
         totalPrice: formData.totalPrice,
+        startTime: (typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') ? formData.startTime : undefined,
+        duration: (typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') ? formData.duration : undefined,
+        numberOfPeople: (typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') ? formData.numberOfPeople : undefined,
       })
       
       setSuccess(true)
@@ -468,6 +474,33 @@ const BookingPage = () => {
                             <span className="font-semibold text-black">{t('dates')}: </span>
                             <span className="text-black">
                               {bookingInfo.startDate.toLocaleDateString(locale || 'ka-GE')} - {bookingInfo.endDate.toLocaleDateString(locale || 'ka-GE')}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {bookingInfo.startTime && (
+                          <div>
+                            <span className="font-semibold text-black">{tLessons('startTime')}: </span>
+                            <span className="text-black">
+                              {bookingInfo.startTime}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {bookingInfo.duration && (
+                          <div>
+                            <span className="font-semibold text-black">{tLessons('duration')}: </span>
+                            <span className="text-black">
+                              {bookingInfo.duration} {parseInt(bookingInfo.duration) === 1 ? tLessons('hour') : tLessons('hours')}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {bookingInfo.numberOfPeople && (
+                          <div>
+                            <span className="font-semibold text-black">{t('numberOfPeople')}: </span>
+                            <span className="text-black">
+                              {bookingInfo.numberOfPeople} {parseInt(bookingInfo.numberOfPeople) === 1 ? tLessons('person') : tLessons('people')}
                             </span>
                           </div>
                         )}
