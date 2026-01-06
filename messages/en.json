@@ -158,6 +158,7 @@
         "customer": "Customer",
         "equipment": "Equipment",
         "date": "Date",
+        "phone": "Phone",
         "status": "Status",
         "price": "Price",
         "actions": "Actions"
