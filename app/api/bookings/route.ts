@@ -35,13 +35,19 @@ export async function POST(request: Request) {
     // Validate dates
     const start = new Date(startDate)
     const end = new Date(endDate)
-    if (end <= start) {
-      return NextResponse.json({ message: 'End date must be after start date' }, { status: 400 })
+    
+    // Normalize dates to compare only the date part (ignore time)
+    const startDateOnly = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+    const endDateOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+    
+    if (endDateOnly < startDateOnly) {
+      return NextResponse.json({ message: 'End date must be on or after start date' }, { status: 400 })
     }
     
     // Validate booking period (max 2 weeks / 14 days)
-    const diffTime = end.getTime() - start.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    // Calculate days including both start and end dates (same-day = 1 day)
+    const diffTime = endDateOnly.getTime() - startDateOnly.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
     if (diffDays > 14) {
       return NextResponse.json({ message: 'Booking period cannot exceed 2 weeks (14 days)' }, { status: 400 })
     }

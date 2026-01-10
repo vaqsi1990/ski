@@ -66,8 +66,13 @@ const bookingSchema = z.object({
   path: ['endDate'],
 }).refine((data) => {
   if (data.startDate && data.endDate) {
-    const diffTime = data.endDate.getTime() - data.startDate.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    // Normalize dates to compare only the date part (ignore time)
+    const startDateOnly = new Date(data.startDate.getFullYear(), data.startDate.getMonth(), data.startDate.getDate())
+    const endDateOnly = new Date(data.endDate.getFullYear(), data.endDate.getMonth(), data.endDate.getDate())
+    
+    // Calculate days including both start and end dates (same-day = 1 day)
+    const diffTime = endDateOnly.getTime() - startDateOnly.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1
     return diffDays <= 14
   }
   return true
