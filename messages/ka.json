@@ -154,6 +154,8 @@
       "delete": "წაშლა",
       "filter": "ფილტრი სტატუსით",
       "all": "ყველა",
+      "exportExcel": "Excel-ში გადმოწერა",
+      "exportError": "გადმოწერა ვერ მოხერხდა",
       "table": {
         "customer": "მომხმარებელი",
         "equipment": "აღჭურვილობა",

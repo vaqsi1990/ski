@@ -154,6 +154,8 @@
       "delete": "Delete",
       "filter": "Filter by Status",
       "all": "All",
+      "exportExcel": "Export to Excel",
+      "exportError": "Failed to export bookings",
       "table": {
         "customer": "Customer",
         "equipment": "Equipment",

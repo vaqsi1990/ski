@@ -39,7 +39,7 @@ const bookingSchema = z.object({
   lastName: z.array(z.string().min(1, 'Last name is required')).min(1, 'At least one last name is required'),
   email: z.array(z.string().email('Invalid email address')).min(1, 'At least one email is required'),
   phoneNumber: z.array(z.string().min(1, 'Phone number is required')).min(1, 'At least one phone number is required'),
-  personalId: z.array(z.string().optional()),
+  personalId: z.array(z.string().min(1, 'Personal ID is required')).min(1, 'At least one personal ID is required'),
   selectedProductIds: z.array(z.string()).refine((ids) => {
     const validIds = ids.filter(id => id && id !== '')
     return validIds.length > 0
@@ -300,7 +300,8 @@ const BookingPage = () => {
       if (validated.firstName.length !== validProductIds.length ||
           validated.lastName.length !== validProductIds.length ||
           validated.email.length !== validProductIds.length ||
-          validated.phoneNumber.length !== validProductIds.length) {
+          validated.phoneNumber.length !== validProductIds.length ||
+          validated.personalId.length !== validProductIds.length) {
         throw new Error('Contact information count must match number of selected products')
       }
 
@@ -985,7 +986,7 @@ const BookingPage = () => {
 
                   <div>
                     <label className="block text-[18px] font-medium text-black mb-2">
-                      {t('personalId')}
+                      {t('personalId')} *
                     </label>
                     <input
                       type="text"
@@ -995,8 +996,13 @@ const BookingPage = () => {
                         newArray[index] = e.target.value
                         setFormData({ ...formData, personalId: newArray })
                       }}
-                      className="w-full border border-gray-300 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 rounded-lg px-4 py-3 text-[18px] focus:ring-1 focus:ring-red-500 text-black"
+                      className={`w-full border rounded-lg px-4 py-3 text-[18px] text-black ${
+                        errors[`personalId.${index}`] ? 'border-red-500' : 'border-gray-300'
+                      } focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500`}
                     />
+                    {errors[`personalId.${index}`] && (
+                      <p className="text-red-500 text-[18px] mt-1">{errors[`personalId.${index}`]}</p>
+                    )}
                   </div>
                 </div>
               )

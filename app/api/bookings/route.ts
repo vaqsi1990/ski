@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     // Support both old format (single productId) and new format (productIds array)
     const productIdArray = productIds || (body.productId ? [body.productId] : [])
 
-    if (!productIdArray || productIdArray.length === 0 || !firstName || !lastName || !phoneNumber || !email || !startDate || !endDate || !totalPrice) {
+    if (!productIdArray || productIdArray.length === 0 || !firstName || !lastName || !phoneNumber || !email || !personalId || !startDate || !endDate || !totalPrice) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
     }
 
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
         lastName,
         phoneNumber,
         email,
-        personalId: personalId || '',
+        personalId,
         numberOfPeople: finalNumberOfPeople || null,
         startDate: start,
         endDate: end,

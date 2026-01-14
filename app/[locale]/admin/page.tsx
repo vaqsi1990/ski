@@ -141,7 +141,7 @@ const bookingSchema = z.object({
   lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Invalid email address'),
   phoneNumber: z.string().min(1, 'Phone number is required'),
-  personalId: z.string().optional(),
+  personalId: z.string().min(1, 'Personal ID is required'),
   productId: z.string().min(1, 'Equipment is required'),
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().min(1, 'End date is required'),
@@ -984,9 +984,9 @@ const AdminPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[16px] font-medium text-black mb-1">
-                      {t('bookings.form.personalId')}
-                    </label>
+                      <label className="block text-[16px] font-medium text-black mb-1">
+                        {t('bookings.form.personalId')} *
+                      </label>
                     <input
                       type="text"
                       value={bookingFormData.personalId}
@@ -1137,6 +1137,36 @@ const AdminPage = () => {
               <h1 className="text-lg md:text-xl font-bold text-black mb-1 md:mb-2">{t('bookings.title')}</h1>
               <p className="text-sm md:text-base text-black">{t('bookings.subtitle')}</p>
             </div>
+            <button
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/admin/bookings/export')
+                  if (!response.ok) throw new Error('Failed to export bookings')
+                  const blob = await response.blob()
+                  const url = window.URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  const contentDisposition = response.headers.get('content-disposition')
+                  const filename = contentDisposition
+                    ? contentDisposition.split('filename=')[1]?.replace(/"/g, '') || 'bookings.xlsx'
+                    : 'bookings.xlsx'
+                  a.download = filename
+                  document.body.appendChild(a)
+                  a.click()
+                  window.URL.revokeObjectURL(url)
+                  document.body.removeChild(a)
+                } catch (error) {
+                  console.error('Failed to export bookings', error)
+                  alert(t('bookings.exportError') || 'Failed to export bookings')
+                }
+              }}
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 rounded-lg transition-colors text-sm md:text-base font-medium flex items-center gap-2 justify-center"
+            >
+              <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {t('bookings.exportExcel')}
+            </button>
           </div>
         </div>
 
