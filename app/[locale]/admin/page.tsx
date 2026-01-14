@@ -18,6 +18,7 @@ type AdminStats = {
 type AdminBooking = {
   id: string
   customer: string
+  email?: string
   equipment: string
   startDate: string
   endDate: string
@@ -793,6 +794,9 @@ const AdminPage = () => {
                     <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell">
                       {t('bookings.table.phone')}
                     </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden xl:table-cell">
+                      {t('bookings.table.email')}
+                    </th>
                     <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden md:table-cell">
                       {t('bookings.table.price')}
                     </th>
@@ -807,14 +811,14 @@ const AdminPage = () => {
               <tbody>
                 {dashboardLoading && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={7}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={8}>
                       {t('bookings.loading')}
                     </td>
                   </tr>
                 )}
                 {!dashboardLoading && recentBookings.length === 0 && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={7}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={8}>
                       {t('bookings.empty')}
                     </td>
                   </tr>
@@ -829,6 +833,7 @@ const AdminPage = () => {
                           <div className="font-medium">{booking.customer}</div>
                           <div className="text-gray-500 sm:hidden mt-1">{booking.equipment}</div>
                           <div className="text-gray-500 lg:hidden mt-1">{(booking as any).phoneNumber || '—'}</div>
+                          <div className="text-gray-500 xl:hidden mt-1">{(booking as any).email || '—'}</div>
                           <div className="text-gray-500 md:hidden mt-1">{formatCurrency((booking as any).totalPrice || 0)}</div>
                           {bookingType === 'lesson' && (
                             <div className="text-xs text-orange-600 mt-1 font-semibold">Lesson</div>
@@ -837,6 +842,7 @@ const AdminPage = () => {
                         <td className="px-3 py-3 text-xs md:text-sm text-black hidden sm:table-cell">{booking.equipment}</td>
                         <td className="px-3 py-3 text-xs md:text-sm text-black whitespace-nowrap">{formatDate(booking.startDate)}</td>
                         <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell whitespace-nowrap">{(booking as any).phoneNumber || '—'}</td>
+                        <td className="px-3 py-3 text-xs md:text-sm text-black hidden xl:table-cell whitespace-nowrap">{(booking as any).email || '—'}</td>
                         <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell whitespace-nowrap">{formatCurrency((booking as any).totalPrice || 0)}</td>
                         <td className="px-3 py-3">
                           <span
@@ -1167,6 +1173,9 @@ const AdminPage = () => {
                     <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell">
                       {t('bookings.table.phone')}
                     </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden xl:table-cell">
+                      {t('bookings.table.email')}
+                    </th>
                     <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell">
                       {t('bookings.table.price')}
                     </th>
@@ -1181,14 +1190,14 @@ const AdminPage = () => {
               <tbody>
                 {bookingsLoading && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={7}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={8}>
                       {t('bookings.loading')}
                     </td>
                   </tr>
                 )}
                 {!bookingsLoading && bookings.length === 0 && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={7}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={8}>
                       {t('bookings.empty')}
                     </td>
                   </tr>
@@ -1206,6 +1215,7 @@ const AdminPage = () => {
                             {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
                           </div>
                           <div className="text-gray-500 lg:hidden mt-1 text-xs">{booking.phoneNumber || '—'}</div>
+                          <div className="text-gray-500 xl:hidden mt-1 text-xs">{booking.email || '—'}</div>
                           <div className="text-gray-500 lg:hidden mt-1 text-xs">{formatCurrency(booking.totalPrice)}</div>
                           {bookingType === 'lesson' && (
                             <div className="text-xs text-orange-600 mt-1 font-semibold">Lesson</div>
@@ -1216,6 +1226,7 @@ const AdminPage = () => {
                           {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
                         </td>
                         <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell whitespace-nowrap">{booking.phoneNumber || '—'}</td>
+                        <td className="px-3 py-3 text-xs md:text-sm text-black hidden xl:table-cell whitespace-nowrap">{booking.email || '—'}</td>
                         <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">{formatCurrency(booking.totalPrice)}</td>
                         <td className="px-3 py-3">
                           <select

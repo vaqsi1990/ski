@@ -105,6 +105,7 @@ const BookingPage = () => {
     startTime?: string
     duration?: string
     numberOfPeople?: string
+    emails?: string[]
   } | null>(null)
 
   const [formData, setFormData] = useState<BookingFormData>({
@@ -360,6 +361,7 @@ const BookingPage = () => {
         startTime: (typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') ? formData.startTime : undefined,
         duration: (typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') ? formData.duration : undefined,
         numberOfPeople: (typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') ? formData.numberOfPeople : undefined,
+        emails: validated.email.filter(email => email && email.trim() !== ''),
       })
       
       setSuccess(true)
@@ -515,6 +517,15 @@ const BookingPage = () => {
                             <span className="font-semibold text-black">{t('totalPrice')}: </span>
                             <span className="text-orange-600 font-bold text-[18px]">
                               {formatCurrency(parseFloat(bookingInfo.totalPrice))}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {bookingInfo.emails && bookingInfo.emails.length > 0 && (
+                          <div>
+                            <span className="font-semibold text-black">{t('email')}: </span>
+                            <span className="text-black">
+                              {bookingInfo.emails.join(', ')}
                             </span>
                           </div>
                         )}

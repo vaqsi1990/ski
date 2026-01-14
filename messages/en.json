@@ -159,6 +159,7 @@
         "equipment": "Equipment",
         "date": "Date",
         "phone": "Phone",
+        "email": "Email",
         "status": "Status",
         "price": "Price",
         "actions": "Actions"
