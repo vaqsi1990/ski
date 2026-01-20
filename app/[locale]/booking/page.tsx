@@ -643,6 +643,24 @@ const BookingPage = () => {
                                 // Exclude already selected products
                                 return !otherSelectedIds.includes(product.id)
                               })
+                              .sort((a, b) => {
+                                // Sort products: ADULT_SKI_SET first, then others
+                                const typeOrder: Record<string, number> = {
+                                  'ADULT_SKI_SET': 1,
+                                  'CHILD_SKI_SET': 2,
+                                  'SKI': 3,
+                                  'ADULT_SNOWBOARD_SET': 4,
+                                  'CHILD_SNOWBOARD_SET': 5,
+                                  'SNOWBOARD': 6,
+                                }
+                                const orderA = typeOrder[a.type] || 99
+                                const orderB = typeOrder[b.type] || 99
+                                if (orderA !== orderB) {
+                                  return orderA - orderB
+                                }
+                                // If same type, sort by price (lower first)
+                                return a.price - b.price
+                              })
                               .map((product) => {
                                 // Get translated type name
                                 const typeLabel = tEquipment(product.type) || product.type.replace(/_/g, ' ')
