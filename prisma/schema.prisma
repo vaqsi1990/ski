@@ -11,6 +11,8 @@ datasource db {
 enum ProductType {
   SKI
   SNOWBOARD
+  SKI_BOOTS
+  SNOWBOARD_BOOTS
   ADULT_CLOTH
   CHILD_CLOTH
   ADULT_SKI_SET

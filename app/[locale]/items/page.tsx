@@ -57,6 +57,10 @@ const ItemsPage = () => {
         return t('items.skis.name')
       case ProductType.SNOWBOARD:
         return t('items.snowboards.name')
+      case ProductType.SKI_BOOTS:
+        return t('items.skiBoots.name')
+      case ProductType.SNOWBOARD_BOOTS:
+        return t('items.snowboardBoots.name')
       case ProductType.ADULT_CLOTH:
         return t('items.adultCloth.name')
       case ProductType.CHILD_CLOTH:
@@ -79,6 +83,8 @@ const ItemsPage = () => {
   const getPageTitle = () => {
     if (type === ProductType.SKI) return t('items.skis.name')
     if (type === ProductType.SNOWBOARD) return t('items.snowboards.name')
+    if (type === ProductType.SKI_BOOTS) return t('items.skiBoots.name')
+    if (type === ProductType.SNOWBOARD_BOOTS) return t('items.snowboardBoots.name')
     if (type === ProductType.ADULT_CLOTH) return t('items.adultCloth.name')
     if (type === ProductType.CHILD_CLOTH) return t('items.childCloth.name')
     if (type === ProductType.ADULT_SKI_SET) return t('items.adultSkiSet.name')

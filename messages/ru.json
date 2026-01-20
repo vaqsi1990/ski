@@ -231,6 +231,8 @@
       "types": {
         "SKI": "Лыжи",
         "SNOWBOARD": "Сноуборд",
+        "SKI_BOOTS": "Лыжные ботинки",
+        "SNOWBOARD_BOOTS": "Ботинки для сноуборда",
         "ADULT_CLOTH": "Взрослая одежда",
         "CHILD_CLOTH": "Детская одежда",
         "ADULT_SKI_SET": "Взрослый лыжный набор",

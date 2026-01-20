@@ -609,11 +609,13 @@ const BookingPage = () => {
                               .filter((product) => {
                                 // Filter by type if typeFromUrl is provided
                                 if (typeFromUrl) {
-                                  // If type is SKI, show SKI, SNOWBOARD and all related sets
+                                  // If type is SKI, show SKI, SNOWBOARD, boots and all related sets
                                   if (typeFromUrl === 'SKI') {
                                     const allowedTypes = [
                                       'SKI',
                                       'SNOWBOARD',
+                                      'SKI_BOOTS',
+                                      'SNOWBOARD_BOOTS',
                                       'ADULT_SKI_SET',
                                       'CHILD_SKI_SET',
                                       'ADULT_SNOWBOARD_SET',
@@ -633,6 +635,16 @@ const BookingPage = () => {
                                     if (!allowedTypes.includes(product.type)) {
                                       return false
                                     }
+                                  } else if (typeFromUrl === 'ACCESSORY') {
+                                    // If type is ACCESSORY, show ACCESSORY and Clothes (ADULT_CLOTH, CHILD_CLOTH)
+                                    const allowedTypes = [
+                                      'ACCESSORY',
+                                      'ADULT_CLOTH',
+                                      'CHILD_CLOTH'
+                                    ]
+                                    if (!allowedTypes.includes(product.type)) {
+                                      return false
+                                    }
                                   } else {
                                     // For other types, filter normally
                                     if (product.type !== typeFromUrl) {
@@ -644,14 +656,16 @@ const BookingPage = () => {
                                 return !otherSelectedIds.includes(product.id)
                               })
                               .sort((a, b) => {
-                                // Sort products: ADULT_SKI_SET first, then others
+                                // Sort products for SKI page: sets first, then skis/boards/boots
                                 const typeOrder: Record<string, number> = {
                                   'ADULT_SKI_SET': 1,
                                   'CHILD_SKI_SET': 2,
-                                  'SKI': 3,
-                                  'ADULT_SNOWBOARD_SET': 4,
-                                  'CHILD_SNOWBOARD_SET': 5,
+                                  'ADULT_SNOWBOARD_SET': 3,
+                                  'CHILD_SNOWBOARD_SET': 4,
+                                  'SKI': 5,
                                   'SNOWBOARD': 6,
+                                  'SKI_BOOTS': 7,
+                                  'SNOWBOARD_BOOTS': 8,
                                 }
                                 const orderA = typeOrder[a.type] || 99
                                 const orderB = typeOrder[b.type] || 99

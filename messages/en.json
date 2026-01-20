@@ -230,6 +230,8 @@
       "types": {
         "SKI": "Ski",
         "SNOWBOARD": "Snowboard",
+        "SKI_BOOTS": "Ski Boots",
+        "SNOWBOARD_BOOTS": "Snowboard Boots",
         "ADULT_CLOTH": "Adult Clothing",
         "CHILD_CLOTH": "Child Clothing",
         "ADULT_SKI_SET": "Adult Ski Set",
