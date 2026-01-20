@@ -193,6 +193,13 @@ const LessonsPage = () => {
       // Use first participant as primary contact for API compatibility
       const primaryParticipant = validated.participants[0]
 
+      // Format date as YYYY-MM-DD using local date components to avoid timezone shifts
+      // toISOString() converts to UTC which can shift the date backward by one day
+      const year = validated.date.getFullYear()
+      const month = String(validated.date.getMonth() + 1).padStart(2, '0')
+      const day = String(validated.date.getDate()).padStart(2, '0')
+      const dateString = `${year}-${month}-${day}`
+
       const response = await fetch('/api/lessons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -201,7 +208,7 @@ const LessonsPage = () => {
           duration: validated.duration,
           level: validated.level,
           lessonType: validated.lessonType,
-          date: validated.date.toISOString().split('T')[0],
+          date: dateString,
           startTime: validated.startTime,
           language: validated.language,
           firstName: primaryParticipant.firstName,

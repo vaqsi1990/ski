@@ -136,6 +136,7 @@
     "menu": {
       "dashboard": "Панель",
       "bookings": "Бронирования",
+      "lessons": "Уроки",
       "equipment": "Оборудование",
       "customers": "Клиенты",
       "reports": "Отчеты",
@@ -337,6 +338,51 @@
       },
       "people": "человек",
       "peoplePlural": "человека",
+      "hour": "час",
+      "hours": "часа"
+    },
+    "lessons": {
+      "title": "Управление уроками",
+      "subtitle": "Просмотр и управление уроками в деталях",
+      "loading": "Загрузка уроков...",
+      "empty": "Уроки не найдены.",
+      "filter": "Фильтр по статусу",
+      "all": "Все",
+      "delete": "Удалить",
+      "deleteConfirm": "Вы уверены, что хотите удалить этот урок?",
+      "deleteSuccess": "Урок успешно удален",
+      "table": {
+        "customer": "Клиент",
+        "type": "Тип",
+        "date": "Дата",
+        "time": "Время",
+        "details": "Детали",
+        "price": "Цена",
+        "status": "Статус",
+        "actions": "Действия"
+      },
+      "status": {
+        "pending": "Ожидает",
+        "confirmed": "Подтверждено",
+        "cancelled": "Отменено",
+        "completed": "Завершено"
+      },
+      "type": {
+        "ski": "Лыжи",
+        "snowboard": "Сноуборд"
+      },
+      "level": {
+        "beginner": "Начинающий",
+        "intermediate": "Средний",
+        "expert": "Эксперт"
+      },
+      "language": {
+        "georgian": "Грузинский",
+        "english": "Английский",
+        "russian": "Русский"
+      },
+      "person": "человек",
+      "people": "человека",
       "hour": "час",
       "hours": "часа"
     },

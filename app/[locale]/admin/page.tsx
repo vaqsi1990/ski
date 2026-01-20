@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import { Link } from '@/i18n/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { BookingStatus, ProductSize } from '@/app/generated/prisma/enums'
+import { BookingStatus, ProductSize, LessonStatus, LessonLevel, LessonLanguage, LessonType } from '@/app/generated/prisma/enums'
 import { ProductType } from '@/app/generated/prisma/enums'
 import { z } from 'zod'
 
@@ -72,6 +72,27 @@ type Customer = {
   bookingsCount: number
   totalSpent: number
   lastBooking: string | null
+}
+
+type Lesson = {
+  id: string
+  customer: string
+  firstName: string
+  lastName: string
+  email: string
+  phoneNumber: string
+  personalId: string
+  numberOfPeople: number
+  duration: number
+  level: string
+  lessonType: string
+  date: string | null
+  startTime: string
+  language: string
+  status: string
+  totalPrice: number
+  createdAt: string
+  updatedAt: string
 }
 
 type ReportData = {
@@ -223,6 +244,11 @@ const AdminPage = () => {
   const [pricesLoading, setPricesLoading] = useState(false)
   const [submittingPrices, setSubmittingPrices] = useState(false)
   const [editingPrices, setEditingPrices] = useState<Record<string, { type: string; includes: string; price: string }>>({})
+
+  // Lessons state
+  const [lessons, setLessons] = useState<Lesson[]>([])
+  const [lessonsLoading, setLessonsLoading] = useState(false)
+  const [lessonsFilter, setLessonsFilter] = useState<string>('all')
 
   // Helper functions
   const showError = useCallback((message: string) => {
@@ -376,6 +402,32 @@ const AdminPage = () => {
     }
   }, [activeTab])
 
+  // Fetch lessons
+  const fetchLessons = useCallback(async () => {
+    setLessonsLoading(true)
+    try {
+      const url = `/api/admin/lessons${lessonsFilter !== 'all' ? `?status=${lessonsFilter}` : ''}`
+      const response = await fetch(url, { cache: 'no-store' })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to load lessons' }))
+        throw new Error(errorData.message || 'Failed to load lessons')
+      }
+      const json = await response.json()
+      setLessons(json.lessons || [])
+    } catch (err) {
+      console.error('Error fetching lessons:', err)
+      showError(err instanceof Error ? err.message : 'Failed to load lessons')
+    } finally {
+      setLessonsLoading(false)
+    }
+  }, [lessonsFilter, showError])
+
+  useEffect(() => {
+    if (activeTab === 'lessons') {
+      fetchLessons()
+    }
+  }, [activeTab, lessonsFilter, fetchLessons])
+
   // Fetch lesson pricing
   useEffect(() => {
     if (activeTab === 'lessonPricing') {
@@ -472,6 +524,35 @@ const AdminPage = () => {
     } catch (err) {
       console.error(err)
       alert('Failed to delete booking')
+    }
+  }
+
+  // Lesson handlers
+  const handleLessonStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/admin/lessons/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (!response.ok) throw new Error('Failed to update lesson')
+      fetchLessons()
+    } catch (err) {
+      console.error(err)
+      showError(err instanceof Error ? err.message : 'Failed to update lesson status')
+    }
+  }
+
+  const handleDeleteLesson = async (id: string) => {
+    if (!confirm(t('lessons.deleteConfirm') || 'Are you sure you want to delete this lesson?')) return
+    try {
+      const response = await fetch(`/api/admin/lessons/${id}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error('Failed to delete lesson')
+      fetchLessons()
+      showSuccess(t('lessons.deleteSuccess') || 'Lesson deleted successfully')
+    } catch (err) {
+      console.error(err)
+      showError(err instanceof Error ? err.message : 'Failed to delete lesson')
     }
   }
 
@@ -710,16 +791,36 @@ const AdminPage = () => {
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat(locale || 'ka-GE', { style: 'currency', currency: 'GEL' }).format(amount)
 
-  const formatDate = (value: string) =>
-    new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(
-      new Date(value),
-    )
+  const formatDate = (value: string | null) => {
+    if (!value) return '—'
+
+    // If we get a date-only string (YYYY-MM-DD) from the API, format it using UTC Date to avoid timezone shifts.
+    // The API returns dates as YYYY-MM-DD (from toISOString().split('T')[0]), which represents
+    // a pure calendar date. We create a UTC Date and format it with UTC timezone to preserve the date.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const [year, month, day] = value.split('-').map(Number)
+      // Create Date using UTC components to avoid timezone conversion
+      const date = new Date(Date.UTC(year, month - 1, day))
+      // Format with UTC timezone to preserve the date exactly
+      return new Intl.DateTimeFormat(undefined, { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        timeZone: 'UTC'
+      }).format(date)
+    }
+
+    // For other date formats, use standard parsing
+    const date = new Date(value)
+    return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(date)
+  }
 
   const statusIsActive = (status: string) => ['PENDING', 'CONFIRMED'].includes(status)
 
   const menuItems = [
     { id: 'dashboard', labelKey: 'menu.dashboard' },
     { id: 'bookings', labelKey: 'menu.bookings' },
+    { id: 'lessons', labelKey: 'menu.lessons' },
     { id: 'equipment', labelKey: 'menu.equipment' },
     { id: 'customers', labelKey: 'menu.customers' },
     { id: 'lessonPricing', labelKey: 'menu.lessonPricing' },
@@ -1650,6 +1751,164 @@ const AdminPage = () => {
     )
   }
 
+  const renderLessons = () => {
+    return (
+      <>
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-lg md:text-xl font-bold text-black mb-1 md:mb-2">{t('lessons.title')}</h1>
+              <p className="text-sm md:text-base text-black">{t('lessons.subtitle')}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+          <label className="text-sm md:text-base font-medium text-black whitespace-nowrap">{t('lessons.filter')}:</label>
+          <select
+            value={lessonsFilter}
+            onChange={(e) => setLessonsFilter(e.target.value)}
+            className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 md:px-4 py-2 text-sm md:text-base text-black"
+          >
+            <option value="all">{t('lessons.all')}</option>
+            <option value="PENDING">{t('lessons.status.pending')}</option>
+            <option value="CONFIRMED">{t('lessons.status.confirmed')}</option>
+            <option value="CANCELLED">{t('lessons.status.cancelled')}</option>
+            <option value="COMPLETED">{t('lessons.status.completed')}</option>
+          </select>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('lessons.table.customer')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell">
+                      {t('lessons.table.type')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden md:table-cell">
+                      {t('lessons.table.date')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell">
+                      {t('lessons.table.time')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden xl:table-cell">
+                      {t('lessons.table.details')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider hidden lg:table-cell">
+                      {t('lessons.table.price')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('lessons.table.status')}
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
+                      {t('lessons.table.actions')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lessonsLoading && (
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 text-[16px] text-black" colSpan={8}>
+                        {t('lessons.loading')}
+                      </td>
+                    </tr>
+                  )}
+                  {!lessonsLoading && lessons.length === 0 && (
+                    <tr className="border-b border-gray-100">
+                      <td className="py-3 px-4 text-[16px] text-black" colSpan={8}>
+                        {t('lessons.empty')}
+                      </td>
+                    </tr>
+                  )}
+                  {!lessonsLoading &&
+                    lessons.map((lesson) => {
+                      const statusKey = lesson.status.toLowerCase()
+                      return (
+                        <tr key={lesson.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
+                          <td className="px-3 py-3 text-xs md:text-sm text-black">
+                            <div className="font-medium">{lesson.customer}</div>
+                            <div className="text-gray-500 lg:hidden mt-1 text-xs">
+                              {lesson.lessonType === 'SKI' ? t('lessons.type.ski') : t('lessons.type.snowboard')}
+                            </div>
+                            <div className="text-gray-500 md:hidden mt-1 text-xs">
+                              {formatDate(lesson.date)} {lesson.startTime}
+                            </div>
+                            <div className="text-gray-500 xl:hidden mt-1 text-xs">
+                              {lesson.numberOfPeople} {lesson.numberOfPeople === 1 ? t('lessons.person') : t('lessons.people')}, {lesson.duration} {lesson.duration === 1 ? t('lessons.hour') : t('lessons.hours')}
+                            </div>
+                            <div className="text-gray-500 lg:hidden mt-1 text-xs">{formatCurrency(lesson.totalPrice)}</div>
+                          </td>
+                          <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">
+                            <div className="font-medium">
+                              {lesson.lessonType === 'SKI' ? t('lessons.type.ski') : t('lessons.type.snowboard')}
+                            </div>
+                            <div className="text-gray-500 text-xs mt-1">
+                              {t(`lessons.level.${lesson.level.toLowerCase()}`)}
+                            </div>
+                            <div className="text-gray-500 text-xs mt-1">
+                              {t(`lessons.language.${lesson.language.toLowerCase()}`)}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell whitespace-nowrap">
+                            {formatDate(lesson.date)}
+                          </td>
+                          <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell whitespace-nowrap">
+                            {lesson.startTime}
+                          </td>
+                          <td className="px-3 py-3 text-xs md:text-sm text-black hidden xl:table-cell">
+                            <div className="text-xs">
+                              <div>{lesson.numberOfPeople} {lesson.numberOfPeople === 1 ? t('lessons.person') : t('lessons.people')}</div>
+                              <div className="text-gray-500 mt-1">{lesson.duration} {lesson.duration === 1 ? t('lessons.hour') : t('lessons.hours')}</div>
+                              <div className="text-gray-500 mt-1">{t(`lessons.level.${lesson.level.toLowerCase()}`)}</div>
+                              <div className="text-gray-500 mt-1">{t(`lessons.language.${lesson.language.toLowerCase()}`)}</div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">
+                            {formatCurrency(lesson.totalPrice)}
+                          </td>
+                          <td className="px-3 py-3">
+                            <select
+                              value={lesson.status}
+                              onChange={(e) => handleLessonStatusChange(lesson.id, e.target.value)}
+                              className={`text-xs md:text-sm font-medium px-2 md:px-3 py-1 rounded-full border-0 w-full sm:w-auto ${
+                                statusIsActive(lesson.status)
+                                  ? 'bg-[#08964c] text-white'
+                                  : lesson.status === 'CANCELLED'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              <option value="PENDING">{t('lessons.status.pending')}</option>
+                              <option value="CONFIRMED">{t('lessons.status.confirmed')}</option>
+                              <option value="CANCELLED">{t('lessons.status.cancelled')}</option>
+                              <option value="COMPLETED">{t('lessons.status.completed')}</option>
+                            </select>
+                          </td>
+                          <td className="px-3 py-3">
+                            <button
+                              onClick={() => handleDeleteLesson(lesson.id)}
+                              className="text-red-600 hover:text-red-700 text-xs md:text-sm whitespace-nowrap"
+                            >
+                              {t('lessons.delete')}
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   const renderCustomers = () => {
     return (
       <>
@@ -2252,6 +2511,8 @@ const AdminPage = () => {
         return renderDashboard()
       case 'bookings':
         return renderBookings()
+      case 'lessons':
+        return renderLessons()
       case 'equipment':
         return renderEquipment()
       case 'customers':

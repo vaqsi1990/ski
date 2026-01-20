@@ -135,6 +135,7 @@
     "menu": {
       "dashboard": "Dashboard",
       "bookings": "Bookings",
+      "lessons": "Lessons",
       "equipment": "Equipment",
       "customers": "Customers",
       "reports": "Reports",
@@ -336,6 +337,51 @@
       },
       "people": "person",
       "peoplePlural": "people",
+      "hour": "hour",
+      "hours": "hours"
+    },
+    "lessons": {
+      "title": "Lessons Management",
+      "subtitle": "View and manage lessons in detail",
+      "loading": "Loading lessons…",
+      "empty": "No lessons found.",
+      "filter": "Filter by Status",
+      "all": "All",
+      "delete": "Delete",
+      "deleteConfirm": "Are you sure you want to delete this lesson?",
+      "deleteSuccess": "Lesson deleted successfully",
+      "table": {
+        "customer": "Customer",
+        "type": "Type",
+        "date": "Date",
+        "time": "Time",
+        "details": "Details",
+        "price": "Price",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "cancelled": "Cancelled",
+        "completed": "Completed"
+      },
+      "type": {
+        "ski": "Ski",
+        "snowboard": "Snowboard"
+      },
+      "level": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "expert": "Expert"
+      },
+      "language": {
+        "georgian": "Georgian",
+        "english": "English",
+        "russian": "Russian"
+      },
+      "person": "person",
+      "people": "people",
       "hour": "hour",
       "hours": "hours"
     },

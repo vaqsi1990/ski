@@ -105,16 +105,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Invalid pricing combination' }, { status: 400 })
     }
 
-    // Validate date
-    const lessonDate = new Date(date)
+    // Validate date - parse YYYY-MM-DD string and create Date using UTC to avoid timezone shifts
+    // When date is "2026-01-31", we want to store exactly that calendar date
+    const dateMatch = date.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (!dateMatch) {
+      return NextResponse.json({ message: 'Invalid date format. Expected YYYY-MM-DD' }, { status: 400 })
+    }
+    
+    const [, yearStr, monthStr, dayStr] = dateMatch
+    const year = parseInt(yearStr, 10)
+    const month = parseInt(monthStr, 10) - 1 // JavaScript months are 0-indexed
+    const day = parseInt(dayStr, 10)
+    
+    // Create Date using UTC to ensure the calendar date is preserved regardless of server timezone
+    const lessonDate = new Date(Date.UTC(year, month, day))
+    
     if (isNaN(lessonDate.getTime())) {
       return NextResponse.json({ message: 'Invalid date' }, { status: 400 })
     }
 
-    // Check if date is in the past
+    // Check if date is in the past (compare dates, not times)
     const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    if (lessonDate < today) {
+    const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
+    const lessonDateUTC = new Date(Date.UTC(year, month, day))
+    if (lessonDateUTC < todayUTC) {
       return NextResponse.json({ message: 'Date cannot be in the past' }, { status: 400 })
     }
 
