@@ -26,7 +26,8 @@ export async function GET() {
       }),
       prisma.product.count(),
       prisma.booking.findMany({
-        orderBy: { createdAt: 'desc' },
+        // Order recent bookings by their start date (latest first)
+        orderBy: { startDate: 'desc' },
         take: 5,
         include: {
           products: {
@@ -53,7 +54,8 @@ export async function GET() {
         },
       }),
       prisma.lesson.findMany({
-        orderBy: { createdAt: 'desc' },
+        // Lessons ordered by lesson date (latest first)
+        orderBy: { date: 'desc' },
         take: 5,
       }),
     ])
@@ -95,10 +97,10 @@ export async function GET() {
       }
     })
 
-    // Combine and sort by createdAt (most recent first)
+    // Combine and sort by booking/lesson date (latest first)
     const allBookings = [...bookings, ...lessons].sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime()
-      const dateB = new Date(b.createdAt).getTime()
+      const dateA = new Date(a.startDate).getTime()
+      const dateB = new Date(b.startDate).getTime()
       return dateB - dateA
     }).slice(0, 8)
 
