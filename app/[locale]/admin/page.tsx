@@ -74,9 +74,20 @@ type Customer = {
   lastBooking: string | null
 }
 
+type Teacher = {
+  id: string
+  firstname: string
+  lastname: string
+  lessonsCount?: number
+  createdAt?: string
+  updatedAt?: string
+}
+
 type Lesson = {
   id: string
   customer: string
+  teacherId?: string | null
+  teacher?: { id: string; firstname: string; lastname: string } | null
   firstName: string
   lastName: string
   email: string
@@ -249,6 +260,14 @@ const AdminPage = () => {
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [lessonsLoading, setLessonsLoading] = useState(false)
   const [lessonsFilter, setLessonsFilter] = useState<string>('all')
+
+  // Teachers state
+  const [teachers, setTeachers] = useState<Teacher[]>([])
+  const [teachersLoading, setTeachersLoading] = useState(false)
+  const [showTeacherForm, setShowTeacherForm] = useState(false)
+  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null)
+  const [teacherFormData, setTeacherFormData] = useState({ firstname: '', lastname: '' })
+  const [teacherFormErrors, setTeacherFormErrors] = useState<Record<string, string>>({})
 
   // Helper functions
   const showError = useCallback((message: string) => {
@@ -427,6 +446,27 @@ const AdminPage = () => {
       fetchLessons()
     }
   }, [activeTab, lessonsFilter, fetchLessons])
+
+  const fetchTeachers = useCallback(async () => {
+    setTeachersLoading(true)
+    try {
+      const response = await fetch('/api/admin/teachers', { cache: 'no-store' })
+      if (!response.ok) throw new Error('Failed to load teachers')
+      const json = await response.json()
+      setTeachers(json.teachers || [])
+    } catch (err) {
+      console.error('Error fetching teachers:', err)
+      showError(err instanceof Error ? err.message : 'Failed to load teachers')
+    } finally {
+      setTeachersLoading(false)
+    }
+  }, [showError])
+
+  useEffect(() => {
+    if (activeTab === 'teachers' || activeTab === 'lessons') {
+      fetchTeachers()
+    }
+  }, [activeTab, fetchTeachers])
 
   // Fetch lesson pricing
   useEffect(() => {
@@ -765,6 +805,90 @@ const AdminPage = () => {
     }
   }
 
+  const handleTeacherSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setTeacherFormErrors({})
+    const firstname = teacherFormData.firstname.trim()
+    const lastname = teacherFormData.lastname.trim()
+    if (!firstname || !lastname) {
+      setTeacherFormErrors({
+        firstname: !firstname ? (t('teachers.firstnameRequired') || 'First name is required') : '',
+        lastname: !lastname ? (t('teachers.lastnameRequired') || 'Last name is required') : '',
+      })
+      return
+    }
+    try {
+      if (editingTeacher) {
+        const response = await fetch(`/api/admin/teachers/${editingTeacher.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ firstname, lastname }),
+        })
+        if (!response.ok) {
+          const err = await response.json()
+          throw new Error(err.message || 'Failed to update teacher')
+        }
+        showSuccess(t('teachers.updateSuccess') || 'Teacher updated successfully')
+      } else {
+        const response = await fetch('/api/admin/teachers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ firstname, lastname }),
+        })
+        if (!response.ok) {
+          const err = await response.json()
+          throw new Error(err.message || 'Failed to create teacher')
+        }
+        showSuccess(t('teachers.addSuccess') || 'Teacher added successfully')
+      }
+      setShowTeacherForm(false)
+      setTeacherFormData({ firstname: '', lastname: '' })
+      setEditingTeacher(null)
+      fetchTeachers()
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to save teacher')
+    }
+  }
+
+  const handleEditTeacher = (teacher: Teacher) => {
+    setEditingTeacher(teacher)
+    setTeacherFormData({ firstname: teacher.firstname, lastname: teacher.lastname })
+    setShowTeacherForm(true)
+  }
+
+  const handleDeleteTeacher = async (id: string) => {
+    if (!confirm(t('teachers.deleteConfirm') || 'Are you sure? Lessons linked to this teacher will have no instructor.')) return
+    try {
+      const response = await fetch(`/api/admin/teachers/${id}`, { method: 'DELETE' })
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.message || 'Failed to delete teacher')
+      }
+      showSuccess(t('teachers.deleteSuccess') || 'Teacher deleted')
+      fetchTeachers()
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to delete teacher')
+    }
+  }
+
+  const handleLessonTeacherChange = async (lessonId: string, teacherId: string | null) => {
+    try {
+      const response = await fetch(`/api/admin/lessons/${lessonId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teacherId: teacherId || null }),
+      })
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.message || 'Failed to update instructor')
+      }
+      showSuccess(t('lessons.instructorUpdated') || 'Instructor updated')
+      fetchLessons()
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to update instructor')
+    }
+  }
+
   const handlePricesSubmit = async (updatedPrices: Array<{ itemKey: string; type: string; includes: string; price: string }>) => {
     setSubmittingPrices(true)
     try {
@@ -821,6 +945,7 @@ const AdminPage = () => {
     { id: 'dashboard', labelKey: 'menu.dashboard' },
     { id: 'bookings', labelKey: 'menu.bookings' },
     { id: 'lessons', labelKey: 'menu.lessons' },
+    { id: 'teachers', labelKey: 'menu.teachers' },
     { id: 'equipment', labelKey: 'menu.equipment' },
     { id: 'customers', labelKey: 'menu.customers' },
     { id: 'lessonPricing', labelKey: 'menu.lessonPricing' },
@@ -1851,6 +1976,21 @@ const AdminPage = () => {
                             <div className="font-medium">
                               {lesson.lessonType === 'SKI' ? t('lessons.type.ski') : t('lessons.type.snowboard')}
                             </div>
+                            <div className="text-gray-600 text-xs mt-1">
+                              <select
+                                value={lesson.teacherId ?? ''}
+                                onChange={(e) => handleLessonTeacherChange(lesson.id, e.target.value || null)}
+                                className="w-full max-w-[160px] border border-gray-300 rounded px-2 py-1 text-xs text-black bg-white"
+                                title={t('lessons.assignInstructor')}
+                              >
+                                <option value="">— {t('lessons.noInstructor')}</option>
+                                {teachers.map((t) => (
+                                  <option key={t.id} value={t.id}>
+                                    {t.firstname} {t.lastname}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
                             <div className="text-gray-500 text-xs mt-1">
                               {t(`lessons.level.${lesson.level.toLowerCase()}`)}
                             </div>
@@ -2353,6 +2493,142 @@ const AdminPage = () => {
     )
   }
 
+  const renderTeachers = () => {
+    return (
+      <>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-lg md:text-xl font-bold text-black mb-1 md:mb-2">{t('teachers.title')}</h1>
+          <p className="text-sm md:text-base text-black">{t('teachers.subtitle')}</p>
+        </div>
+
+        {showTeacherForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+              <h2 className="text-lg font-bold text-black mb-4">
+                {editingTeacher ? t('teachers.edit') : t('teachers.add')}
+              </h2>
+              <form onSubmit={handleTeacherSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-black mb-1">{t('teachers.firstname')} *</label>
+                  <input
+                    type="text"
+                    value={teacherFormData.firstname}
+                    onChange={(e) => setTeacherFormData({ ...teacherFormData, firstname: e.target.value })}
+                    className={`w-full border rounded-lg px-3 py-2 text-sm text-black ${
+                      teacherFormErrors.firstname ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {teacherFormErrors.firstname && (
+                    <p className="text-red-500 text-xs mt-1">{teacherFormErrors.firstname}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-1">{t('teachers.lastname')} *</label>
+                  <input
+                    type="text"
+                    value={teacherFormData.lastname}
+                    onChange={(e) => setTeacherFormData({ ...teacherFormData, lastname: e.target.value })}
+                    className={`w-full border rounded-lg px-3 py-2 text-sm text-black ${
+                      teacherFormErrors.lastname ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {teacherFormErrors.lastname && (
+                    <p className="text-red-500 text-xs mt-1">{teacherFormErrors.lastname}</p>
+                  )}
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700 text-sm font-medium"
+                  >
+                    {editingTeacher ? t('teachers.save') : t('teachers.add')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowTeacherForm(false)
+                      setEditingTeacher(null)
+                      setTeacherFormData({ firstname: '', lastname: '' })
+                      setTeacherFormErrors({})
+                    }}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-black hover:bg-gray-50 text-sm"
+                  >
+                    {t('lessonPricing.cancel')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-4">
+          <button
+            onClick={() => {
+              setEditingTeacher(null)
+              setTeacherFormData({ firstname: '', lastname: '' })
+              setTeacherFormErrors({})
+              setShowTeacherForm(true)
+            }}
+            className="px-4 py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700 text-sm font-medium"
+          >
+            {t('teachers.add')}
+          </button>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase">{t('teachers.firstname')}</th>
+                  <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase">{t('teachers.lastname')}</th>
+                  <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase">{t('teachers.lessonsCount')}</th>
+                  <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase">{t('lessons.table.actions')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {teachersLoading && (
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-4 text-sm text-black" colSpan={4}>{t('teachers.loading')}</td>
+                  </tr>
+                )}
+                {!teachersLoading && teachers.length === 0 && (
+                  <tr className="border-b border-gray-100">
+                    <td className="py-3 px-4 text-sm text-black" colSpan={4}>{t('teachers.empty')}</td>
+                  </tr>
+                )}
+                {!teachersLoading &&
+                  teachers.map((teacher) => (
+                    <tr key={teacher.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
+                      <td className="px-3 py-3 text-sm text-black">{teacher.firstname}</td>
+                      <td className="px-3 py-3 text-sm text-black">{teacher.lastname}</td>
+                      <td className="px-3 py-3 text-sm text-black">{teacher.lessonsCount ?? 0}</td>
+                      <td className="px-3 py-3">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEditTeacher(teacher)}
+                            className="text-xs md:text-sm px-3 py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700"
+                          >
+                            {t('lessonPricing.edit')}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTeacher(teacher.id)}
+                            className="text-xs md:text-sm text-red-600 hover:text-red-700"
+                          >
+                            {t('teachers.delete')}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   const renderPrices = () => {
     // Helper function to convert camelCase to spaced words
     const formatCamelCase = (text: string): string => {
@@ -2527,6 +2803,8 @@ const AdminPage = () => {
         return renderSettings()
       case 'lessonPricing':
         return renderLessonPricing()
+      case 'teachers':
+        return renderTeachers()
       case 'prices':
         return renderPrices()
       default:

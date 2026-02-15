@@ -54,9 +54,9 @@ export async function GET() {
         },
       }),
       prisma.lesson.findMany({
-        // Lessons ordered by lesson date (latest first)
         orderBy: { date: 'desc' },
         take: 5,
+        include: { teacher: true },
       }),
     ])
 
@@ -82,10 +82,13 @@ export async function GET() {
     const lessons = recentLessons.map((lesson) => {
       const lessonTypeLabel = lesson.lessonType === 'SKI' ? 'Ski' : 'Snowboard'
       const levelLabel = lesson.level === 'BEGINNER' ? 'Beginner' : lesson.level === 'INTERMEDIATE' ? 'Intermediate' : 'Expert'
+      const teacherName = lesson.teacher ? `${lesson.teacher.firstname} ${lesson.teacher.lastname}` : null
       return {
         id: lesson.id,
         type: 'lesson',
         customer: `${lesson.firstName} ${lesson.lastName}`,
+        teacher: lesson.teacher ? { id: lesson.teacher.id, firstname: lesson.teacher.firstname, lastname: lesson.teacher.lastname } : null,
+        teacherName,
         email: lesson.email,
         phoneNumber: lesson.phoneNumber,
         equipment: `${lessonTypeLabel} Lesson (${levelLabel}, ${lesson.numberOfPeople} ${lesson.numberOfPeople === 1 ? 'person' : 'people'})`,

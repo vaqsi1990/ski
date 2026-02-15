@@ -18,6 +18,7 @@ export async function GET(request: Request) {
       orderBy: {
         createdAt: 'desc',
       },
+      include: { teacher: true },
     })
 
     return NextResponse.json({
@@ -34,6 +35,8 @@ export async function GET(request: Request) {
         return {
           id: lesson.id,
           customer: `${lesson.firstName} ${lesson.lastName}`,
+          teacherId: lesson.teacherId,
+          teacher: lesson.teacher ? { id: lesson.teacher.id, firstname: lesson.teacher.firstname, lastname: lesson.teacher.lastname } : null,
           firstName: lesson.firstName,
           lastName: lesson.lastName,
           email: lesson.email,

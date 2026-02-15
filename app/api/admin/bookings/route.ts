@@ -43,8 +43,8 @@ export async function GET(request: Request) {
         where: lessonWhere,
         skip,
         take: limit,
-        // Lessons ordered by lesson date (latest first)
         orderBy: { date: 'desc' },
+        include: { teacher: true },
       }),
       prisma.lesson.count({ where: lessonWhere }),
     ])
@@ -76,10 +76,14 @@ export async function GET(request: Request) {
     const formattedLessons = lessons.map((lesson) => {
       const lessonTypeLabel = lesson.lessonType === 'SKI' ? 'Ski' : 'Snowboard'
       const levelLabel = lesson.level === 'BEGINNER' ? 'Beginner' : lesson.level === 'INTERMEDIATE' ? 'Intermediate' : 'Expert'
+      const teacherName = lesson.teacher ? `${lesson.teacher.firstname} ${lesson.teacher.lastname}` : null
       return {
         id: lesson.id,
         type: 'lesson',
         customer: `${lesson.firstName} ${lesson.lastName}`,
+        teacherId: lesson.teacherId,
+        teacher: lesson.teacher ? { id: lesson.teacher.id, firstname: lesson.teacher.firstname, lastname: lesson.teacher.lastname } : null,
+        teacherName,
         firstName: lesson.firstName,
         lastName: lesson.lastName,
         email: lesson.email,

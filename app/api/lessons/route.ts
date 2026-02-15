@@ -67,12 +67,21 @@ export async function POST(request: Request) {
       phoneNumber,
       email,
       personalId,
+      teacherId,
     } = body
 
     // Validate required fields
     if (!numberOfPeople || !duration || !level || !lessonType || !date || !startTime || !language || 
         !firstName || !lastName || !phoneNumber || !email || !personalId) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Validate teacherId if provided (optional for backward compatibility)
+    if (teacherId) {
+      const teacher = await prisma.teacher.findUnique({ where: { id: teacherId } })
+      if (!teacher) {
+        return NextResponse.json({ message: 'Invalid teacher' }, { status: 400 })
+      }
     }
 
     // Validate lessonType
@@ -134,6 +143,7 @@ export async function POST(request: Request) {
 
     const lesson = await prisma.lesson.create({
       data: {
+        teacherId: teacherId || undefined,
         numberOfPeople: people,
         duration: hours,
         level,
@@ -157,6 +167,7 @@ export async function POST(request: Request) {
       lesson: {
         id: lesson.id,
         customer: `${lesson.firstName} ${lesson.lastName}`,
+        teacherId: lesson.teacherId,
         numberOfPeople: lesson.numberOfPeople,
         duration: lesson.duration,
         level: lesson.level,

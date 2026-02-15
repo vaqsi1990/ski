@@ -20,6 +20,7 @@ export async function GET() {
       }),
       prisma.lesson.findMany({
         orderBy: { createdAt: 'desc' },
+        include: { teacher: true },
       }),
     ])
 
@@ -47,6 +48,7 @@ export async function GET() {
       const lessonTypeLabel = lesson.lessonType === 'SKI' ? 'Ski' : 'Snowboard'
       const levelLabel = lesson.level === 'BEGINNER' ? 'Beginner' : lesson.level === 'INTERMEDIATE' ? 'Intermediate' : 'Expert'
       const equipment = `${lessonTypeLabel} Lesson (${levelLabel}, ${lesson.numberOfPeople} ${lesson.numberOfPeople === 1 ? 'person' : 'people'}, ${lesson.duration}h)`
+      const teacherName = lesson.teacher ? `${lesson.teacher.firstname} ${lesson.teacher.lastname}` : ''
 
       return {
         'First Name': lesson.firstName,
@@ -54,6 +56,7 @@ export async function GET() {
         'Email': lesson.email,
         'Phone': lesson.phoneNumber,
         'Personal ID': lesson.personalId || '',
+        'Teacher': teacherName,
         'Equipment': equipment,
         'Start Date': new Date(lesson.date).toLocaleDateString(),
         'End Date': new Date(lesson.date).toLocaleDateString(),

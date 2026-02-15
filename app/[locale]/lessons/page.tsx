@@ -17,11 +17,14 @@ type PersonContactInfo = {
   personalId: string
 }
 
+type Teacher = { id: string; firstname: string; lastname: string }
+
 type LessonFormData = {
   numberOfPeople: string
   duration: string
   level: string
   lessonType: string
+  teacherId: string
   date: Date | null
   startTime: string
   language: string
@@ -82,18 +85,21 @@ const LessonsPage = () => {
     numberOfPeople: number
     duration: number
     level: string
+    teacherName?: string
     date: Date | null
     startTime: string
     language: string
     totalPrice: number
   } | null>(null)
   const [pricing, setPricing] = useState<Record<number, Record<number, number>>>(DEFAULT_PRICING)
+  const [teachers, setTeachers] = useState<Teacher[]>([])
 
   const [formData, setFormData] = useState<LessonFormData>({
     numberOfPeople: '',
     duration: '',
     level: '',
     lessonType: '',
+    teacherId: '',
     date: null,
     startTime: '',
     language: '',
@@ -128,7 +134,7 @@ const LessonsPage = () => {
     }
   }, [formData.numberOfPeople])
 
-  // Fetch pricing from API
+  // Fetch pricing and teachers from API
   useEffect(() => {
     const fetchPricing = async () => {
       try {
@@ -141,10 +147,23 @@ const LessonsPage = () => {
         }
       } catch (error) {
         console.error('Failed to fetch pricing', error)
-        // Use default pricing on error
+      }
+    }
+    const fetchTeachers = async () => {
+      try {
+        const response = await fetch('/api/teachers')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.teachers) {
+            setTeachers(data.teachers)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch teachers', error)
       }
     }
     fetchPricing()
+    fetchTeachers()
   }, [])
 
   // Generate time slots from 10:00 to 15:00 (last slot starts at 15:00 for 1-hour lesson)
@@ -208,6 +227,7 @@ const LessonsPage = () => {
           duration: validated.duration,
           level: validated.level,
           lessonType: validated.lessonType,
+          teacherId: formData.teacherId || undefined,
           date: dateString,
           startTime: validated.startTime,
           language: validated.language,
@@ -216,7 +236,7 @@ const LessonsPage = () => {
           email: primaryParticipant.email,
           phoneNumber: primaryParticipant.phoneNumber,
           personalId: primaryParticipant.personalId,
-          participants: validated.participants, // Send all participants
+          participants: validated.participants,
         }),
       })
 
@@ -227,12 +247,13 @@ const LessonsPage = () => {
 
       const responseData = await response.json()
       
-      // Store lesson info for popup
+      const selectedTeacher = teachers.find((t) => t.id === formData.teacherId)
       setLessonInfo({
         lessonType: validated.lessonType,
         numberOfPeople: parseInt(validated.numberOfPeople),
         duration: parseInt(validated.duration),
         level: validated.level,
+        teacherName: selectedTeacher ? `${selectedTeacher.firstname} ${selectedTeacher.lastname}` : undefined,
         date: validated.date,
         startTime: validated.startTime,
         language: validated.language,
@@ -340,6 +361,13 @@ const LessonsPage = () => {
                             {t(lessonInfo.level.toLowerCase())}
                           </span>
                         </div>
+                        
+                        {lessonInfo.teacherName && (
+                          <div>
+                            <span className="font-semibold text-black">{t('teacher')}: </span>
+                            <span className="text-black">{lessonInfo.teacherName}</span>
+                          </div>
+                        )}
                         
                         {lessonInfo.date && (
                           <div>
@@ -474,6 +502,27 @@ const LessonsPage = () => {
                 <p className="text-red-500 text-[18px] mt-1">{errors.lessonType}</p>
               )}
             </div>
+
+            {/* Teacher */}
+            {teachers.length > 0 && (
+              <div>
+                <label className="block text-[18px] font-medium text-black mb-2">
+                  {t('teacher')}
+                </label>
+                <select
+                  value={formData.teacherId}
+                  onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-[18px] text-black"
+                >
+                  <option value="">{t('selectTeacher')}</option>
+                  {teachers.map((teacher) => (
+                    <option key={teacher.id} value={teacher.id}>
+                      {teacher.firstname} {teacher.lastname}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Level */}
             <div>

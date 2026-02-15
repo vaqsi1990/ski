@@ -108,8 +108,19 @@ model BookingProduct {
   @@unique([bookingId, productId])
 }
 
+model Teacher {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstname String
+  lastname  String
+  lessons   Lesson[]
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+}
+
 model Lesson {
   id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  teacherId     String?        @db.Uuid
+  teacher       Teacher?       @relation(fields: [teacherId], references: [id], onDelete: SetNull)
   numberOfPeople Int           // 1-4 people
   duration      Int            // 1, 2, or 3 hours
   level         LessonLevel    // BEGINNER, INTERMEDIATE, EXPERT
