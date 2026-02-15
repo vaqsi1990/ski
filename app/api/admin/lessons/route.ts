@@ -7,10 +7,23 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
+    const dateFrom = searchParams.get('dateFrom') // YYYY-MM-DD
+    const dateTo = searchParams.get('dateTo') // YYYY-MM-DD
+
+    const dateFilter: { gte?: Date; lte?: Date } = {}
+    if (dateFrom && /^\d{4}-\d{2}-\d{2}$/.test(dateFrom)) {
+      dateFilter.gte = new Date(dateFrom + 'T00:00:00.000Z')
+    }
+    if (dateTo && /^\d{4}-\d{2}-\d{2}$/.test(dateTo)) {
+      dateFilter.lte = new Date(dateTo + 'T23:59:59.999Z')
+    }
 
     const where: any = {}
     if (status && status !== 'all') {
       where.status = status
+    }
+    if (Object.keys(dateFilter).length > 0) {
+      where.date = dateFilter
     }
 
     const lessons = await prisma.lesson.findMany({

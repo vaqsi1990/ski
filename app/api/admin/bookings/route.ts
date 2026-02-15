@@ -9,18 +9,42 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
+    const dateFrom = searchParams.get('dateFrom') // YYYY-MM-DD
+    const dateTo = searchParams.get('dateTo') // YYYY-MM-DD
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const skip = (page - 1) * limit
+
+    const bookingDateFilter: { gte?: Date; lte?: Date } = {}
+    if (dateFrom && /^\d{4}-\d{2}-\d{2}$/.test(dateFrom)) {
+      bookingDateFilter.gte = new Date(dateFrom + 'T00:00:00.000Z')
+    }
+    if (dateTo && /^\d{4}-\d{2}-\d{2}$/.test(dateTo)) {
+      bookingDateFilter.lte = new Date(dateTo + 'T23:59:59.999Z')
+    }
 
     const where: Prisma.BookingWhereInput = {}
     if (status && Object.values(BookingStatus).includes(status as BookingStatus)) {
       where.status = status as BookingStatus
     }
+    if (Object.keys(bookingDateFilter).length > 0) {
+      where.startDate = bookingDateFilter
+    }
+
+    const lessonDateFilter: { gte?: Date; lte?: Date } = {}
+    if (dateFrom && /^\d{4}-\d{2}-\d{2}$/.test(dateFrom)) {
+      lessonDateFilter.gte = new Date(dateFrom + 'T00:00:00.000Z')
+    }
+    if (dateTo && /^\d{4}-\d{2}-\d{2}$/.test(dateTo)) {
+      lessonDateFilter.lte = new Date(dateTo + 'T23:59:59.999Z')
+    }
 
     const lessonWhere: any = {}
     if (status) {
       lessonWhere.status = status
+    }
+    if (Object.keys(lessonDateFilter).length > 0) {
+      lessonWhere.date = lessonDateFilter
     }
 
     const [bookings, totalBookings, lessons, totalLessons] = await Promise.all([

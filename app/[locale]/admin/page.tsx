@@ -215,6 +215,8 @@ const AdminPage = () => {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [bookingsLoading, setBookingsLoading] = useState(false)
   const [bookingsFilter, setBookingsFilter] = useState<string>('all')
+  const [bookingsDateFrom, setBookingsDateFrom] = useState<string>('')
+  const [bookingsDateTo, setBookingsDateTo] = useState<string>('')
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
   const [submittingBooking, setSubmittingBooking] = useState(false)
@@ -260,6 +262,8 @@ const AdminPage = () => {
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [lessonsLoading, setLessonsLoading] = useState(false)
   const [lessonsFilter, setLessonsFilter] = useState<string>('all')
+  const [lessonsDateFrom, setLessonsDateFrom] = useState<string>('')
+  const [lessonsDateTo, setLessonsDateTo] = useState<string>('')
 
   // Teachers state
   const [teachers, setTeachers] = useState<Teacher[]>([])
@@ -352,12 +356,17 @@ const AdminPage = () => {
     if (activeTab === 'bookings') {
       fetchBookings()
     }
-  }, [activeTab, bookingsFilter])
+  }, [activeTab, bookingsFilter, bookingsDateFrom, bookingsDateTo])
 
   const fetchBookings = useCallback(async () => {
     setBookingsLoading(true)
     try {
-      const url = `/api/admin/bookings${bookingsFilter !== 'all' ? `?status=${bookingsFilter}` : ''}`
+      const params = new URLSearchParams()
+      if (bookingsFilter !== 'all') params.set('status', bookingsFilter)
+      if (bookingsDateFrom) params.set('dateFrom', bookingsDateFrom)
+      if (bookingsDateTo) params.set('dateTo', bookingsDateTo)
+      const qs = params.toString()
+      const url = `/api/admin/bookings${qs ? `?${qs}` : ''}`
       const response = await fetch(url, { cache: 'no-store' })
       if (!response.ok) throw new Error('Failed to load bookings')
       const json = await response.json()
@@ -368,7 +377,7 @@ const AdminPage = () => {
     } finally {
       setBookingsLoading(false)
     }
-  }, [bookingsFilter, showError])
+  }, [bookingsFilter, bookingsDateFrom, bookingsDateTo, showError])
 
   // Fetch equipment
   useEffect(() => {
@@ -425,7 +434,12 @@ const AdminPage = () => {
   const fetchLessons = useCallback(async () => {
     setLessonsLoading(true)
     try {
-      const url = `/api/admin/lessons${lessonsFilter !== 'all' ? `?status=${lessonsFilter}` : ''}`
+      const params = new URLSearchParams()
+      if (lessonsFilter !== 'all') params.set('status', lessonsFilter)
+      if (lessonsDateFrom) params.set('dateFrom', lessonsDateFrom)
+      if (lessonsDateTo) params.set('dateTo', lessonsDateTo)
+      const qs = params.toString()
+      const url = `/api/admin/lessons${qs ? `?${qs}` : ''}`
       const response = await fetch(url, { cache: 'no-store' })
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Failed to load lessons' }))
@@ -439,13 +453,13 @@ const AdminPage = () => {
     } finally {
       setLessonsLoading(false)
     }
-  }, [lessonsFilter, showError])
+  }, [lessonsFilter, lessonsDateFrom, lessonsDateTo, showError])
 
   useEffect(() => {
     if (activeTab === 'lessons') {
       fetchLessons()
     }
-  }, [activeTab, lessonsFilter, fetchLessons])
+  }, [activeTab, lessonsFilter, lessonsDateFrom, lessonsDateTo, fetchLessons])
 
   const fetchTeachers = useCallback(async () => {
     setTeachersLoading(true)
@@ -1396,19 +1410,47 @@ const AdminPage = () => {
           </div>
         </div>
 
-        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-          <label className="text-sm md:text-base font-medium text-black whitespace-nowrap">{t('bookings.filter')}:</label>
-          <select
-            value={bookingsFilter}
-            onChange={(e) => setBookingsFilter(e.target.value)}
-            className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 md:px-4 py-2 text-sm md:text-base text-black"
-          >
-            <option value="all">{t('bookings.all')}</option>
-            <option value="PENDING">{t('bookings.status.pending')}</option>
-            <option value="CONFIRMED">{t('bookings.status.confirmed')}</option>
-            <option value="CANCELLED">{t('bookings.status.cancelled')}</option>
-            <option value="COMPLETED">{t('bookings.status.completed')}</option>
-          </select>
+        <div className="mb-4 flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 flex-wrap">
+            <label className="text-sm md:text-base font-medium text-black whitespace-nowrap">{t('bookings.filter')}:</label>
+            <select
+              value={bookingsFilter}
+              onChange={(e) => setBookingsFilter(e.target.value)}
+              className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 md:px-4 py-2 text-sm md:text-base text-black"
+            >
+              <option value="all">{t('bookings.all')}</option>
+              <option value="PENDING">{t('bookings.status.pending')}</option>
+              <option value="CONFIRMED">{t('bookings.status.confirmed')}</option>
+              <option value="CANCELLED">{t('bookings.status.cancelled')}</option>
+              <option value="COMPLETED">{t('bookings.status.completed')}</option>
+            </select>
+            <span className="text-sm font-medium text-black hidden sm:inline">{t('bookings.dateFrom')}</span>
+            <input
+              type="date"
+              value={bookingsDateFrom}
+              onChange={(e) => setBookingsDateFrom(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black w-full sm:w-auto"
+            />
+            <span className="text-sm font-medium text-black hidden sm:inline">{t('bookings.dateTo')}</span>
+            <input
+              type="date"
+              value={bookingsDateTo}
+              onChange={(e) => setBookingsDateTo(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black w-full sm:w-auto"
+            />
+            {(bookingsDateFrom || bookingsDateTo) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setBookingsDateFrom('')
+                  setBookingsDateTo('')
+                }}
+                className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+              >
+                {t('bookings.clearDates')}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
@@ -1892,19 +1934,47 @@ const AdminPage = () => {
           </div>
         </div>
 
-        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-          <label className="text-sm md:text-base font-medium text-black whitespace-nowrap">{t('lessons.filter')}:</label>
-          <select
-            value={lessonsFilter}
-            onChange={(e) => setLessonsFilter(e.target.value)}
-            className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 md:px-4 py-2 text-sm md:text-base text-black"
-          >
-            <option value="all">{t('lessons.all')}</option>
-            <option value="PENDING">{t('lessons.status.pending')}</option>
-            <option value="CONFIRMED">{t('lessons.status.confirmed')}</option>
-            <option value="CANCELLED">{t('lessons.status.cancelled')}</option>
-            <option value="COMPLETED">{t('lessons.status.completed')}</option>
-          </select>
+        <div className="mb-4 flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 flex-wrap">
+            <label className="text-sm md:text-base font-medium text-black whitespace-nowrap">{t('lessons.filter')}:</label>
+            <select
+              value={lessonsFilter}
+              onChange={(e) => setLessonsFilter(e.target.value)}
+              className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 md:px-4 py-2 text-sm md:text-base text-black"
+            >
+              <option value="all">{t('lessons.all')}</option>
+              <option value="PENDING">{t('lessons.status.pending')}</option>
+              <option value="CONFIRMED">{t('lessons.status.confirmed')}</option>
+              <option value="CANCELLED">{t('lessons.status.cancelled')}</option>
+              <option value="COMPLETED">{t('lessons.status.completed')}</option>
+            </select>
+            <span className="text-sm font-medium text-black hidden sm:inline">{t('lessons.dateFrom')}</span>
+            <input
+              type="date"
+              value={lessonsDateFrom}
+              onChange={(e) => setLessonsDateFrom(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black w-full sm:w-auto"
+            />
+            <span className="text-sm font-medium text-black hidden sm:inline">{t('lessons.dateTo')}</span>
+            <input
+              type="date"
+              value={lessonsDateTo}
+              onChange={(e) => setLessonsDateTo(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black w-full sm:w-auto"
+            />
+            {(lessonsDateFrom || lessonsDateTo) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLessonsDateFrom('')
+                  setLessonsDateTo('')
+                }}
+                className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+              >
+                {t('lessons.clearDates')}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
