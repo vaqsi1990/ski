@@ -130,11 +130,14 @@
       "totalBookings": "Total Bookings",
       "activeRentals": "Active Rentals",
       "revenue": "Revenue",
-      "equipment": "Equipment"
+      "equipment": "Equipment",
+      "todayGuests": "Today's guests",
+      "tomorrowGuests": "Tomorrow's guests"
     },
     "menu": {
       "dashboard": "Dashboard",
       "bookings": "Bookings",
+      "guestsCalendar": "Guests calendar",
       "lessons": "Lessons",
       "teachers": "Instructors",
       "equipment": "Equipment",
@@ -143,6 +146,35 @@
       "settings": "Settings",
       "lessonPricing": "Lesson Pricing",
       "prices": "Price List"
+    },
+    "guestsCalendar": {
+      "title": "Guests by calendar",
+      "subtitle": "Number of guests per day based on bookings and lessons",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "orMonth": "or month",
+      "hint": "Number shown is total guests (rentals + lesson participants) for that day.",
+      "month1": "January",
+      "month2": "February",
+      "month3": "March",
+      "month4": "April",
+      "month5": "May",
+      "month6": "June",
+      "month7": "July",
+      "month8": "August",
+      "month9": "September",
+      "month10": "October",
+      "month11": "November",
+      "month12": "December",
+      "weekday": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      }
     },
     "bookings": {
       "title": "Bookings Management",
@@ -158,6 +190,7 @@
       "all": "All",
       "dateFrom": "From date",
       "dateTo": "To date",
+      "applyFilter": "Apply filter",
       "clearDates": "Clear dates",
       "exportExcel": "Export to Excel",
       "exportError": "Failed to export bookings",
@@ -374,6 +407,7 @@
       "all": "All",
       "dateFrom": "From date",
       "dateTo": "To date",
+      "applyFilter": "Apply filter",
       "clearDates": "Clear dates",
       "delete": "Delete",
       "deleteConfirm": "Are you sure you want to delete this lesson?",

@@ -5,9 +5,22 @@ import type { Prisma } from '@/app/generated/prisma/client'
 
 export const dynamic = 'force-dynamic'
 
+function getDayBounds(dayOffset: number) {
+  const d = new Date()
+  d.setUTCDate(d.getUTCDate() + dayOffset)
+  d.setUTCHours(0, 0, 0, 0)
+  const start = new Date(d)
+  const end = new Date(d)
+  end.setUTCHours(23, 59, 59, 999)
+  return { start, end }
+}
+
 export async function GET() {
   try {
-    const [totalBookings, activeRentals, revenue, totalProducts, recentBookings, totalLessons, activeLessons, lessonsRevenue, recentLessons] = await Promise.all([
+    const { start: todayStart, end: todayEnd } = getDayBounds(0)
+    const { start: tomorrowStart, end: tomorrowEnd } = getDayBounds(1)
+
+    const [totalBookings, activeRentals, revenue, totalProducts, recentBookings, totalLessons, activeLessons, lessonsRevenue, recentLessons, todayBookingGuests, tomorrowBookingGuests, todayLessonGuests, tomorrowLessonGuests] = await Promise.all([
       prisma.booking.count(),
       prisma.booking.count({
         where: {
@@ -26,7 +39,6 @@ export async function GET() {
       }),
       prisma.product.count(),
       prisma.booking.findMany({
-        // Order recent bookings by their start date (latest first)
         orderBy: { startDate: 'desc' },
         take: 5,
         include: {
@@ -57,6 +69,38 @@ export async function GET() {
         orderBy: { date: 'desc' },
         take: 5,
         include: { teacher: true },
+      }),
+      // Guests on today: bookings spanning today (1 per booking), exclude cancelled
+      prisma.booking.count({
+        where: {
+          status: { not: BookingStatus.CANCELLED },
+          startDate: { lte: todayEnd },
+          endDate: { gte: todayStart },
+        },
+      }),
+      // Guests tomorrow: bookings spanning tomorrow
+      prisma.booking.count({
+        where: {
+          status: { not: BookingStatus.CANCELLED },
+          startDate: { lte: tomorrowEnd },
+          endDate: { gte: tomorrowStart },
+        },
+      }),
+      // Lesson guests today: sum of numberOfPeople for lessons on today
+      prisma.lesson.aggregate({
+        _sum: { numberOfPeople: true },
+        where: {
+          status: { not: 'CANCELLED' },
+          date: { gte: todayStart, lte: todayEnd },
+        },
+      }),
+      // Lesson guests tomorrow
+      prisma.lesson.aggregate({
+        _sum: { numberOfPeople: true },
+        where: {
+          status: { not: 'CANCELLED' },
+          date: { gte: tomorrowStart, lte: tomorrowEnd },
+        },
       }),
     ])
 
@@ -107,12 +151,17 @@ export async function GET() {
       return dateB - dateA
     }).slice(0, 8)
 
+    const todayGuests = todayBookingGuests + (todayLessonGuests._sum.numberOfPeople ?? 0)
+    const tomorrowGuests = tomorrowBookingGuests + (tomorrowLessonGuests._sum.numberOfPeople ?? 0)
+
     return NextResponse.json({
       stats: {
         totalBookings: totalBookings + totalLessons,
         activeRentals: activeRentals + activeLessons,
         totalRevenue: (revenue._sum.totalPrice ?? 0) + (lessonsRevenue._sum.totalPrice ?? 0),
         totalProducts,
+        todayGuests,
+        tomorrowGuests,
       },
       bookings: allBookings,
     })

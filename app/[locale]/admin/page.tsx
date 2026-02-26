@@ -13,6 +13,8 @@ type AdminStats = {
   activeRentals: number
   totalRevenue: number
   totalProducts: number
+  todayGuests?: number
+  tomorrowGuests?: number
 }
 
 type AdminBooking = {
@@ -244,6 +246,14 @@ const AdminPage = () => {
   const [reports, setReports] = useState<ReportData | null>(null)
   const [reportsLoading, setReportsLoading] = useState(false)
 
+  // Guests calendar state (stumrების რაოდენობა კალენდრის მიხედვით)
+  const [guestsCalendarDates, setGuestsCalendarDates] = useState<Record<string, number> | null>(null)
+  const [guestsCalendarLoading, setGuestsCalendarLoading] = useState(false)
+  const [guestsCalendarYear, setGuestsCalendarYear] = useState(() => new Date().getFullYear())
+  const [guestsCalendarMonth, setGuestsCalendarMonth] = useState(() => new Date().getMonth() + 1)
+  const [guestsCalendarDateFrom, setGuestsCalendarDateFrom] = useState('')
+  const [guestsCalendarDateTo, setGuestsCalendarDateTo] = useState('')
+
   // Lesson Pricing state
   const [lessonPricing, setLessonPricing] = useState<Array<{ id: string; numberOfPeople: number; duration: number; price: number }>>([])
   const [lessonPricingLoading, setLessonPricingLoading] = useState(false)
@@ -461,6 +471,21 @@ const AdminPage = () => {
     }
   }, [activeTab, lessonsFilter, lessonsDateFrom, lessonsDateTo, fetchLessons])
 
+  // Bookings sorted by start date descending (newest first)
+  const sortedBookings = useMemo(() => {
+    return [...bookings].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+  }, [bookings])
+
+  // Lessons sorted by date descending then startTime ascending for same day
+  const sortedLessons = useMemo(() => {
+    return [...lessons].sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0
+      const dateB = b.date ? new Date(b.date).getTime() : 0
+      if (dateB !== dateA) return dateB - dateA
+      return (a.startTime || '').localeCompare(b.startTime || '')
+    })
+  }, [lessons])
+
   const fetchTeachers = useCallback(async () => {
     setTeachersLoading(true)
     try {
@@ -481,6 +506,33 @@ const AdminPage = () => {
       fetchTeachers()
     }
   }, [activeTab, fetchTeachers])
+
+  // Fetch guests calendar (by month or by dateFrom/dateTo)
+  const fetchGuestsCalendar = useCallback(async () => {
+    setGuestsCalendarLoading(true)
+    try {
+      const useRange = guestsCalendarDateFrom && guestsCalendarDateTo
+      const url = useRange
+        ? `/api/admin/guests-calendar?dateFrom=${guestsCalendarDateFrom}&dateTo=${guestsCalendarDateTo}`
+        : `/api/admin/guests-calendar?year=${guestsCalendarYear}&month=${guestsCalendarMonth}`
+      const res = await fetch(url, { cache: 'no-store' })
+      if (!res.ok) throw new Error('Failed to load guests calendar')
+      const json = await res.json()
+      setGuestsCalendarDates(json.dates || {})
+    } catch (err) {
+      console.error(err)
+      showError(err instanceof Error ? err.message : 'Failed to load guests calendar')
+      setGuestsCalendarDates({})
+    } finally {
+      setGuestsCalendarLoading(false)
+    }
+  }, [showError, guestsCalendarYear, guestsCalendarMonth, guestsCalendarDateFrom, guestsCalendarDateTo])
+
+  useEffect(() => {
+    if (activeTab === 'guestsCalendar') {
+      fetchGuestsCalendar()
+    }
+  }, [activeTab, guestsCalendarYear, guestsCalendarMonth, guestsCalendarDateFrom, guestsCalendarDateTo, fetchGuestsCalendar])
 
   // Fetch lesson pricing
   useEffect(() => {
@@ -958,6 +1010,7 @@ const AdminPage = () => {
   const menuItems = [
     { id: 'dashboard', labelKey: 'menu.dashboard' },
     { id: 'bookings', labelKey: 'menu.bookings' },
+    { id: 'guestsCalendar', labelKey: 'menu.guestsCalendar' },
     { id: 'lessons', labelKey: 'menu.lessons' },
     { id: 'teachers', labelKey: 'menu.teachers' },
     { id: 'equipment', labelKey: 'menu.equipment' },
@@ -980,7 +1033,9 @@ const AdminPage = () => {
       { labelKey: 'stats.equipment', value: dashboardData?.stats.totalProducts ?? 0 },
     ]
 
-    const recentBookings = dashboardData?.bookings ?? []
+    const recentBookings = [...(dashboardData?.bookings ?? [])].sort(
+      (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+    )
 
     return (
       <>
@@ -1004,6 +1059,21 @@ const AdminPage = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="text-[16px] text-black mb-1">{t('stats.todayGuests')}</div>
+            <div className="text-[16px] font-bold text-black">
+              {dashboardLoading ? '—' : (dashboardData?.stats.todayGuests ?? 0)}
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="text-[16px] text-black mb-1">{t('stats.tomorrowGuests')}</div>
+            <div className="text-[16px] font-bold text-black">
+              {dashboardLoading ? '—' : (dashboardData?.stats.tomorrowGuests ?? 0)}
+            </div>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
@@ -1438,6 +1508,14 @@ const AdminPage = () => {
               onChange={(e) => setBookingsDateTo(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black w-full sm:w-auto"
             />
+            <button
+              type="button"
+              onClick={() => fetchBookings()}
+              disabled={bookingsLoading}
+              className="text-sm px-3 py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 font-medium"
+            >
+              {t('bookings.applyFilter')}
+            </button>
             {(bookingsDateFrom || bookingsDateTo) && (
               <button
                 type="button"
@@ -1493,7 +1571,7 @@ const AdminPage = () => {
                     </td>
                   </tr>
                 )}
-                {!bookingsLoading && bookings.length === 0 && (
+                {!bookingsLoading && sortedBookings.length === 0 && (
                   <tr className="border-b border-gray-100">
                     <td className="py-3 px-4 text-[16px] text-black" colSpan={8}>
                       {t('bookings.empty')}
@@ -1501,7 +1579,7 @@ const AdminPage = () => {
                   </tr>
                 )}
                 {!bookingsLoading &&
-                  bookings.map((booking) => {
+                  sortedBookings.map((booking) => {
                     const statusKey = booking.status.toLowerCase()
                     const bookingType = (booking as any).type || 'booking'
                     return (
@@ -1962,6 +2040,14 @@ const AdminPage = () => {
               onChange={(e) => setLessonsDateTo(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black w-full sm:w-auto"
             />
+            <button
+              type="button"
+              onClick={() => fetchLessons()}
+              disabled={lessonsLoading}
+              className="text-sm px-3 py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 font-medium"
+            >
+              {t('lessons.applyFilter')}
+            </button>
             {(lessonsDateFrom || lessonsDateTo) && (
               <button
                 type="button"
@@ -2017,7 +2103,7 @@ const AdminPage = () => {
                       </td>
                     </tr>
                   )}
-                  {!lessonsLoading && lessons.length === 0 && (
+                  {!lessonsLoading && sortedLessons.length === 0 && (
                     <tr className="border-b border-gray-100">
                       <td className="py-3 px-4 text-[16px] text-black" colSpan={8}>
                         {t('lessons.empty')}
@@ -2025,7 +2111,7 @@ const AdminPage = () => {
                     </tr>
                   )}
                   {!lessonsLoading &&
-                    lessons.map((lesson) => {
+                    sortedLessons.map((lesson) => {
                       const statusKey = lesson.status.toLowerCase()
                       return (
                         <tr key={lesson.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
@@ -2298,6 +2384,137 @@ const AdminPage = () => {
             </table>
           </div>
         </div>
+        </div>
+      </>
+    )
+  }
+
+  const renderGuestsCalendar = () => {
+    const monthNames = [
+      t('guestsCalendar.month1'), t('guestsCalendar.month2'), t('guestsCalendar.month3'), t('guestsCalendar.month4'),
+      t('guestsCalendar.month5'), t('guestsCalendar.month6'), t('guestsCalendar.month7'), t('guestsCalendar.month8'),
+      t('guestsCalendar.month9'), t('guestsCalendar.month10'), t('guestsCalendar.month11'), t('guestsCalendar.month12'),
+    ]
+    const useRange = Boolean(guestsCalendarDateFrom && guestsCalendarDateTo)
+    let dateKeys: string[] = []
+    if (useRange) {
+      const from = new Date(guestsCalendarDateFrom + 'T00:00:00.000Z')
+      const to = new Date(guestsCalendarDateTo + 'T00:00:00.000Z')
+      const current = new Date(from)
+      while (current <= to) {
+        const y = current.getUTCFullYear()
+        const m = current.getUTCMonth() + 1
+        const d = current.getUTCDate()
+        dateKeys.push(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`)
+        current.setUTCDate(current.getUTCDate() + 1)
+      }
+    } else {
+      const daysInMonth = new Date(guestsCalendarYear, guestsCalendarMonth, 0).getDate()
+      for (let d = 1; d <= daysInMonth; d++) {
+        dateKeys.push(`${guestsCalendarYear}-${String(guestsCalendarMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`)
+      }
+    }
+    const firstDateKey = dateKeys[0]
+    const firstDay = firstDateKey
+      ? new Date(firstDateKey + 'T00:00:00.000Z').getUTCDay()
+      : new Date(guestsCalendarYear, guestsCalendarMonth - 1, 1).getDay()
+    const weeks: (string | null)[][] = []
+    let week: (string | null)[] = []
+    for (let i = 0; i < firstDay; i++) week.push(null)
+    for (const key of dateKeys) {
+      week.push(key)
+      if (week.length === 7) {
+        weeks.push(week)
+        week = []
+      }
+    }
+    if (week.length) {
+      while (week.length < 7) week.push(null)
+      weeks.push(week)
+    }
+
+    return (
+      <>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{t('guestsCalendar.title')}</h1>
+          <p className="text-sm md:text-base text-gray-600">{t('guestsCalendar.subtitle')}</p>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          <div className="flex flex-wrap items-center gap-3 mb-6">
+            <label className="flex items-center gap-2 text-black">
+              <span className="text-sm font-medium whitespace-nowrap">{t('guestsCalendar.dateFrom')}</span>
+              <input
+                type="date"
+                value={guestsCalendarDateFrom}
+                onChange={(e) => setGuestsCalendarDateFrom(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-black"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-black">
+              <span className="text-sm font-medium whitespace-nowrap">{t('guestsCalendar.dateTo')}</span>
+              <input
+                type="date"
+                value={guestsCalendarDateTo}
+                onChange={(e) => setGuestsCalendarDateTo(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-black"
+              />
+            </label>
+            <span className="text-sm text-gray-500 hidden sm:inline">{t('guestsCalendar.orMonth')}</span>
+            <select
+              value={guestsCalendarMonth}
+              onChange={(e) => setGuestsCalendarMonth(Number(e.target.value))}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-black"
+            >
+              {monthNames.map((name, i) => (
+                <option key={i} value={i + 1}>{name}</option>
+              ))}
+            </select>
+            <select
+              value={guestsCalendarYear}
+              onChange={(e) => setGuestsCalendarYear(Number(e.target.value))}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-black"
+            >
+              {[guestsCalendarYear - 2, guestsCalendarYear - 1, guestsCalendarYear, guestsCalendarYear + 1, guestsCalendarYear + 2].map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => fetchGuestsCalendar()}
+              className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700"
+            >
+              {t('bookings.applyFilter')}
+            </button>
+          </div>
+
+          {guestsCalendarLoading ? (
+            <div className="text-center py-12 text-gray-500">{t('bookings.loading')}</div>
+          ) : (
+            <>
+              <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-semibold text-gray-600">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((wd) => (
+                  <div key={wd}>{t(`guestsCalendar.weekday.${wd.toLowerCase()}`)}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {weeks.flat().map((dateKey, idx) => {
+                  if (!dateKey) return <div key={`empty-${idx}`} className="aspect-square" />
+                  const guests = guestsCalendarDates?.[dateKey] ?? 0
+                  const [, , d] = dateKey.split('-')
+                  return (
+                    <div
+                      key={dateKey}
+                      className="aspect-square border border-gray-200 rounded-lg p-1 flex flex-col items-center justify-center bg-gray-50"
+                    >
+                      <span className="text-xs text-gray-600">{d}</span>
+                      <span className="text-sm font-bold text-black">{guests}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              <p className="mt-4 text-sm text-gray-600">{t('guestsCalendar.hint')}</p>
+            </>
+          )}
         </div>
       </>
     )
@@ -2869,6 +3086,8 @@ const AdminPage = () => {
         return renderCustomers()
       case 'reports':
         return renderReports()
+      case 'guestsCalendar':
+        return renderGuestsCalendar()
       case 'settings':
         return renderSettings()
       case 'lessonPricing':
