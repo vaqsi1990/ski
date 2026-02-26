@@ -122,6 +122,9 @@
   "admin": {
     "adminLabel": "Admin",
     "backToSite": "Back to Site",
+    "selectAll": "Select all",
+    "selectedCount": "{count} selected",
+    "clearSelection": "Clear selection",
     "dashboard": {
       "title": "Admin Dashboard",
       "subtitle": "Welcome back! Here's what's happening today."

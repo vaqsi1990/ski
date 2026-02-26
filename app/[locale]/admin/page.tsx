@@ -268,6 +268,10 @@ const AdminPage = () => {
   const [submittingPrices, setSubmittingPrices] = useState(false)
   const [editingPrices, setEditingPrices] = useState<Record<string, { type: string; includes: string; price: string }>>({})
 
+  // Selection state (მონიშვნა)
+  const [selectedBookingIds, setSelectedBookingIds] = useState<Set<string>>(new Set())
+  const [selectedLessonIds, setSelectedLessonIds] = useState<Set<string>>(new Set())
+
   // Lessons state
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [lessonsLoading, setLessonsLoading] = useState(false)
@@ -1532,11 +1536,40 @@ const AdminPage = () => {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          {selectedBookingIds.size > 0 && (
+            <div className="flex flex-wrap items-center gap-3 mb-4 py-2 px-3 rounded-lg bg-orange-50 border border-orange-200">
+              <span className="text-sm font-medium text-black">
+                {t('selectedCount', { count: selectedBookingIds.size })}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedBookingIds(new Set())}
+                className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+              >
+                {t('clearSelection')}
+              </button>
+            </div>
+          )}
           <div className="overflow-x-auto -mx-4 md:mx-0">
             <div className="inline-block min-w-full align-middle">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-2 py-3 text-left w-10">
+                      <input
+                        type="checkbox"
+                        checked={sortedBookings.length > 0 && sortedBookings.every((b) => selectedBookingIds.has(b.id))}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedBookingIds(new Set(sortedBookings.map((b) => b.id)))
+                          } else {
+                            setSelectedBookingIds(new Set())
+                          }
+                        }}
+                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        title={t('selectAll')}
+                      />
+                    </th>
                     <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
                       {t('bookings.table.customer')}
                     </th>
@@ -1566,14 +1599,14 @@ const AdminPage = () => {
               <tbody>
                 {bookingsLoading && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={8}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={9}>
                       {t('bookings.loading')}
                     </td>
                   </tr>
                 )}
                 {!bookingsLoading && sortedBookings.length === 0 && (
                   <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-[16px] text-black" colSpan={8}>
+                    <td className="py-3 px-4 text-[16px] text-black" colSpan={9}>
                       {t('bookings.empty')}
                     </td>
                   </tr>
@@ -1582,8 +1615,25 @@ const AdminPage = () => {
                   sortedBookings.map((booking) => {
                     const statusKey = booking.status.toLowerCase()
                     const bookingType = (booking as any).type || 'booking'
+                    const isSelected = selectedBookingIds.has(booking.id)
                     return (
-                      <tr key={booking.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
+                      <tr
+                        key={booking.id}
+                        className={`border-b border-gray-100 hover:bg-gray-50 ${isSelected ? 'bg-orange-50' : 'bg-white'}`}
+                      >
+                        <td className="px-2 py-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              const next = new Set(selectedBookingIds)
+                              if (e.target.checked) next.add(booking.id)
+                              else next.delete(booking.id)
+                              setSelectedBookingIds(next)
+                            }}
+                            className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                          />
+                        </td>
                         <td className="px-3 py-3 text-xs md:text-sm text-black">
                           <div className="font-medium">{booking.customer}</div>
                           <div className="text-gray-500 lg:hidden mt-1 text-xs">{booking.equipment}</div>
@@ -2064,11 +2114,40 @@ const AdminPage = () => {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+          {selectedLessonIds.size > 0 && (
+            <div className="flex flex-wrap items-center gap-3 mb-4 py-2 px-3 rounded-lg bg-orange-50 border border-orange-200">
+              <span className="text-sm font-medium text-black">
+                {t('selectedCount', { count: selectedLessonIds.size })}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedLessonIds(new Set())}
+                className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+              >
+                {t('clearSelection')}
+              </button>
+            </div>
+          )}
           <div className="overflow-x-auto -mx-4 md:mx-0">
             <div className="inline-block min-w-full align-middle">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-2 py-3 text-left w-10">
+                      <input
+                        type="checkbox"
+                        checked={sortedLessons.length > 0 && sortedLessons.every((l) => selectedLessonIds.has(l.id))}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedLessonIds(new Set(sortedLessons.map((l) => l.id)))
+                          } else {
+                            setSelectedLessonIds(new Set())
+                          }
+                        }}
+                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        title={t('selectAll')}
+                      />
+                    </th>
                     <th className="px-3 py-3 text-left text-xs md:text-sm font-semibold text-black uppercase tracking-wider">
                       {t('lessons.table.customer')}
                     </th>
@@ -2098,14 +2177,14 @@ const AdminPage = () => {
                 <tbody>
                   {lessonsLoading && (
                     <tr className="border-b border-gray-100">
-                      <td className="py-3 px-4 text-[16px] text-black" colSpan={8}>
+                      <td className="py-3 px-4 text-[16px] text-black" colSpan={9}>
                         {t('lessons.loading')}
                       </td>
                     </tr>
                   )}
                   {!lessonsLoading && sortedLessons.length === 0 && (
                     <tr className="border-b border-gray-100">
-                      <td className="py-3 px-4 text-[16px] text-black" colSpan={8}>
+                      <td className="py-3 px-4 text-[16px] text-black" colSpan={9}>
                         {t('lessons.empty')}
                       </td>
                     </tr>
@@ -2113,8 +2192,25 @@ const AdminPage = () => {
                   {!lessonsLoading &&
                     sortedLessons.map((lesson) => {
                       const statusKey = lesson.status.toLowerCase()
+                      const isSelected = selectedLessonIds.has(lesson.id)
                       return (
-                        <tr key={lesson.id} className="bg-white border-b border-gray-100 hover:bg-gray-50">
+                        <tr
+                          key={lesson.id}
+                          className={`border-b border-gray-100 hover:bg-gray-50 ${isSelected ? 'bg-orange-50' : 'bg-white'}`}
+                        >
+                          <td className="px-2 py-3">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                const next = new Set(selectedLessonIds)
+                                if (e.target.checked) next.add(lesson.id)
+                                else next.delete(lesson.id)
+                                setSelectedLessonIds(next)
+                              }}
+                              className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                            />
+                          </td>
                           <td className="px-3 py-3 text-xs md:text-sm text-black">
                             <div className="font-medium">{lesson.customer}</div>
                             <div className="text-gray-500 lg:hidden mt-1 text-xs">

@@ -122,6 +122,9 @@
   "admin": {
     "adminLabel": "ადმინისტრატორი",
     "backToSite": "საიტზე დაბრუნება",
+    "selectAll": "ყველას მონიშვნა",
+    "selectedCount": "მონიშნული: {count}",
+    "clearSelection": "მონიშვნის გასუფთავება",
     "dashboard": {
       "title": "ადმინისტრატორის პანელი",
       "subtitle": "კეთილი იყოს თქვენი დაბრუნება! აი რა ხდება დღეს."

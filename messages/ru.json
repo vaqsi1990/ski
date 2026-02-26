@@ -123,6 +123,9 @@
   "admin": {
     "adminLabel": "Админ",
     "backToSite": "Вернуться на сайт",
+    "selectAll": "Выбрать все",
+    "selectedCount": "Выбрано: {count}",
+    "clearSelection": "Снять выбор",
     "dashboard": {
       "title": "Админ-панель",
       "subtitle": "Добро пожаловать! Вот что происходит сегодня."
