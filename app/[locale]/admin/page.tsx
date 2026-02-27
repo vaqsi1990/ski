@@ -253,6 +253,56 @@ const AdminPage = () => {
   const [guestsCalendarMonth, setGuestsCalendarMonth] = useState(() => new Date().getMonth() + 1)
   const [guestsCalendarDateFrom, setGuestsCalendarDateFrom] = useState('')
   const [guestsCalendarDateTo, setGuestsCalendarDateTo] = useState('')
+  const [guestsCalendarSelectedDate, setGuestsCalendarSelectedDate] = useState<string | null>(null)
+  const [guestsCalendarDayDetails, setGuestsCalendarDayDetails] = useState<{
+    date: string
+    summary: {
+      totalGuests: number
+      bookingGuests: number
+      lessonGuests: number
+      bookingsCount: number
+      lessonsCount: number
+    }
+    bookings: Array<{
+      id: string
+      type: 'booking'
+      customer: string
+      firstName: string
+      lastName: string
+      email: string
+      phoneNumber: string
+      personalId: string
+      numberOfPeople: number | null
+      equipment: string
+      startDate: string
+      endDate: string
+      status: string
+      totalPrice: number
+    }>
+    lessons: Array<{
+      id: string
+      type: 'lesson'
+      customer: string
+      firstName: string
+      lastName: string
+      email: string
+      phoneNumber: string
+      personalId: string
+      numberOfPeople: number
+      duration: number
+      lessonType: string
+      level: string
+      language: string
+      teacherId?: string | null
+      teacherName?: string | null
+      description: string
+      date: string
+      startTime: string
+      status: string
+      totalPrice: number
+    }>
+  } | null>(null)
+  const [guestsCalendarDayLoading, setGuestsCalendarDayLoading] = useState(false)
 
   // Lesson Pricing state
   const [lessonPricing, setLessonPricing] = useState<Array<{ id: string; numberOfPeople: number; duration: number; price: number }>>([])
@@ -531,6 +581,67 @@ const AdminPage = () => {
       setGuestsCalendarLoading(false)
     }
   }, [showError, guestsCalendarYear, guestsCalendarMonth, guestsCalendarDateFrom, guestsCalendarDateTo])
+
+  const fetchGuestsCalendarDayDetails = useCallback(
+    async (dateKey: string) => {
+      setGuestsCalendarDayLoading(true)
+      setGuestsCalendarSelectedDate(dateKey)
+      try {
+        const res = await fetch(`/api/admin/guests-calendar-day?date=${dateKey}`, { cache: 'no-store' })
+        if (!res.ok) throw new Error('Failed to load guests details for day')
+        const json = await res.json()
+        setGuestsCalendarDayDetails({
+          date: json.date,
+          summary: json.summary,
+          bookings: (json.bookings || []).map((b: any) => ({
+            id: b.id,
+            type: 'booking' as const,
+            customer: b.customer,
+            firstName: b.firstName,
+            lastName: b.lastName,
+            email: b.email,
+            phoneNumber: b.phoneNumber,
+            personalId: b.personalId,
+            numberOfPeople: b.numberOfPeople ?? null,
+            equipment: b.equipment,
+            startDate: typeof b.startDate === 'string' ? b.startDate : new Date(b.startDate).toISOString(),
+            endDate: typeof b.endDate === 'string' ? b.endDate : new Date(b.endDate).toISOString(),
+            status: b.status,
+            totalPrice: b.totalPrice,
+          })),
+          lessons: (json.lessons || []).map((l: any) => ({
+            id: l.id,
+            type: 'lesson' as const,
+            customer: l.customer,
+            firstName: l.firstName,
+            lastName: l.lastName,
+            email: l.email,
+            phoneNumber: l.phoneNumber,
+            personalId: l.personalId,
+            numberOfPeople: l.numberOfPeople,
+            duration: l.duration,
+            lessonType: l.lessonType,
+            level: l.level,
+            language: l.language,
+            teacherId: l.teacherId ?? null,
+            teacherName: l.teacherName ?? null,
+            description: l.description,
+            date: typeof l.date === 'string' ? l.date : new Date(l.date).toISOString(),
+            startTime: l.startTime,
+            status: l.status,
+            totalPrice: l.totalPrice,
+          })),
+        })
+      } catch (err) {
+        console.error(err)
+        showError(err instanceof Error ? err.message : 'Failed to load guests details for day')
+        setGuestsCalendarDayDetails(null)
+      } finally {
+        setGuestsCalendarDayLoading(false)
+      }
+    },
+    [showError],
+  )
 
   useEffect(() => {
     if (activeTab === 'guestsCalendar') {
@@ -2603,7 +2714,10 @@ const AdminPage = () => {
                   return (
                     <div
                       key={dateKey}
-                      className="aspect-square border border-gray-200 rounded-lg p-1 flex flex-col items-center justify-center bg-gray-50"
+                      className={`aspect-square border border-gray-200 rounded-lg p-1 flex flex-col items-center justify-center cursor-pointer ${
+                        guestsCalendarSelectedDate === dateKey ? 'bg-orange-100 border-orange-400' : 'bg-gray-50'
+                      }`}
+                      onClick={() => fetchGuestsCalendarDayDetails(dateKey)}
                     >
                       <span className="text-xs text-gray-600">{d}</span>
                       <span className="text-sm font-bold text-black">{guests}</span>
@@ -2615,6 +2729,121 @@ const AdminPage = () => {
             </>
           )}
         </div>
+
+        {guestsCalendarSelectedDate && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4"
+            onClick={() => {
+              setGuestsCalendarSelectedDate(null)
+              setGuestsCalendarDayDetails(null)
+            }}
+          >
+            <div
+              className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[95vh] overflow-hidden flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                <h2 className="text-base md:text-lg font-semibold text-black">
+                  დეტალები: {guestsCalendarSelectedDate}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGuestsCalendarSelectedDate(null)
+                    setGuestsCalendarDayDetails(null)
+                  }}
+                  className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-black"
+                  aria-label={t('bookings.form.close')}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-4 overflow-y-auto flex-1">
+                {guestsCalendarDayDetails && (
+                  <div className="text-xs md:text-sm text-gray-600 mb-4">
+                    სულ სტუმარი: <span className="font-semibold text-black">{guestsCalendarDayDetails.summary.totalGuests}</span>{' '}
+                    ({guestsCalendarDayDetails.summary.bookingGuests} დაჯავშნებიდან,{' '}
+                    {guestsCalendarDayDetails.summary.lessonGuests} გაკვეთილებიდან)
+                  </div>
+                )}
+                {guestsCalendarDayLoading && (
+                  <div className="text-sm text-gray-500 py-8 text-center">{t('bookings.loading')}</div>
+                )}
+                {!guestsCalendarDayLoading && guestsCalendarDayDetails && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-black mb-2">დაჯავშნები</h3>
+                      {guestsCalendarDayDetails.bookings.length === 0 ? (
+                        <p className="text-xs text-gray-500">დაჯავშნები არ არის ამ დღეზე.</p>
+                      ) : (
+                        <ul className="space-y-2 max-h-64 overflow-auto pr-1">
+                          {guestsCalendarDayDetails.bookings.map((b) => (
+                            <li
+                              key={b.id}
+                              className="border border-gray-200 rounded-lg px-3 py-2 text-xs md:text-sm text-black bg-gray-50"
+                            >
+                              <div className="font-semibold">{b.customer}</div>
+                              <div className="text-gray-600 mt-0.5">{b.equipment}</div>
+                              {b.numberOfPeople !== null && (
+                                <div className="text-gray-600 mt-0.5">
+                                  სტუმრები: <span className="font-medium">{b.numberOfPeople}</span>
+                                </div>
+                              )}
+                              <div className="text-gray-500 mt-0.5">
+                                სტატუსი: <span className="font-medium">{b.status}</span>
+                              </div>
+                              <div className="text-gray-500 mt-0.5">
+                                ფასი: <span className="font-medium">{formatCurrency(b.totalPrice)}</span>
+                              </div>
+                              <div className="text-gray-400 mt-0.5">
+                                {b.phoneNumber} • {b.email}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-black mb-2">გაკვეთილები</h3>
+                      {guestsCalendarDayDetails.lessons.length === 0 ? (
+                        <p className="text-xs text-gray-500">გაკვეთილები არ არის ამ დღეზე.</p>
+                      ) : (
+                        <ul className="space-y-2 max-h-64 overflow-auto pr-1">
+                          {guestsCalendarDayDetails.lessons.map((l) => (
+                            <li
+                              key={l.id}
+                              className="border border-gray-200 rounded-lg px-3 py-2 text-xs md:text-sm text-black bg-gray-50"
+                            >
+                              <div className="font-semibold">{l.customer}</div>
+                              <div className="text-gray-600 mt-0.5">{l.description}</div>
+                              <div className="text-gray-600 mt-0.5">
+                                დრო: {l.startTime} • {l.duration}h
+                              </div>
+                              {l.teacherName && (
+                                <div className="text-gray-600 mt-0.5">ინსტრუქტორი: {l.teacherName}</div>
+                              )}
+                              <div className="text-gray-500 mt-0.5">
+                                სტატუსი: <span className="font-medium">{l.status}</span>
+                              </div>
+                              <div className="text-gray-500 mt-0.5">
+                                ფასი: <span className="font-medium">{formatCurrency(l.totalPrice)}</span>
+                              </div>
+                              <div className="text-gray-400 mt-0.5">
+                                {l.phoneNumber} • {l.email}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </>
     )
   }
