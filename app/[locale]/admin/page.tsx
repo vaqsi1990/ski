@@ -2222,6 +2222,9 @@ const AdminPage = () => {
                             <div className="text-gray-500 xl:hidden mt-1 text-xs">
                               {lesson.numberOfPeople} {lesson.numberOfPeople === 1 ? t('lessons.person') : t('lessons.people')}, {lesson.duration} {lesson.duration === 1 ? t('lessons.hour') : t('lessons.hours')}
                             </div>
+                            <div className="text-gray-500 xl:hidden mt-1 text-xs">
+                              {t(`lessons.level.${lesson.level.toLowerCase()}`)}, {t(`lessons.language.${lesson.language.toLowerCase()}`)}
+                            </div>
                             <div className="text-gray-500 lg:hidden mt-1 text-xs">{formatCurrency(lesson.totalPrice)}</div>
                           </td>
                           <td className="px-3 py-3 text-xs md:text-sm text-black hidden lg:table-cell">
