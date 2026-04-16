@@ -19,7 +19,7 @@ const Services = () => {
       id: 1,
       titleKey: 'service1.title',
       descriptionKey: 'service1.description',
-      image: '/images/serv1.png',
+      image: '/images/servrent.png',
     },
     {
       id: 3,
@@ -31,13 +31,13 @@ const Services = () => {
       id: 4,
       titleKey: 'service4.title',
       descriptionKey: 'service4.description',
-      image: '/images/serv4.png',
+      image: '/images/servless.png',
     },
     {
       id: 2,
       titleKey: 'service2.title',
       descriptionKey: 'service2.description',
-      image: '/images/serv2.png',
+      image: '/images/servacces.png',
     },
     {
       id: 5,
