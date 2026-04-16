@@ -57,7 +57,7 @@ const Equipment = () => {
             id: 1,
             key: 'skis',
             type: 'SKI',
-            image: '/images/1.png',
+            image: '/images/skii2.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
             link: '/booking?type=SKI',
         },
