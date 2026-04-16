@@ -73,7 +73,7 @@ const Equipment = () => {
             id: 4,
             key: 'lessons',
             type: 'LESSON',
-            image: '/images/serv3.png',
+            image: '/images/servless.png',
             buttonColor: 'bg-orange-500 hover:bg-orange-600',
             link: '/lessons',
         },
