@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { LessonStatus } from '@/app/generated/prisma/enums'
+import { sendLessonBookingEmail, type LessonRecipient } from '@/lib/booking-email'
 
 export const dynamic = 'force-dynamic'
 
@@ -68,6 +69,8 @@ export async function POST(request: Request) {
       email,
       personalId,
       teacherId,
+      locale,
+      participants,
     } = body
 
     // Validate required fields
@@ -159,11 +162,43 @@ export async function POST(request: Request) {
         totalPrice: price,
         status: LessonStatus.PENDING,
       },
+      include: { teacher: true },
+    })
+
+    const rawParticipants = Array.isArray(participants) ? participants : []
+    const recipients: LessonRecipient[] = rawParticipants
+      .map((person: Partial<LessonRecipient> | null) => ({
+        firstName: String(person?.firstName || '').trim(),
+        lastName: String(person?.lastName || '').trim(),
+        email: String(person?.email || '').trim(),
+        phoneNumber: person?.phoneNumber ? String(person.phoneNumber) : null,
+      }))
+      .filter((person: LessonRecipient) => person.email)
+
+    if (recipients.length === 0) {
+      recipients.push({ firstName, lastName, email, phoneNumber })
+    }
+
+    const emailSent = await sendLessonBookingEmail({
+      locale,
+      bookingId: lesson.id,
+      status: lesson.status,
+      recipients,
+      lessonType: lesson.lessonType,
+      level: lesson.level,
+      language: lesson.language,
+      date: lesson.date,
+      startTime: lesson.startTime,
+      duration: lesson.duration,
+      numberOfPeople: lesson.numberOfPeople,
+      totalPrice: lesson.totalPrice,
+      teacherName: lesson.teacher ? `${lesson.teacher.firstname} ${lesson.teacher.lastname}` : null,
     })
 
     return NextResponse.json({
       id: lesson.id,
       message: 'Lesson booking created successfully',
+      emailSent,
       lesson: {
         id: lesson.id,
         customer: `${lesson.firstName} ${lesson.lastName}`,

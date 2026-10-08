@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { sendRentalBookingEmail } from '@/lib/booking-email'
 import prisma from '@/lib/prisma'
 import { BookingStatus } from '@/app/generated/prisma/enums'
 import type { Prisma } from '@/app/generated/prisma/client'
@@ -160,6 +161,7 @@ export async function POST(request: Request) {
       endDate,
       totalPrice,
       status = BookingStatus.PENDING,
+      locale,
     } = body
 
     // Support both old format (single productId) and new format (productIds array)
@@ -199,7 +201,25 @@ export async function POST(request: Request) {
       .map((bp) => `${bp.product.type.replace(/_/g, ' ')}${bp.product.size ? ` (${bp.product.size})` : ''}`)
       .join(', ')
 
+    const emailSent = await sendRentalBookingEmail({
+      locale,
+      to: booking.email,
+      firstName: booking.firstName,
+      lastName: booking.lastName,
+      phoneNumber: booking.phoneNumber,
+      bookingId: booking.id,
+      status: booking.status,
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      startTime: booking.startTime,
+      duration: booking.duration,
+      numberOfPeople: booking.numberOfPeople,
+      totalPrice: booking.totalPrice,
+      products: booking.products.map((bp) => bp.product),
+    })
+
     return NextResponse.json({
+      emailSent,
       id: booking.id,
       customer: `${booking.firstName} ${booking.lastName}`,
       firstName: booking.firstName,

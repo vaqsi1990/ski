@@ -803,6 +803,7 @@ const AdminPage = () => {
         body: JSON.stringify({
           ...validated,
           totalPrice: parseFloat(validated.totalPrice),
+          locale,
         }),
       })
 
