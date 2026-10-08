@@ -121,6 +121,15 @@
   },
   "admin": {
     "adminLabel": "Admin",
+    "login": {
+      "title": "Admin login",
+      "subtitle": "Enter the admin username and password",
+      "username": "Username",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "error": "Incorrect username or password"
+    },
     "backToSite": "Back to Site",
     "selectAll": "Select all",
     "selectedCount": "{count} selected",

@@ -122,6 +122,15 @@
   },
   "admin": {
     "adminLabel": "Админ",
+    "login": {
+      "title": "Вход в админку",
+      "subtitle": "Введите имя пользователя и пароль",
+      "username": "Пользователь",
+      "password": "Пароль",
+      "submit": "Войти",
+      "submitting": "Вход...",
+      "error": "Неверное имя пользователя или пароль"
+    },
     "backToSite": "Вернуться на сайт",
     "selectAll": "Выбрать все",
     "selectedCount": "Выбрано: {count}",

@@ -297,9 +297,7 @@ function renderEmail(options: {
     )
     .join('')
 
-  const note = options.note
-    ? `<p style="margin:20px 0 0;padding:14px 16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;color:#9a3412;font-size:14px;line-height:1.5;">${escapeHtml(options.note)}</p>`
-    : ''
+ 
 
   const html = `<!DOCTYPE html>
 <html lang="${options.locale}">
@@ -319,7 +317,7 @@ function renderEmail(options: {
               <td style="padding:28px;font-family:Arial,Helvetica,sans-serif;color:#111111;">
                 <p style="margin:0 0 18px;font-size:16px;line-height:1.6;">${escapeHtml(options.intro)}</p>
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
-                ${note}
+               
                 <p style="margin:22px 0 0;font-size:14px;line-height:1.6;color:#374151;">${escapeHtml(text.cancellation)}</p>
                 <p style="margin:18px 0 0;font-size:14px;line-height:1.7;color:#374151;">
                   <strong>${escapeHtml(text.contact)}</strong><br />

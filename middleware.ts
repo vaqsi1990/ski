@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { routing } from "@/i18n/routing";
+import { ADMIN_SESSION_COOKIE, expectedAdminSessionToken } from "@/lib/admin-session";
 
 const intlMiddleware = createMiddleware(routing);
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-
   const isAdminPath = /^\/(ka|en|ru)\/admin(\/.*)?$|^\/admin(\/.*)?$/.test(pathname);
+  const isLoginPath = /^\/(ka|en|ru)\/admin\/login\/?$/.test(pathname);
 
   if (pathname === '/' ) {
     const url = request.nextUrl.clone();
@@ -16,26 +17,18 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (isAdminPath) {
-    const basicAuth = request.headers.get("authorization");
+  if (isAdminPath && !isLoginPath) {
+    const expected = await expectedAdminSessionToken();
+    const session = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
 
-    if (basicAuth) {
-      const [user, pwd] = atob(basicAuth.split(" ")[1] || "").split(":");
-
-      const validUser = process.env.BASIC_AUTH_USER;
-      const validPassword = process.env.BASIC_AUTH_PASSWORD;
-
-      if (user === validUser && pwd === validPassword) {
-        return intlMiddleware(request); 
-      }
+    if (!expected || session !== expected) {
+      const url = request.nextUrl.clone();
+      const locale = pathname.match(/^\/(ka|en|ru)(?=\/)/)?.[1] ?? 'en';
+      url.pathname = `/${locale}/admin/login`;
+      url.search = '';
+      return NextResponse.redirect(url);
     }
-
-   
-    const url = request.nextUrl.clone();
-    url.pathname = "/api/basicauth";
-    return NextResponse.rewrite(url);
   }
-
 
   return intlMiddleware(request);
 }
