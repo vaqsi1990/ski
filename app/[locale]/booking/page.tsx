@@ -97,7 +97,6 @@ const BookingPage = () => {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [success, setSuccess] = useState(false)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
   const [bookingInfo, setBookingInfo] = useState<{
     products: Product[]
     startDate: Date | null
@@ -256,7 +255,6 @@ const BookingPage = () => {
     e.preventDefault()
     setErrors({})
     setSuccess(false)
-    setEmailSent(false)
     setSubmitting(true)
 
     try {
@@ -350,7 +348,7 @@ const BookingPage = () => {
 
       const payloads = await Promise.all(
         responses.map(async (response) => {
-          const data = await response.json().catch(() => ({} as { message?: string; emailSent?: boolean }))
+          const data = await response.json().catch(() => ({} as { message?: string }))
           return { ok: response.ok, data }
         })
       )
@@ -359,8 +357,6 @@ const BookingPage = () => {
       if (failed) {
         throw new Error(failed.data.message || 'Failed to create booking')
       }
-
-      setEmailSent(payloads.length > 0 && payloads.every((payload) => payload.data.emailSent === true))
 
       // Store booking info for popup
       const selectedProducts = products.filter((p) => validProductIds.includes(p.id))
@@ -457,11 +453,9 @@ const BookingPage = () => {
                   <p className="text-[18px] text-black mb-4">
                     {t('bookingSuccessMessage')}
                   </p>
-                  {emailSent && (
-                    <p className="text-[16px] text-gray-700 mb-4">
-                      {t('emailSentNotice')}
-                    </p>
-                  )}
+                  <p className="text-[16px] text-gray-700 mb-4">
+                    {t('emailSentNotice')}
+                  </p>
                   
                   <div className="border-t border-b border-gray-200 py-4 space-y-4">
                     <div>

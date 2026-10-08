@@ -91,6 +91,7 @@ model Booking {
   startTime     String?       // Start time in format "HH:MM" (10:00 to 15:00)
   duration      Int?          // Duration in hours (1, 2, or 3)
   status        BookingStatus @default(PENDING)
+  locale        String?
   totalPrice    Float
   products      BookingProduct[]
   createdAt     DateTime      @default(now()) @db.Timestamp(6)
@@ -134,6 +135,8 @@ model Lesson {
   email         String
   personalId    String
   status        LessonStatus   @default(PENDING)
+  locale        String?
+  participants  Json?
   totalPrice    Float          // Price based on numberOfPeople and duration
   createdAt     DateTime       @default(now()) @db.Timestamp(6)
   updatedAt     DateTime       @updatedAt

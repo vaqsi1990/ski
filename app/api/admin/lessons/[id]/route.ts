@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { LessonStatus } from '@/app/generated/prisma/enums'
+import { lessonRecipientsFromJson, sendLessonBookingEmail } from '@/lib/booking-email'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +12,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const updateData: {
       status?: LessonStatus
-      teacherId?: string | null
+      teacher?: { connect: { id: string } } | { disconnect: true }
     } = {}
 
     if (body.status && Object.values(LessonStatus).includes(body.status)) {
@@ -20,14 +21,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (body.teacherId !== undefined) {
       if (body.teacherId === null || body.teacherId === '') {
-        updateData.teacherId = null
+        updateData.teacher = { disconnect: true }
       } else {
         const teacher = await prisma.teacher.findUnique({ where: { id: body.teacherId } })
         if (!teacher) {
           return NextResponse.json({ message: 'Invalid teacher' }, { status: 400 })
         }
-        updateData.teacherId = body.teacherId
+        updateData.teacher = { connect: { id: body.teacherId } }
       }
+    }
+
+    const existing = await prisma.lesson.findUnique({
+      where: { id },
+      select: { status: true },
+    })
+
+    if (!existing) {
+      return NextResponse.json({ message: 'Lesson not found' }, { status: 404 })
     }
 
     const lesson = await prisma.lesson.update({
@@ -35,6 +45,29 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       data: updateData,
       include: { teacher: true },
     })
+
+    if (existing.status !== LessonStatus.CONFIRMED && lesson.status === LessonStatus.CONFIRMED) {
+      await sendLessonBookingEmail({
+        locale: lesson.locale,
+        bookingId: lesson.id,
+        status: lesson.status,
+        recipients: lessonRecipientsFromJson(lesson.participants, {
+          firstName: lesson.firstName,
+          lastName: lesson.lastName,
+          email: lesson.email,
+          phoneNumber: lesson.phoneNumber,
+        }),
+        lessonType: lesson.lessonType,
+        level: lesson.level,
+        language: lesson.language,
+        date: lesson.date,
+        startTime: lesson.startTime,
+        duration: lesson.duration,
+        numberOfPeople: lesson.numberOfPeople,
+        totalPrice: lesson.totalPrice,
+        teacherName: lesson.teacher ? `${lesson.teacher.firstname} ${lesson.teacher.lastname}` : null,
+      })
+    }
 
     return NextResponse.json({
       id: lesson.id,

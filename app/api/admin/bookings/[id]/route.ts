@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { BookingStatus } from '@/app/generated/prisma/enums'
+import { sendRentalBookingEmail } from '@/lib/booking-email'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,6 +77,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (body.endDate) updateData.endDate = new Date(body.endDate)
     if (body.totalPrice !== undefined) updateData.totalPrice = parseFloat(body.totalPrice)
 
+    const existing = await prisma.booking.findUnique({
+      where: { id },
+      select: { status: true },
+    })
+
+    if (!existing) {
+      return NextResponse.json({ message: 'Booking not found' }, { status: 404 })
+    }
+
     const booking = await prisma.booking.update({
       where: { id },
       data: updateData,
@@ -91,6 +101,25 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const equipmentList = booking.products
       .map((bp) => `${bp.product.type}${bp.product.size ? ` (${bp.product.size})` : ''}`)
       .join(', ')
+
+    if (existing.status !== BookingStatus.CONFIRMED && booking.status === BookingStatus.CONFIRMED) {
+      await sendRentalBookingEmail({
+        locale: booking.locale,
+        to: booking.email,
+        firstName: booking.firstName,
+        lastName: booking.lastName,
+        phoneNumber: booking.phoneNumber,
+        bookingId: booking.id,
+        status: booking.status,
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+        startTime: booking.startTime,
+        duration: booking.duration,
+        numberOfPeople: booking.numberOfPeople,
+        totalPrice: booking.totalPrice,
+        products: booking.products.map((bp) => bp.product),
+      })
+    }
 
     return NextResponse.json({
       id: booking.id,

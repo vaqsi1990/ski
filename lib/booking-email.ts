@@ -18,9 +18,9 @@ const copy = {
     staffLessonSubject: (name: string) => `ახალი გაკვეთილი — ${name}`,
     greeting: (name: string) => `გამარჯობა, ${name}`,
     hello: 'გამარჯობა',
-    bookingIntro: 'თქვენი ჯავშანი მიღებულია. ქვემოთ არის დაჯავშნის დეტალები.',
-    lessonIntro: 'თქვენი გაკვეთილი დაჯავშნილია. ქვემოთ არის დეტალები.',
-    staffIntro: 'საიტიდან ახალი ჯავშანი შემოვიდა.',
+    bookingIntro: 'თქვენი ჯავშანი დადასტურებულია. ქვემოთ არის დაჯავშნის დეტალები.',
+    lessonIntro: 'თქვენი გაკვეთილი დადასტურებულია. ქვემოთ არის დეტალები.',
+    staffIntro: 'ჯავშანი დადასტურდა.',
     reference: 'ჯავშნის ნომერი',
     fullName: 'სახელი და გვარი',
     days: 'დღეების რაოდენობა',
@@ -41,9 +41,9 @@ const copy = {
     staffLessonSubject: (name: string) => `New lesson — ${name}`,
     greeting: (name: string) => `Hello, ${name}`,
     hello: 'Hello',
-    bookingIntro: 'Your booking has been received. The details are below.',
-    lessonIntro: 'Your lesson has been booked. The details are below.',
-    staffIntro: 'A new booking was submitted on the website.',
+    bookingIntro: 'Your booking is confirmed. The details are below.',
+    lessonIntro: 'Your lesson is confirmed. The details are below.',
+    staffIntro: 'A booking has been confirmed.',
     reference: 'Booking reference',
     fullName: 'Name',
     days: 'Number of days',
@@ -64,9 +64,9 @@ const copy = {
     staffLessonSubject: (name: string) => `Новый урок — ${name}`,
     greeting: (name: string) => `Здравствуйте, ${name}`,
     hello: 'Здравствуйте',
-    bookingIntro: 'Ваше бронирование получено. Детали ниже.',
-    lessonIntro: 'Ваш урок забронирован. Детали ниже.',
-    staffIntro: 'С сайта поступило новое бронирование.',
+    bookingIntro: 'Ваше бронирование подтверждено. Детали ниже.',
+    lessonIntro: 'Ваш урок подтверждён. Детали ниже.',
+    staffIntro: 'Бронирование подтверждено.',
     reference: 'Номер бронирования',
     fullName: 'Имя и фамилия',
     days: 'Количество дней',
@@ -112,6 +112,26 @@ export type LessonRecipient = {
   lastName: string
   email: string
   phoneNumber?: string | null
+}
+
+export function lessonRecipientsFromJson(value: unknown, fallback: LessonRecipient): LessonRecipient[] {
+  if (!Array.isArray(value)) return [fallback]
+
+  const recipients: LessonRecipient[] = []
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue
+    const person = item as Record<string, unknown>
+    const email = typeof person.email === 'string' ? person.email.trim() : ''
+    if (!email) continue
+    recipients.push({
+      firstName: typeof person.firstName === 'string' ? person.firstName.trim() : '',
+      lastName: typeof person.lastName === 'string' ? person.lastName.trim() : '',
+      email,
+      phoneNumber: typeof person.phoneNumber === 'string' ? person.phoneNumber : null,
+    })
+  }
+
+  return recipients.length > 0 ? recipients : [fallback]
 }
 
 export type LessonEmailInput = {
@@ -438,7 +458,7 @@ function rentalDetails(input: RentalEmailInput, locale: AppLocale): Detail[] {
 
 export async function sendRentalBookingEmail(input: RentalEmailInput) {
   try {
-    if (input.status === 'CANCELLED') return false
+    if (input.status !== 'CONFIRMED') return false
     const locale = normalizeLocale(input.locale)
     const text = copy[locale]
     const equipment = input.products.map((product) => formatProduct(locale, product)).join(', ') || '—'
@@ -524,7 +544,7 @@ function lessonDetails(input: LessonEmailInput, locale: AppLocale, recipient?: L
 
 export async function sendLessonBookingEmail(input: LessonEmailInput) {
   try {
-    if (input.status === 'CANCELLED') return false
+    if (input.status !== 'CONFIRMED') return false
     const locale = normalizeLocale(input.locale)
     const text = copy[locale]
     const unique = new Map<string, LessonRecipient>()

@@ -1,0 +1,2 @@
+ALTER TABLE "Booking" ADD COLUMN "locale" TEXT;
+ALTER TABLE "Lesson" ADD COLUMN "locale" TEXT;

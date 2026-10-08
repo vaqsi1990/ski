@@ -1121,7 +1121,12 @@ const AdminPage = () => {
     return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(date)
   }
 
-  const statusIsActive = (status: string) => ['PENDING', 'CONFIRMED'].includes(status)
+  const statusBadgeClass = (status: string) => {
+    if (status === 'CONFIRMED') return 'bg-[#08964c] text-white'
+    if (status === 'PENDING') return 'bg-orange-600 text-white'
+    if (status === 'CANCELLED') return 'bg-red-100 text-red-800'
+    return 'bg-gray-100 text-gray-800'
+  }
 
   const menuItems = [
     { id: 'dashboard', labelKey: 'menu.dashboard' },
@@ -1272,13 +1277,7 @@ const AdminPage = () => {
                         <td className="px-3 py-3 text-xs md:text-sm text-black hidden md:table-cell whitespace-nowrap">{formatCurrency((booking as any).totalPrice || 0)}</td>
                         <td className="px-3 py-3">
                           <span
-                            className={`inline-block px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                              statusIsActive(booking.status)
-                                ? 'bg-[#08964c] text-white'
-                                : booking.status === 'CANCELLED'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}
+                            className={`inline-block px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${statusBadgeClass(booking.status)}`}
                           >
                             {t(`bookings.status.${statusKey}`)}
                           </span>
@@ -1770,13 +1769,7 @@ const AdminPage = () => {
                           <select
                             value={booking.status}
                             onChange={(e) => handleBookingStatusChange(booking.id, e.target.value, bookingType)}
-                            className={`text-xs md:text-sm font-medium px-2 md:px-3 py-1 rounded-full border-0 w-full sm:w-auto ${
-                              statusIsActive(booking.status)
-                                ? 'bg-[#08964c] text-white'
-                                : booking.status === 'CANCELLED'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}
+                            className={`text-xs md:text-sm font-medium px-2 md:px-3 py-1 rounded-full border-0 w-full sm:w-auto ${statusBadgeClass(booking.status)}`}
                           >
                             <option value="PENDING">{t('bookings.status.pending')}</option>
                             <option value="CONFIRMED">{t('bookings.status.confirmed')}</option>
@@ -2386,13 +2379,7 @@ const AdminPage = () => {
                             <select
                               value={lesson.status}
                               onChange={(e) => handleLessonStatusChange(lesson.id, e.target.value)}
-                              className={`text-xs md:text-sm font-medium px-2 md:px-3 py-1 rounded-full border-0 w-full sm:w-auto ${
-                                statusIsActive(lesson.status)
-                                  ? 'bg-[#08964c] text-white'
-                                  : lesson.status === 'CANCELLED'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}
+                              className={`text-xs md:text-sm font-medium px-2 md:px-3 py-1 rounded-full border-0 w-full sm:w-auto ${statusBadgeClass(lesson.status)}`}
                             >
                               <option value="PENDING">{t('lessons.status.pending')}</option>
                               <option value="CONFIRMED">{t('lessons.status.confirmed')}</option>

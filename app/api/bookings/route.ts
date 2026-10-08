@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { BookingStatus } from '@/app/generated/prisma/enums'
-import { sendRentalBookingEmail } from '@/lib/booking-email'
+import { normalizeLocale } from '@/lib/booking-email'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,6 +78,7 @@ export async function POST(request: Request) {
         duration: duration ? parseInt(duration) : null,
         totalPrice: parseFloat(totalPrice),
         status: BookingStatus.PENDING,
+        locale: normalizeLocale(locale),
         products: {
           create: productIdArray.map((productId: string) => ({
             productId,
@@ -97,27 +98,9 @@ export async function POST(request: Request) {
       .map((bp) => `${bp.product.type}${bp.product.size ? ` (${bp.product.size})` : ''}`)
       .join(', ')
 
-    const emailSent = await sendRentalBookingEmail({
-      locale,
-      to: booking.email,
-      firstName: booking.firstName,
-      lastName: booking.lastName,
-      phoneNumber: booking.phoneNumber,
-      bookingId: booking.id,
-      status: booking.status,
-      startDate: booking.startDate,
-      endDate: booking.endDate,
-      startTime: booking.startTime,
-      duration: booking.duration,
-      numberOfPeople: booking.numberOfPeople,
-      totalPrice: booking.totalPrice,
-      products: booking.products.map((bp) => bp.product),
-    })
-
     return NextResponse.json({
       id: booking.id,
       message: 'Booking created successfully',
-      emailSent,
       booking: {
         id: booking.id,
         customer: `${booking.firstName} ${booking.lastName}`,

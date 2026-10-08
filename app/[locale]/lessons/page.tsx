@@ -80,7 +80,6 @@ const LessonsPage = () => {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [success, setSuccess] = useState(false)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
   const [lessonInfo, setLessonInfo] = useState<{
     lessonType: string
     numberOfPeople: number
@@ -192,7 +191,6 @@ const LessonsPage = () => {
     e.preventDefault()
     setErrors({})
     setSuccess(false)
-    setEmailSent(false)
     setSubmitting(true)
 
     try {
@@ -249,9 +247,6 @@ const LessonsPage = () => {
         throw new Error(error.message || 'Failed to create lesson booking')
       }
 
-      const responseData = await response.json()
-      setEmailSent(responseData.emailSent === true)
-      
       const selectedTeacher = teachers.find((t) => t.id === formData.teacherId)
       setLessonInfo({
         lessonType: validated.lessonType,
@@ -333,11 +328,9 @@ const LessonsPage = () => {
                   <p className="text-[18px] text-black mb-4">
                     {t('bookingSuccessMessage')}
                   </p>
-                  {emailSent && (
-                    <p className="text-[16px] text-gray-700 mb-4">
-                      {t('emailSentNotice')}
-                    </p>
-                  )}
+                  <p className="text-[16px] text-gray-700 mb-4">
+                    {t('emailSentNotice')}
+                  </p>
                   
                   <div className="border-t border-b border-gray-200 py-4 space-y-4">
                     <div>
