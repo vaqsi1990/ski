@@ -146,23 +146,44 @@ const BookingPage = () => {
     fetchProducts()
   }, [])
 
-  // Sync contact info arrays with selected products count
+  const accessoryTypes = ['ACCESSORY', 'ADULT_CLOTH', 'CHILD_CLOTH']
+
+  const isSingleContactBooking = (selectedIds: string[] = formData.selectedProductIds) => {
+    if (typeFromUrl === 'ACCESSORY') return true
+    if (typeFromUrl === 'SKI' || typeFromUrl === 'VEHICLES' || typeFromUrl === 'SNOWBOARD') return false
+    const selected = products.filter((product) => selectedIds.filter(Boolean).includes(product.id))
+    return selected.length > 0 && selected.every((product) => accessoryTypes.includes(product.type))
+  }
+
+  // One person can book several accessories with a single contact.
+  // Other equipment still uses one contact block per selected product.
   useEffect(() => {
-    // Use the length of selectedProductIds (including empty strings) to match number of dropdowns
-    const productCount = formData.selectedProductIds.length || 1
-    
-    // Ensure arrays match product count
-    if (formData.firstName.length !== productCount) {
-      const newArrays = {
-        firstName: Array(productCount).fill('').map((_, i) => formData.firstName[i] || ''),
-        lastName: Array(productCount).fill('').map((_, i) => formData.lastName[i] || ''),
-        email: Array(productCount).fill('').map((_, i) => formData.email[i] || ''),
-        phoneNumber: Array(productCount).fill('').map((_, i) => formData.phoneNumber[i] || ''),
-        personalId: Array(productCount).fill('').map((_, i) => formData.personalId[i] || ''),
+    if (isSingleContactBooking()) {
+      if (formData.firstName.length !== 1) {
+        setFormData((prev) => ({
+          ...prev,
+          firstName: [prev.firstName[0] || ''],
+          lastName: [prev.lastName[0] || ''],
+          email: [prev.email[0] || ''],
+          phoneNumber: [prev.phoneNumber[0] || ''],
+          personalId: [prev.personalId[0] || ''],
+        }))
       }
-      setFormData((prev) => ({ ...prev, ...newArrays }))
+      return
     }
-  }, [formData.selectedProductIds])
+
+    const productCount = formData.selectedProductIds.length || 1
+    if (formData.firstName.length !== productCount) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: Array(productCount).fill('').map((_, i) => prev.firstName[i] || ''),
+        lastName: Array(productCount).fill('').map((_, i) => prev.lastName[i] || ''),
+        email: Array(productCount).fill('').map((_, i) => prev.email[i] || ''),
+        phoneNumber: Array(productCount).fill('').map((_, i) => prev.phoneNumber[i] || ''),
+        personalId: Array(productCount).fill('').map((_, i) => prev.personalId[i] || ''),
+      }))
+    }
+  }, [formData.selectedProductIds, products, typeFromUrl])
 
   // Auto-set numberOfPeople and duration for vehicles based on selected product type
   useEffect(() => {
@@ -295,45 +316,63 @@ const BookingPage = () => {
       
       // Filter out empty strings from product IDs
       const validProductIds = validated.selectedProductIds.filter(id => id && id !== '')
-      
-      // Validate that contact info arrays match product count
-      if (validated.firstName.length !== validProductIds.length ||
+      const singleContact = isSingleContactBooking(validProductIds)
+
+      // Ski and vehicle bookings keep one contact per product.
+      // Accessory bookings use the same person for every selected item.
+      if (!singleContact && (
+          validated.firstName.length !== validProductIds.length ||
           validated.lastName.length !== validProductIds.length ||
           validated.email.length !== validProductIds.length ||
           validated.phoneNumber.length !== validProductIds.length ||
-          validated.personalId.length !== validProductIds.length) {
+          validated.personalId.length !== validProductIds.length)) {
         throw new Error('Contact information count must match number of selected products')
       }
 
-      // For each product, create a booking with corresponding contact info
-      const bookings = validProductIds.map((productId, index) => ({
-        firstName: validated.firstName[index] || '',
-        lastName: validated.lastName[index] || '',
-        email: validated.email[index] || '',
-        phoneNumber: validated.phoneNumber[index] || '',
-        personalId: validated.personalId[index] || '',
-        productIds: [productId],
-        numberOfPeople: validated.numberOfPeople || '1',
-        startDate: validated.startDate!.toISOString(),
-        endDate: validated.endDate!.toISOString(),
-        startTime: validated.startTime || '',
-        duration: validated.duration || '',
-        totalPrice: (() => {
-          const selectedProduct = products.find(p => p.id === productId)
-          if (!selectedProduct) return 0
-          const start = new Date(validated.startDate!)
-          const end = new Date(validated.endDate!)
-          start.setHours(0, 0, 0, 0)
-          end.setHours(0, 0, 0, 0)
-          const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
-          const numberOfPeople = parseInt(validated.numberOfPeople || '1') || 1
-          const isVehicle = ['QUAD_BIKE', 'BAG', 'BURAN', 'WRANGLER_JEEP'].includes(selectedProduct.type)
-          return isVehicle 
-            ? selectedProduct.price * days
-            : selectedProduct.price * days * numberOfPeople
-        })(),
-        locale,
-      }))
+      const bookings = singleContact
+        ? [{
+            firstName: validated.firstName[0] || '',
+            lastName: validated.lastName[0] || '',
+            email: validated.email[0] || '',
+            phoneNumber: validated.phoneNumber[0] || '',
+            personalId: validated.personalId[0] || '',
+            productIds: validProductIds,
+            numberOfPeople: '1',
+            startDate: validated.startDate!.toISOString(),
+            endDate: validated.endDate!.toISOString(),
+            startTime: '',
+            duration: '',
+            totalPrice: Number(validated.totalPrice),
+            locale,
+          }]
+        : validProductIds.map((productId, index) => ({
+            firstName: validated.firstName[index] || '',
+            lastName: validated.lastName[index] || '',
+            email: validated.email[index] || '',
+            phoneNumber: validated.phoneNumber[index] || '',
+            personalId: validated.personalId[index] || '',
+            productIds: [productId],
+            numberOfPeople: validated.numberOfPeople || '1',
+            startDate: validated.startDate!.toISOString(),
+            endDate: validated.endDate!.toISOString(),
+            startTime: validated.startTime || '',
+            duration: validated.duration || '',
+            totalPrice: (() => {
+              const selectedProduct = products.find(p => p.id === productId)
+              if (!selectedProduct) return 0
+              const start = new Date(validated.startDate!)
+              const end = new Date(validated.endDate!)
+              start.setHours(0, 0, 0, 0)
+              end.setHours(0, 0, 0, 0)
+              const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+              const numberOfPeople = parseInt(validated.numberOfPeople || '1') || 1
+              const isVehicle = ['QUAD_BIKE', 'BAG', 'BURAN', 'WRANGLER_JEEP'].includes(selectedProduct.type)
+              return isVehicle
+                ? selectedProduct.price * days
+                : selectedProduct.price * days * numberOfPeople
+            })(),
+            locale,
+          }))
 
       // Create all bookings. Each person receives a confirmation on their own email.
       const responses = await Promise.all(
@@ -746,11 +785,14 @@ const BookingPage = () => {
                     type="button"
                     onClick={() => {
                       const newProductIds = [...formData.selectedProductIds, '']
+                      if (isSingleContactBooking()) {
+                        setFormData({ ...formData, selectedProductIds: newProductIds })
+                        return
+                      }
                       const newCount = newProductIds.length
                       setFormData({
                         ...formData,
                         selectedProductIds: newProductIds,
-                        // Immediately sync contact info arrays
                         firstName: Array(newCount).fill('').map((_, i) => formData.firstName[i] || ''),
                         lastName: Array(newCount).fill('').map((_, i) => formData.lastName[i] || ''),
                         email: Array(newCount).fill('').map((_, i) => formData.email[i] || ''),
@@ -918,17 +960,19 @@ const BookingPage = () => {
               </div>
             )}
 
-            {/* Contact Information - Dynamic based on number of products */}
-            {formData.selectedProductIds.map((productId, index) => {
+            {/* Contact Information - one person for accessories, one person per product otherwise */}
+            {(isSingleContactBooking() ? [0] : formData.selectedProductIds.map((_, index) => index)).map((index) => {
+              const productId = formData.selectedProductIds[index]
               const selectedProduct = productId ? products.find(p => p.id === productId) : null
               const productLabel = selectedProduct 
                 ? `${tEquipment(selectedProduct.type)}${selectedProduct.description ? ` (${selectedProduct.description})` : ''}`
                 : ` ${index + 1}`
+              const singleContact = isSingleContactBooking()
               
               return (
                 <div key={index} className="border-t pt-6 mt-6">
                   <h3 className="text-xl font-bold text-black mb-4">
-                    {tLessons('contactInfo')} - {productLabel}
+                    {singleContact ? tLessons('contactInfo') : `${tLessons('contactInfo')} - ${productLabel}`}
                   </h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1075,7 +1119,8 @@ const BookingPage = () => {
                           const isVehicle = selectedProducts.some(p => 
                             ['QUAD_BIKE', 'BAG', 'BURAN', 'WRANGLER_JEEP'].includes(p.type)
                           )
-                          if (isVehicle) {
+                          const singleContact = isSingleContactBooking()
+                          if (isVehicle || singleContact) {
                             return `(${selectedProducts.length} ${selectedProducts.length === 1 ? 'product' : 'products'}: ${formatCurrency(totalProductPrice)} × ${days} ${days === 1 ? 'day' : 'days'}) = ${formatCurrency(parseFloat(formData.totalPrice))}`
                           } else {
                             return `(${selectedProducts.length} ${selectedProducts.length === 1 ? 'product' : 'products'}: ${formatCurrency(totalProductPrice)} × ${days} ${days === 1 ? 'day' : 'days'} × ${numberOfPeople} ${numberOfPeople === 1 ? 'person' : 'people'}) = ${formatCurrency(parseFloat(formData.totalPrice))}`
