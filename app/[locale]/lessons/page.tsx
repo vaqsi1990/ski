@@ -405,6 +405,10 @@ const LessonsPage = () => {
                             </span>
                           </div>
                         )}
+
+                        <div>
+                          <span className="font-semibold text-black">{t('payOnSite')}</span>
+                        </div>
                       </div>
                     </div>
                   </div>

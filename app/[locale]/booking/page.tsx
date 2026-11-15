@@ -530,6 +530,10 @@ const BookingPage = () => {
                             </span>
                           </div>
                         )}
+
+                        <div>
+                          <span className="font-semibold text-black">{t('payOnSite')}</span>
+                        </div>
                         
                         {bookingInfo.emails && bookingInfo.emails.length > 0 && (
                           <div>

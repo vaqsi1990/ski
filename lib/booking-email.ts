@@ -28,6 +28,7 @@ const copy = {
     daysWord: 'დღე',
     pendingNote: 'ჯავშანი მიღებულია და ჯერ დაუდასტურებელია. თუ დამატებითი ინფორმაცია დაგვჭირდება, დაგიკავშირდებით.',
     confirmedNote: 'ჯავშანი დადასტურებულია.',
+    payOnSite: 'გადახდა ადგილზე',
     cancellation: 'ჯავშნის გაუქმების შემთხვევაში მოგვწერეთ ან დაგვირეკეთ ნომერზე +995 57761 41 51.',
     contact: 'კონტაქტი',
     address: 'მისამართი',
@@ -51,6 +52,7 @@ const copy = {
     daysWord: 'days',
     pendingNote: 'Your booking has been received and is not confirmed yet. We will contact you if we need anything else.',
     confirmedNote: 'Your booking is confirmed.',
+    payOnSite: 'Payment on site',
     cancellation: 'To cancel, text or call us at +995 57761 41 51.',
     contact: 'Contact',
     address: 'Address',
@@ -74,6 +76,7 @@ const copy = {
     daysWord: 'дн.',
     pendingNote: 'Бронирование получено и ещё не подтверждено. Мы свяжемся с вами, если понадобятся дополнительные данные.',
     confirmedNote: 'Бронирование подтверждено.',
+    payOnSite: 'Оплата на месте',
     cancellation: 'Чтобы отменить бронирование, напишите или позвоните нам: +995 57761 41 51.',
     contact: 'Контакты',
     address: 'Адрес',
@@ -338,6 +341,7 @@ function renderEmail(options: {
                 <p style="margin:0 0 18px;font-size:16px;line-height:1.6;">${escapeHtml(options.intro)}</p>
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
                
+                <p style="margin:18px 0 0;font-size:15px;line-height:1.6;color:#111111;font-weight:700;">${escapeHtml(text.payOnSite)}</p>
                 <p style="margin:22px 0 0;font-size:14px;line-height:1.6;color:#374151;">${escapeHtml(text.cancellation)}</p>
                 <p style="margin:18px 0 0;font-size:14px;line-height:1.7;color:#374151;">
                   <strong>${escapeHtml(text.contact)}</strong><br />
@@ -364,6 +368,8 @@ function renderEmail(options: {
     options.intro,
     '',
     ...options.details.map((detail) => `${detail.label}: ${detail.value}`),
+    '',
+    text.payOnSite,
     '',
     options.note || '',
     '',

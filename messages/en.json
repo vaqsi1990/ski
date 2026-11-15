@@ -256,7 +256,8 @@
         "cancellationInfo": "To cancel your booking, please text us at",
         "cancellationPhone": "+995 57761 41 51",
         "cancellationOr": "or call us at this number",
-        "emailSentNotice": "A confirmation email will be sent to the address you entered after we confirm the booking."
+        "emailSentNotice": "A confirmation email will be sent to the address you entered after we confirm the booking.",
+        "payOnSite": "Payment on site"
       }
     },
     "equipment": {
@@ -557,6 +558,7 @@
     "bookingSuccessTitle": "You have booked",
     "bookingSuccessMessage": "Lesson booked successfully",
     "emailSentNotice": "A confirmation email will be sent to the address you entered after we confirm the booking.",
+    "payOnSite": "Payment on site",
     "bookingDetails": "Booking Details",
     "close": "Close",
     "cancellationInfo": "To cancel your booking, please text us at",
